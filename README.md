@@ -1,38 +1,93 @@
-# SovereignAI
+# ⬡ SovereignAI
 
-A platform for creating your own sovereign AI — an assistant you own, running on models you choose, with data that never leaves your control.
+**Create your own sovereign AI** — an assistant you actually own: your models, your memory, your knowledge, your machine. Zero runtime dependencies. One command to start.
 
-> **Status:** early concept. This repo is the starting point for design, prototyping, and eventually the platform itself.
+```bash
+node bin/sovereign.js start
+# → Web UI at http://127.0.0.1:4321
+```
 
-## The idea
+> **Status:** v0.1.0 — working end-to-end. Server, web UI, CLI, MCP server, VS Code extension, and browser extension all functional today.
 
-Most people's "AI" today is a rented seat on someone else's infrastructure: their models, their memory, their rules, their telemetry. SovereignAI is a tool that lets anyone stand up an AI that is genuinely *theirs*:
+## Why
 
-- **Own the runtime** — run locally or on infrastructure the user controls (home server, VPS, private cloud).
-- **Own the data** — conversation history, memory, and documents stored where the user decides, portable and exportable by default.
-- **Choose the brain** — plug in local open-weight models (Llama, Mistral, Qwen, etc.) or bring-your-own-key cloud APIs, and switch freely.
-- **Shape the behavior** — user-defined persona, system prompts, tools, and guardrails, versioned like code.
-- **No lock-in** — everything (config, memory, knowledge base) lives in open formats the user can take anywhere.
+Most people's "AI" is a rented seat on someone else's infrastructure: their models, their memory, their telemetry, their rules. SovereignAI flips the ownership:
 
-## What the platform could look like
+- **Own the runtime** — a single Node process on hardware you control. **Zero npm dependencies**: no supply chain, fully auditable, works offline.
+- **Own the brain** — local models via **Ollama**, any **OpenAI-compatible** server (vLLM, llama.cpp, LM Studio, Groq…), or BYO-key **Anthropic** — switch freely per persona.
+- **Own the memory** — conversations, long-term memory notes, and a document knowledge base in a local SQLite file. Hybrid retrieval (semantic embeddings when available, BM25 keyword always — works fully offline).
+- **Shape the behavior** — personas with their own system prompts, models, memory and knowledge switches. Three sensible defaults included (Assistant, Engineer, Archivist).
+- **No lock-in** — one-click export of *everything* to portable JSON. Import it anywhere.
 
-Rough shape to be validated during prototyping:
+## Quickstart
 
-| Layer | Responsibility |
-|---|---|
-| **Setup wizard / CLI** | One command or guided flow: pick a model backend, storage location, and persona → get a running assistant |
-| **Model gateway** | Uniform interface over local runtimes (Ollama, llama.cpp, vLLM) and BYO-key cloud APIs |
-| **Memory & knowledge** | Local-first store for chat history, long-term memory, and user documents (RAG) |
-| **Persona & policy** | Declarative config for identity, tone, tools, and permissions — diffable, versioned, shareable |
-| **Interfaces** | Web UI, CLI, and an API so the assistant can be reached from anywhere the user allows |
+Requirements: [Node.js 22.5+](https://nodejs.org). For local models: [Ollama](https://ollama.com) with any chat model (`ollama pull llama3.1`).
 
-## Roadmap (draft)
+```bash
+git clone https://github.com/mlmrx/SovereignAI
+cd SovereignAI
+node bin/sovereign.js start
+```
 
-1. **Define** — sharpen the target user and the minimum "sovereign" guarantees (this doc).
-2. **Prototype** — thin vertical slice: wizard → local model → chat with persistent local memory.
-3. **Platform** — multi-model gateway, RAG, persona config, packaged self-host deployment.
-4. **Ecosystem** — shareable personas/tool packs, one-click deploy targets.
+Open http://127.0.0.1:4321 → Settings → pick your default model → chat.
 
-## Contributing / working notes
+Optional semantic knowledge search: `ollama pull nomic-embed-text` (without it, retrieval runs in keyword mode — still fully functional).
 
-Nothing is settled yet — stack, architecture, and scope are all open. Design notes and decisions will live in `docs/` as they happen.
+```
+sovereign start            # run the server
+sovereign init             # write a starter config file
+sovereign mcp              # MCP server (stdio) for Claude/Codex/Cursor/Gemini CLI
+sovereign export [file]    # export all data to JSON
+sovereign import <file>    # restore from an export
+```
+
+## Your AI, everywhere
+
+The platform is the substrate; `integrations/` carries it into every tool you use:
+
+| Surface | What you get | Where |
+|---|---|---|
+| **MCP server** | Your AI's memory + knowledge inside **Claude Desktop, Claude Code, Codex CLI, Cursor, Windsurf, Gemini CLI** | [`integrations/mcp/`](integrations/mcp/README.md) |
+| **VS Code extension** (`.vsix`) | Streaming chat panel, ask-about-selection, save-code-to-knowledge. Works in Cursor/Windsurf/VSCodium too | [`integrations/vscode/`](integrations/vscode/README.md) |
+| **Browser extension** (MV3) | Popup chat + right-click "save to my AI's knowledge / memory" (Chrome, Edge, Brave; Firefox note included) | [`integrations/browser/`](integrations/browser/README.md) |
+| **ChatGPT Custom GPT** | Actions schema so ChatGPT can query *your* AI (needs a tunnel — OpenAI must reach you) | [`integrations/chatgpt/`](integrations/chatgpt/README.md) |
+
+## Architecture
+
+```
+bin/sovereign.js        CLI (start · init · mcp · export · import)
+src/
+  server.js             HTTP server, REST API, SSE, static UI, auth
+  chat.js               chat orchestration: history + memory + RAG → stream
+  mcp.js                MCP server (stdio JSON-RPC, zero deps)
+  config.js             config + env overrides + secret redaction
+  db.js                 SQLite storage (node:sqlite — built into Node 22)
+  providers/            model gateway: ollama · openai-compat · anthropic
+  rag/                  chunker · BM25 · hybrid retriever
+public/                 web UI (vanilla JS, no build step, no telemetry)
+integrations/           vscode (.vsix) · browser (MV3) · mcp · chatgpt
+test/                   node:test suite (21 tests)
+```
+
+Details and decision records: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+## API (localhost)
+
+`POST /api/chat` (SSE stream) · `POST /api/ask` (simple JSON) · `GET /api/search?q=` · CRUD for `personas`, `conversations`, `memories`, `documents` · `GET /api/export` / `POST /api/import` · `GET /api/providers` · `GET /api/models` · `GET/PUT /api/config`
+
+Security model: binds to `127.0.0.1` by default. Remote access requires setting `authToken` in `sovereign.config.json` (Bearer auth); without a token, non-local requests are refused.
+
+## Development
+
+```bash
+npm test    # node:test, no dependencies to install — there are none
+```
+
+## Roadmap
+
+- [x] Core platform: gateway, memory, RAG, personas, portability
+- [x] Integrations: MCP, VS Code, browser, ChatGPT Actions
+- [ ] Setup wizard (guided first-run in the web UI)
+- [ ] PDF/DOCX ingestion, auto memory extraction
+- [ ] JetBrains plugin; signed store releases of the extensions
+- [ ] Packaged installers (single binary), Docker image, LAN/tailnet mode

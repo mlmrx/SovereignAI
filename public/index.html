@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SovereignAI</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>⬡</text></svg>" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <aside id="sidebar">
+    <div class="brand">
+      <span class="brand-mark">⬡</span>
+      <div>
+        <div class="brand-name" id="instance-name">SovereignAI</div>
+        <div class="brand-sub">your models · your memory</div>
+      </div>
+    </div>
+
+    <button id="new-chat" class="btn primary block">+ New chat</button>
+
+    <nav id="conversation-list" class="conversation-list" aria-label="Conversations"></nav>
+
+    <nav class="side-nav">
+      <button class="nav-item active" data-view="chat">💬 Chat</button>
+      <button class="nav-item" data-view="knowledge">📚 Knowledge</button>
+      <button class="nav-item" data-view="memory">🧠 Memory</button>
+      <button class="nav-item" data-view="settings">⚙️ Settings</button>
+    </nav>
+  </aside>
+
+  <main id="main">
+    <!-- Chat -->
+    <section id="view-chat" class="view active">
+      <header class="view-header">
+        <select id="persona-select" title="Persona"></select>
+        <span id="chat-model" class="model-chip"></span>
+      </header>
+      <div id="messages" class="messages">
+        <div class="empty-state" id="chat-empty">
+          <div class="empty-mark">⬡</div>
+          <h2>Your sovereign AI</h2>
+          <p>Runs on your machine. Remembers what you tell it. Answers from your own knowledge.<br/>Nothing leaves your control.</p>
+        </div>
+      </div>
+      <footer class="composer">
+        <textarea id="input" rows="1" placeholder="Message your AI… (Enter to send, Shift+Enter for newline)"></textarea>
+        <button id="send" class="btn primary">Send</button>
+      </footer>
+    </section>
+
+    <!-- Knowledge -->
+    <section id="view-knowledge" class="view">
+      <header class="view-header"><h1>Knowledge base</h1></header>
+      <div class="panel-body">
+        <p class="hint">Add text or markdown files. Your AI personas with knowledge enabled will ground their answers in these documents — all indexed locally.</p>
+        <div class="row">
+          <input type="file" id="doc-file" accept=".txt,.md,.markdown,.csv,.json,.log,.html" multiple hidden />
+          <button class="btn" id="doc-upload">＋ Add documents</button>
+          <input id="kb-search" placeholder="Test a search against your knowledge…" />
+        </div>
+        <div id="kb-results" class="kb-results"></div>
+        <table class="table" id="doc-table">
+          <thead><tr><th>Document</th><th>Chunks</th><th>Semantic</th><th>Added</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Memory -->
+    <section id="view-memory" class="view">
+      <header class="view-header"><h1>Long-term memory</h1></header>
+      <div class="panel-body">
+        <p class="hint">Notes your AI always keeps in mind (for personas with memory enabled). Stored only on this machine.</p>
+        <div class="row">
+          <input id="memory-input" placeholder="e.g. I prefer concise answers. My company is called…" />
+          <button class="btn" id="memory-add">Remember</button>
+        </div>
+        <ul id="memory-list" class="memory-list"></ul>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section id="view-settings" class="view">
+      <header class="view-header"><h1>Settings</h1></header>
+      <div class="panel-body" id="settings-body">
+        <h3>Instance</h3>
+        <label>Name <input id="cfg-name" /></label>
+
+        <h3>Providers <button class="btn small" id="providers-check">Check status</button></h3>
+        <div id="provider-status" class="provider-status"></div>
+
+        <fieldset>
+          <legend>Ollama (local)</legend>
+          <label class="check"><input type="checkbox" id="cfg-ollama-enabled" /> Enabled</label>
+          <label>Base URL <input id="cfg-ollama-url" placeholder="http://localhost:11434" /></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>OpenAI-compatible (vLLM, llama.cpp, LM Studio, Groq, OpenAI…)</legend>
+          <label class="check"><input type="checkbox" id="cfg-openai-enabled" /> Enabled</label>
+          <label>Base URL <input id="cfg-openai-url" placeholder="https://api.openai.com" /></label>
+          <label>API key <input id="cfg-openai-key" type="password" autocomplete="off" /></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Anthropic (Claude)</legend>
+          <label class="check"><input type="checkbox" id="cfg-anthropic-enabled" /> Enabled</label>
+          <label>API key <input id="cfg-anthropic-key" type="password" autocomplete="off" /></label>
+        </fieldset>
+
+        <h3>Defaults</h3>
+        <label>Provider
+          <select id="cfg-default-provider">
+            <option value="ollama">Ollama</option>
+            <option value="openai">OpenAI-compatible</option>
+            <option value="anthropic">Anthropic</option>
+          </select>
+        </label>
+        <label>Model <input id="cfg-default-model" list="model-options" placeholder="e.g. llama3.1:latest" /></label>
+        <datalist id="model-options"></datalist>
+
+        <h3>Embeddings (semantic knowledge search)</h3>
+        <label>Ollama embedding model <input id="cfg-embed-model" placeholder="nomic-embed-text" /></label>
+        <p class="hint">Pull it with <code>ollama pull nomic-embed-text</code>. Without it, knowledge search falls back to keyword mode — still fully functional.</p>
+
+        <h3>Personas</h3>
+        <div id="persona-editor"></div>
+        <button class="btn" id="persona-new">＋ New persona</button>
+
+        <h3>Your data</h3>
+        <div class="row">
+          <button class="btn" id="export-btn">⬇ Export everything</button>
+          <button class="btn" id="import-btn">⬆ Import</button>
+          <input type="file" id="import-file" accept=".json" hidden />
+        </div>
+        <p class="hint">Everything — personas, conversations, memory, knowledge — in one portable JSON file. No lock-in, ever.</p>
+
+        <div class="save-bar"><button class="btn primary" id="settings-save">Save settings</button><span id="save-status"></span></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

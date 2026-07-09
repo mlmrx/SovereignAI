@@ -21,6 +21,8 @@ out/
 # Local data / models (large artifacts stay out of git)
 data/
 models/
+sovereign.config.json
+sovereign-export-*.json
 *.gguf
 *.safetensors
 

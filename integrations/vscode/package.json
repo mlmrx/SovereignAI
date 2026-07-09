@@ -1,0 +1,84 @@
+{
+  "name": "sovereignai",
+  "displayName": "SovereignAI — Your Own AI",
+  "description": "Chat with your self-hosted sovereign AI (local models, private memory, private knowledge) without leaving your editor. Works in VS Code, Cursor, Windsurf, and VSCodium.",
+  "version": "0.1.0",
+  "publisher": "sovereignai",
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mlmrx/SovereignAI"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "chat",
+    "local",
+    "ollama",
+    "private",
+    "sovereign"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "sovereignai.openChat",
+        "title": "SovereignAI: Open Chat"
+      },
+      {
+        "command": "sovereignai.askSelection",
+        "title": "SovereignAI: Ask About Selection"
+      },
+      {
+        "command": "sovereignai.saveSelectionToKnowledge",
+        "title": "SovereignAI: Save Selection to Knowledge"
+      },
+      {
+        "command": "sovereignai.remember",
+        "title": "SovereignAI: Remember This (Long-term Memory)"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "sovereignai.askSelection",
+          "when": "editorHasSelection",
+          "group": "sovereignai@1"
+        },
+        {
+          "command": "sovereignai.saveSelectionToKnowledge",
+          "when": "editorHasSelection",
+          "group": "sovereignai@2"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "SovereignAI",
+      "properties": {
+        "sovereignai.serverUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:4321",
+          "description": "URL of your SovereignAI server (run `sovereign start`)."
+        },
+        "sovereignai.persona": {
+          "type": "string",
+          "default": "Engineer",
+          "description": "Persona name to chat with (as defined in your SovereignAI instance)."
+        },
+        "sovereignai.authToken": {
+          "type": "string",
+          "default": "",
+          "description": "Bearer token — only needed when the server is remote and protected."
+        }
+      }
+    }
+  }
+}
