@@ -1,0 +1,103 @@
+name: Release
+
+# Tag a version to ship everything:
+#   git tag v0.2.0 && git push origin v0.2.0
+#
+# Produces a GitHub Release with: VS Code .vsix, browser extension zip,
+# JetBrains plugin zip — and publishes the Docker image to GHCR.
+#
+# Store publishing activates automatically when you add repo secrets:
+#   VSCE_PAT        → VS Code Marketplace  (https://marketplace.visualstudio.com/manage)
+#   OVSX_PAT        → Open VSX / Cursor & co. (https://open-vsx.org)
+# Chrome Web Store / Firefox AMO / JetBrains Marketplace need one-time manual
+# uploads of the artifacts below; their review flows aren't secret-only.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --no-warnings --test
+
+  artifacts:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Package VS Code extension (.vsix)
+        working-directory: integrations/vscode
+        run: npx --yes @vscode/vsce@latest package
+
+      - name: Zip browser extension
+        working-directory: integrations/browser
+        run: zip -r "sovereignai-browser-${GITHUB_REF_NAME#v}.zip" manifest.json background.js popup.html popup.js
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10'
+      - name: Build JetBrains plugin
+        run: gradle buildPlugin --no-daemon
+        working-directory: integrations/jetbrains
+
+      - name: Create GitHub Release with artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "SovereignAI $GITHUB_REF_NAME" \
+            --generate-notes \
+            integrations/vscode/*.vsix \
+            integrations/browser/sovereignai-browser-*.zip \
+            integrations/jetbrains/build/distributions/*.zip
+
+      - name: Publish to VS Code Marketplace (when VSCE_PAT secret exists)
+        working-directory: integrations/vscode
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then echo "VSCE_PAT not set — skipping marketplace publish"; exit 0; fi
+          npx --yes @vscode/vsce@latest publish -p "$VSCE_PAT"
+
+      - name: Publish to Open VSX (when OVSX_PAT secret exists)
+        working-directory: integrations/vscode
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -z "$OVSX_PAT" ]; then echo "OVSX_PAT not set — skipping Open VSX publish"; exit 0; fi
+          npx --yes ovsx publish *.vsix -p "$OVSX_PAT"
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push image
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          docker build -t "$IMAGE:${GITHUB_REF_NAME#v}" -t "$IMAGE:latest" .
+          docker push "$IMAGE:${GITHUB_REF_NAME#v}"
+          docker push "$IMAGE:latest"

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
+import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { startServer } from '../src/server.js';
@@ -13,12 +15,15 @@ const HELP = `SovereignAI v${VERSION} — your own sovereign AI
 Usage: sovereign <command>
 
 Commands:
-  start            Start the server (default)   [--port N] [--host H]
+  start            Start the server (default)   [--port N] [--host H] [--lan]
   init             Create sovereign.config.json in the current directory
   mcp              Run the MCP server (stdio) for Claude/Codex/Cursor/etc.
   export [file]    Export all data (personas, chats, memory, knowledge) to JSON
   import <file>    Import a previous export
   help             Show this help
+
+  --lan            Share on your LAN or tailnet: binds 0.0.0.0 and enforces a
+                   bearer token (auto-generated on first use, saved to config).
 `;
 
 try {
@@ -49,18 +54,38 @@ try {
 }
 
 async function start(flags) {
+  let lanToken = null;
+  if (flags.lan) {
+    // LAN/tailnet mode: bind all interfaces, require a bearer token for remote clients
+    const config = loadConfig(rootDir);
+    if (!config.authToken) {
+      config.authToken = crypto.randomBytes(24).toString('base64url');
+      saveConfig(rootDir, config);
+    }
+    lanToken = config.authToken;
+    flags.host = flags.host ?? '0.0.0.0';
+  }
   const { host, port, config } = await startServer(rootDir, {
     host: flags.host,
     port: flags.port ? Number(flags.port) : undefined,
   });
   console.log(`
   ⬡ SovereignAI v${VERSION} — "${config.name}"
-    Web UI    http://${host}:${port}
-    API       http://${host}:${port}/api/status
-    Data      ${path.join(rootDir, 'data')}
-
-  Your models. Your memory. Your machine.
-`);
+    Web UI    http://${host === '0.0.0.0' ? '127.0.0.1' : host}:${port}
+    API       http://${host === '0.0.0.0' ? '127.0.0.1' : host}:${port}/api/status
+    Data      ${path.join(rootDir, 'data')}`);
+  if (lanToken) {
+    const addresses = Object.values(os.networkInterfaces())
+      .flat()
+      .filter((i) => i && i.family === 'IPv4' && !i.internal)
+      .map((i) => i.address);
+    console.log(`
+    LAN mode  open on another device:
+              ${addresses.map((a) => `http://${a}:${port}/?token=${lanToken}`).join('\n              ') || '(no LAN interfaces found)'}
+              (the token is remembered by the browser after first visit;
+               API clients send it as  Authorization: Bearer <token>)`);
+  }
+  console.log('\n  Your models. Your memory. Your machine.\n');
 }
 
 function init() {
@@ -101,7 +126,10 @@ async function importData(file) {
 function parseFlags(argv) {
   const flags = {};
   for (let i = 0; i < argv.length; i++) {
-    if (argv[i].startsWith('--')) flags[argv[i].slice(2)] = argv[i + 1];
+    if (!argv[i].startsWith('--')) continue;
+    const key = argv[i].slice(2);
+    const next = argv[i + 1];
+    flags[key] = next === undefined || next.startsWith('--') ? true : next;
   }
   return flags;
 }

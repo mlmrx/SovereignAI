@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { deepMerge } from './util.js';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';
 
 export const DEFAULT_CONFIG = {
   name: 'My Sovereign AI',
@@ -19,7 +19,11 @@ export const DEFAULT_CONFIG = {
   defaults: { provider: 'ollama', model: '' },
   // Embeddings power semantic knowledge search. Falls back to keyword (BM25) search when unavailable.
   embeddings: { provider: 'ollama', model: 'nomic-embed-text' },
+  // Auto memory: distill durable facts from conversations into long-term memory (extra model call per exchange).
+  memory: { autoExtract: false },
   limits: { historyChars: 24000, ragChunks: 6, maxTokens: 32000 },
+  // Flipped by the first-run wizard; false shows the guided setup in the web UI.
+  setupComplete: false,
 };
 
 export function configPath(rootDir) {

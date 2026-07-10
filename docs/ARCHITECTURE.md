@@ -46,6 +46,15 @@ Server binds `127.0.0.1`. Remote requests are refused unless `authToken` is conf
 ### ADR-7: No-build web UI
 Vanilla HTML/CSS/JS served statically. No bundler, no framework, no telemetry. Chat streaming reads the SSE body via `fetch` + `ReadableStream` (POST-based SSE, since `EventSource` is GET-only). Markdown rendering is a minimal escaped-first subset (code fences, inline code, bold, links).
 
+### ADR-8: Zero-dep document ingestion
+DOCX is a ZIP of XML; PDF text lives in content streams. Both are parseable with Node built-ins: a ~70-line ZIP reader (`ingest/zip.js`, stored + deflate via `zlib.inflateRawSync`) feeds the DOCX extractor, and the PDF extractor inflates FlateDecode streams and walks the text operators (Tj/TJ/'/"/Td/T*). Best-effort by design: unreadable output (scanned pages, CID fonts) fails loudly with a clear message instead of indexing noise. Binary uploads travel as base64 JSON (`contentBase64`) to keep the API surface JSON-only.
+
+### ADR-9: Auto memory extraction is opt-in and fire-and-forget
+When `memory.autoExtract` is on, each chat exchange triggers one background model call that distills ≤3 durable facts into memory notes. It never blocks or delays the chat stream, failures are silent, and parsing tolerates model quirks (bullet variants, stray NONE lines). Off by default: it costs a model call per exchange and users should choose to be profiled, even locally.
+
+### ADR-10: "Bake your own model" via Ollama Modelfile
+`POST /api/create-model` calls Ollama's `/api/create` (base model + system prompt → new named model). This gives users a literal model artifact they own (`ollama list` shows it), usable outside SovereignAI too. Fine-tuning is a different beast (planned as JSONL export first); baking delivers the "my own model" experience today at zero training cost.
+
 ## Data model
 
 `personas` (system prompt, provider/model override, memory/knowledge switches) · `conversations` → `messages` (role, content, provider, model, token usage) · `memories` (long-term notes) · `documents` → `chunks` (content + optional embedding JSON). Export = all six tables + redacted config, one JSON file.

@@ -1,5 +1,6 @@
 import { getProvider } from './providers/index.js';
 import { retrieve, formatContext } from './rag/retriever.js';
+import { autoExtractMemories } from './memory-extract.js';
 import { HttpError } from './util.js';
 
 /**
@@ -11,7 +12,7 @@ export async function handleChat({ store, config, body, sse, signal }) {
   const message = typeof body.message === 'string' ? body.message.trim() : '';
   if (!message) throw new HttpError(400, 'message is required');
 
-  const persona = resolvePersona(store, body.personaId);
+  const persona = resolvePersona(store, body.personaId, config);
   const { provider, providerCfg, model } = resolveModel(config, persona);
 
   let conversation = body.conversationId ? store.getConversation(body.conversationId) : null;
@@ -84,6 +85,10 @@ export async function handleChat({ store, config, body, sse, signal }) {
   });
   sse.end();
 
+  if (config.memory?.autoExtract && text && persona.use_memory) {
+    autoExtractMemories({ store, config, userMessage: message, assistantReply: text }).catch(() => {});
+  }
+
   function persistAssistant(errorNote) {
     const content = text || (errorNote ? `⚠️ ${errorNote}` : '');
     if (!content) return null;
@@ -101,11 +106,15 @@ export async function handleChat({ store, config, body, sse, signal }) {
   }
 }
 
-function resolvePersona(store, personaId) {
+function resolvePersona(store, personaId, config) {
   if (personaId) {
     const persona = store.getPersona(personaId);
     if (!persona) throw new HttpError(404, 'Persona not found');
     return persona;
+  }
+  if (config?.defaults?.personaId) {
+    const persona = store.getPersona(config.defaults.personaId);
+    if (persona) return persona;
   }
   const first = store.listPersonas()[0];
   if (!first) throw new HttpError(400, 'No personas exist — create one first');

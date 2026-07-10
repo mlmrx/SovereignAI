@@ -8,6 +8,7 @@ import { providers, getProvider, providerStatus } from './providers/index.js';
 import { seedPersonas } from './personas.js';
 import { chunkText } from './rag/chunker.js';
 import { retrieve, embedTexts } from './rag/retriever.js';
+import { extractText } from './ingest/index.js';
 import { handleChat } from './chat.js';
 import { readJsonBody, sendJson, sseStart, HttpError } from './util.js';
 
@@ -42,6 +43,7 @@ export function createApp(rootDir) {
       memories: store.listMemories().length,
     },
     defaults: config.defaults,
+    setupComplete: Boolean(config.setupComplete),
   }));
 
   route('GET', '/api/providers', async () => providerStatus(config));
@@ -117,13 +119,30 @@ export function createApp(rootDir) {
   // ---- knowledge base ----
   route('GET', '/api/documents', async () => store.listDocuments());
   route('POST', '/api/documents', async ({ body }) => {
-    if (!body.name || typeof body.content !== 'string' || !body.content.trim()) {
-      throw new HttpError(400, 'name and content are required');
+    if (!body.name) throw new HttpError(400, 'name is required');
+    let text;
+    if (typeof body.contentBase64 === 'string' && body.contentBase64) {
+      text = extractText(body.name, Buffer.from(body.contentBase64, 'base64'));
+    } else if (typeof body.content === 'string' && body.content.trim()) {
+      text = extractText(body.name, Buffer.from(body.content, 'utf8'));
+    } else {
+      throw new HttpError(400, 'content or contentBase64 is required');
     }
-    const pieces = chunkText(body.content);
+    if (!text.trim()) throw new HttpError(422, `${body.name}: no extractable text`);
+    const pieces = chunkText(text);
     const vectors = await embedTexts(config, pieces);
     const chunks = pieces.map((content, i) => ({ content, embedding: vectors?.[i] ?? null }));
-    return store.addDocument({ name: body.name, size: body.content.length, chunks, embedded: Boolean(vectors) });
+    return store.addDocument({ name: body.name, size: text.length, chunks, embedded: Boolean(vectors) });
+  });
+
+  // ---- bake your own named local model (Ollama Modelfile) ----
+  route('POST', '/api/create-model', async ({ body }) => {
+    const { name, base, system } = body;
+    if (!name || !base || !system) throw new HttpError(400, 'name, base and system are required');
+    if (!/^[a-z0-9][a-z0-9._-]*$/i.test(name)) throw new HttpError(400, 'Model name: letters, digits, dots, dashes only');
+    const cfg = config.providers.ollama;
+    if (!providers.ollama.isConfigured(cfg)) throw new HttpError(400, 'Ollama is not configured');
+    return providers.ollama.createModel(cfg, { name, base, system });
   });
   route('DELETE', '/api/documents/:id', async ({ params }) => {
     store.deleteDocument(params.id);

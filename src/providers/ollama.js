@@ -51,6 +51,21 @@ export const ollama = {
     yield { type: 'done', usage, stopReason: 'end_turn' };
   },
 
+  /**
+   * Bake a named local model from a base model + system prompt (Ollama Modelfile).
+   * The user ends up with their OWN model artifact, e.g. `mia:latest`.
+   */
+  async createModel(cfg, { name, base, system }) {
+    const res = await fetch(`${cfg.baseUrl}/api/create`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model: name, from: base, system, stream: false }),
+      signal: AbortSignal.timeout(300000),
+    });
+    await ensureOk(res, 'Ollama create');
+    return { model: name };
+  },
+
   /** Batch-embed texts. Returns array of vectors. */
   async embed(cfg, model, texts) {
     const res = await fetch(`${cfg.baseUrl}/api/embed`, {

@@ -1,6 +1,6 @@
 {
   "name": "sovereignai",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Create your own sovereign AI — user-owned models, memory, and data. Zero runtime dependencies.",
   "type": "module",
   "private": true,

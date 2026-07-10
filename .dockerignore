@@ -1,0 +1,9 @@
+.git
+data
+node_modules
+integrations
+docs
+test
+*.md
+sovereign.config.json
+sovereign-export-*.json

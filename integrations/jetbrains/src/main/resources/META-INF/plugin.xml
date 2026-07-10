@@ -1,0 +1,28 @@
+<idea-plugin>
+    <id>ai.sovereign.plugin</id>
+    <name>SovereignAI — Your Own AI</name>
+    <vendor url="https://github.com/mlmrx/SovereignAI">SovereignAI</vendor>
+    <description><![CDATA[
+        Chat with your self-hosted sovereign AI — local models, private memory, private
+        knowledge — without leaving your IDE. Requires a running SovereignAI server
+        (<code>sovereign start</code>). No telemetry; talks only to the server you configure.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="SovereignAI" anchor="right" icon="AllIcons.Toolwindows.ToolWindowMessages"
+                    factoryClass="ai.sovereign.plugin.SovereignToolWindowFactory"/>
+        <notificationGroup id="SovereignAI" displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <group id="SovereignAI.EditorGroup" text="SovereignAI" popup="true">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <action id="SovereignAI.AskSelection" class="ai.sovereign.plugin.AskSelectionAction"
+                    text="Ask About Selection" description="Ask your sovereign AI about the selected code"/>
+            <action id="SovereignAI.SaveSelection" class="ai.sovereign.plugin.SaveSelectionAction"
+                    text="Save Selection to Knowledge" description="Index the selection into your AI's private knowledge base"/>
+        </group>
+    </actions>
+</idea-plugin>

@@ -7,16 +7,31 @@ const state = {
   streaming: false,
 };
 
+/* Remote access (LAN/tailnet/Docker): accept ?token=… once, persist it, send it always. */
+window.SOVEREIGN_HEADERS = (() => {
+  try {
+    const url = new URL(location.href);
+    const fromUrl = url.searchParams.get('token');
+    if (fromUrl) {
+      localStorage.setItem('sovereign-token', fromUrl);
+      url.searchParams.delete('token');
+      history.replaceState(null, '', url);
+    }
+  } catch { /* ignore */ }
+  const token = localStorage.getItem('sovereign-token');
+  return () => (token ? { authorization: `Bearer ${token}` } : {});
+})();
+
 const api = {
   async get(path) {
-    const res = await fetch(path);
+    const res = await fetch(path, { headers: SOVEREIGN_HEADERS() });
     if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
     return res.json();
   },
   async send(method, path, body) {
     const res = await fetch(path, {
       method,
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', ...SOVEREIGN_HEADERS() },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
@@ -87,7 +102,7 @@ async function sendMessage() {
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', ...SOVEREIGN_HEADERS() },
       body: JSON.stringify({
         message: text,
         conversationId: state.conversationId,
@@ -234,12 +249,29 @@ async function loadPersonas() {
 $('#doc-upload').addEventListener('click', () => $('#doc-file').click());
 $('#doc-file').addEventListener('change', async (e) => {
   for (const file of e.target.files) {
-    const content = await file.text();
-    await api.send('POST', '/api/documents', { name: file.name, content });
+    try {
+      await api.send('POST', '/api/documents', await filePayload(file));
+    } catch (err) {
+      alert(`${file.name}: ${err.message}`);
+    }
   }
   e.target.value = '';
   loadDocuments();
 });
+
+/** Binary formats (pdf/docx) go up as base64; everything else as text. Shared with the wizard. */
+window.filePayload = async function filePayload(file) {
+  if (/\.(pdf|docx)$/i.test(file.name)) {
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    return { name: file.name, contentBase64: dataUrl.slice(dataUrl.indexOf(',') + 1) };
+  }
+  return { name: file.name, content: await file.text() };
+};
 
 $('#kb-search').addEventListener('keydown', async (e) => {
   if (e.key !== 'Enter') return;
@@ -313,6 +345,7 @@ async function loadSettings() {
   $('#cfg-default-provider').value = cfgCache.defaults.provider;
   $('#cfg-default-model').value = cfgCache.defaults.model ?? '';
   $('#cfg-embed-model').value = cfgCache.embeddings.model ?? '';
+  $('#cfg-auto-memory').checked = Boolean(cfgCache.memory?.autoExtract);
   renderPersonaEditor();
   refreshModelOptions();
 }
@@ -350,6 +383,7 @@ $('#settings-save').addEventListener('click', async () => {
     },
     defaults: { provider: $('#cfg-default-provider').value, model: $('#cfg-default-model').value },
     embeddings: { provider: 'ollama', model: $('#cfg-embed-model').value },
+    memory: { autoExtract: $('#cfg-auto-memory').checked },
   };
   await api.send('PUT', '/api/config', update);
   await savePersonas();
@@ -418,6 +452,25 @@ async function savePersonas() {
   renderPersonaEditor();
 }
 
+/* bake your own local model */
+$('#bake-btn').addEventListener('click', async () => {
+  const name = $('#bake-name').value.trim();
+  const base = $('#bake-base').value.trim();
+  const system = $('#bake-system').value.trim();
+  const status = $('#bake-status');
+  if (!name || !base || !system) {
+    status.textContent = 'Fill in name, base model, and personality first.';
+    return;
+  }
+  status.textContent = 'Baking… (this can take a moment)';
+  try {
+    const result = await api.send('POST', '/api/create-model', { name, base, system });
+    status.textContent = `✓ Created local model "${result.model}" — pick it as a persona's model.`;
+  } catch (err) {
+    status.textContent = `✕ ${err.message}`;
+  }
+});
+
 /* export / import */
 $('#export-btn').addEventListener('click', async () => {
   const data = await api.get('/api/export');
@@ -446,4 +499,9 @@ $('#import-file').addEventListener('change', async (e) => {
   } catch { /* server warming up */ }
   await loadPersonas();
   await loadConversations();
+  // select the wizard-created (default) persona if configured
+  try {
+    const cfg = await api.get('/api/config');
+    if (cfg.defaults?.personaId) $('#persona-select').value = cfg.defaults.personaId;
+  } catch { /* non-fatal */ }
 })();
