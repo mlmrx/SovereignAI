@@ -17,6 +17,7 @@ repositories {
 dependencies {
     intellijPlatform {
         intellijIdeaCommunity("2024.2.4")
+        instrumentationTools()
     }
 }
 
