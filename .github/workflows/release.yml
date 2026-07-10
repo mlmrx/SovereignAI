@@ -1,7 +1,7 @@
 name: Release
 
 # Tag a version to ship everything:
-#   git tag v0.2.0 && git push origin v0.2.0
+#   git tag v0.3.0 && git push origin v0.3.0
 #
 # Produces a GitHub Release with: VS Code .vsix, browser extension zip,
 # JetBrains plugin zip — and publishes the Docker image to GHCR.
@@ -28,7 +28,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --no-warnings --test
+      - run: npm test
 
   artifacts:
     needs: test
@@ -41,11 +41,11 @@ jobs:
 
       - name: Package VS Code extension (.vsix)
         working-directory: integrations/vscode
-        run: npx --yes @vscode/vsce@latest package
+        run: npx --yes @vscode/vsce@latest package --out "$RUNNER_TEMP/sovereignai-${GITHUB_REF_NAME#v}.vsix"
 
       - name: Zip browser extension
         working-directory: integrations/browser
-        run: zip -r "sovereignai-browser-${GITHUB_REF_NAME#v}.zip" manifest.json background.js popup.html popup.js
+        run: zip -r "$RUNNER_TEMP/sovereignai-browser-${GITHUB_REF_NAME#v}.zip" manifest.json background.js popup.html popup.js
 
       - uses: actions/setup-java@v4
         with:
@@ -65,8 +65,8 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             --title "SovereignAI $GITHUB_REF_NAME" \
             --generate-notes \
-            integrations/vscode/*.vsix \
-            integrations/browser/sovereignai-browser-*.zip \
+            "$RUNNER_TEMP/sovereignai-${GITHUB_REF_NAME#v}.vsix" \
+            "$RUNNER_TEMP/sovereignai-browser-${GITHUB_REF_NAME#v}.zip" \
             integrations/jetbrains/build/distributions/*.zip
 
       - name: Publish to VS Code Marketplace (when VSCE_PAT secret exists)
@@ -83,7 +83,7 @@ jobs:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
           if [ -z "$OVSX_PAT" ]; then echo "OVSX_PAT not set — skipping Open VSX publish"; exit 0; fi
-          npx --yes ovsx publish *.vsix -p "$OVSX_PAT"
+          npx --yes ovsx publish "$RUNNER_TEMP/sovereignai-${GITHUB_REF_NAME#v}.vsix" -p "$OVSX_PAT"
 
   docker:
     needs: test

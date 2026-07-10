@@ -1,8 +1,9 @@
 import { ndjsonLines, ensureOk } from './parsers.js';
+import { withTimeoutSignal } from '../util.js';
 
 export const ollama = {
   id: 'ollama',
-  label: 'Ollama (local)',
+  label: 'Ollama',
 
   isConfigured(cfg) {
     return Boolean(cfg.enabled && cfg.baseUrl);
@@ -23,20 +24,19 @@ export const ollama = {
   },
 
   /** Yields { type: 'delta', text } then { type: 'done', usage, stopReason }. */
-  async *chatStream({ cfg, model, system, messages, temperature, signal }) {
+  async *chatStream({ cfg, model, system, messages, temperature, maxTokens = 32000, signal }) {
     const body = {
       model,
       stream: true,
       messages: [...(system ? [{ role: 'system', content: system }] : []), ...messages],
     };
-    if (temperature !== null && temperature !== undefined) {
-      body.options = { temperature };
-    }
+    body.options = { num_predict: maxTokens };
+    if (temperature !== null && temperature !== undefined) body.options.temperature = temperature;
     const res = await fetch(`${cfg.baseUrl}/api/chat`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
-      signal,
+      signal: withTimeoutSignal(signal),
     });
     await ensureOk(res, 'Ollama');
     let usage = {};
@@ -52,8 +52,8 @@ export const ollama = {
   },
 
   /**
-   * Bake a named local model from a base model + system prompt (Ollama Modelfile).
-   * The user ends up with their OWN model artifact, e.g. `mia:latest`.
+   * Bake a named model from a base model + system prompt on the configured
+   * Ollama endpoint (Ollama Modelfile), e.g. `mia:latest`.
    */
   async createModel(cfg, { name, base, system }) {
     const res = await fetch(`${cfg.baseUrl}/api/create`, {

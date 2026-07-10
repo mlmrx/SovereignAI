@@ -19,17 +19,38 @@ if ([version]$version -lt [version]'22.5.0') {
   exit 1
 }
 
-# 2. Fetch source (git if present, zip otherwise)
-if (Test-Path $dest) {
-  Write-Host "  Updating existing install at $dest"
-  if (Test-Path (Join-Path $dest '.git')) { git -C $dest pull --quiet }
+# 2. Fetch source (git if present, archive refresh otherwise)
+function Install-SourceArchive {
+  $work = Join-Path $env:TEMP ("sovereignai-install-" + [guid]::NewGuid().ToString('N'))
+  $zip = Join-Path $work 'sovereignai.zip'
+  $extract = Join-Path $work 'source'
+  New-Item -ItemType Directory -Force $work | Out-Null
+  try {
+    Invoke-WebRequest "https://github.com/$repo/archive/refs/heads/main.zip" -OutFile $zip
+    Expand-Archive $zip $extract -Force
+    $source = Join-Path $extract 'SovereignAI-main'
+    New-Item -ItemType Directory -Force $dest | Out-Null
+    Get-ChildItem -LiteralPath $source -Force | Copy-Item -Destination $dest -Recurse -Force
+  } finally {
+    if (Test-Path $work) { Remove-Item -LiteralPath $work -Recurse -Force }
+  }
+}
+
+if (Test-Path (Join-Path $dest '.git')) {
+  if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    throw "Git is required to update the existing Git install at $dest."
+  }
+  Write-Host "  Updating existing Git install at $dest"
+  git -C $dest pull --ff-only --quiet
+  if ($LASTEXITCODE -ne 0) { throw "Could not update $dest; resolve its Git changes and run the installer again." }
+} elseif (Test-Path $dest) {
+  Write-Host "  Refreshing existing archive install at $dest (config and data are preserved)"
+  Install-SourceArchive
 } elseif (Get-Command git -ErrorAction SilentlyContinue) {
   git clone --quiet "https://github.com/$repo" $dest
+  if ($LASTEXITCODE -ne 0) { throw "Could not clone SovereignAI into $dest." }
 } else {
-  $zip = Join-Path $env:TEMP 'sovereignai.zip'
-  Invoke-WebRequest "https://github.com/$repo/archive/refs/heads/main.zip" -OutFile $zip
-  Expand-Archive $zip (Join-Path $env:TEMP 'sovereignai-x') -Force
-  Move-Item (Join-Path $env:TEMP 'sovereignai-x\SovereignAI-main') $dest
+  Install-SourceArchive
 }
 
 # 3. Shim on PATH
@@ -37,6 +58,7 @@ $binDir = Join-Path $dest 'shim'
 New-Item -ItemType Directory -Force $binDir | Out-Null
 @"
 @echo off
+if not defined SOVEREIGN_HOME set "SOVEREIGN_HOME=$dest"
 node --no-warnings "$dest\bin\sovereign.js" %*
 "@ | Set-Content (Join-Path $binDir 'sovereign.cmd') -Encoding ascii
 
@@ -49,6 +71,7 @@ if ($userPath -notlike "*$binDir*") {
 Write-Host @"
 
   Installed to $dest
+  Config + data:     $dest  (override with SOVEREIGN_HOME for another instance)
 
   Start your AI:     sovereign start
   Then open:         http://127.0.0.1:4321

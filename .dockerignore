@@ -5,5 +5,11 @@ integrations
 docs
 test
 *.md
+.env
+.env.*
+!.env.example
+*.pem
+*.key
 sovereign.config.json
+sovereign.config.*.json
 sovereign-export-*.json

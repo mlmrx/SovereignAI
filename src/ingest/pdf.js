@@ -1,5 +1,10 @@
 import zlib from 'node:zlib';
 
+export const MAX_PDF_STREAM_BYTES = 10 * 1024 * 1024;
+export const MAX_PDF_TOTAL_STREAM_BYTES = 20 * 1024 * 1024;
+export const MAX_PDF_STREAM_COUNT = 4096;
+export const MAX_PDF_DICT_BYTES = 64 * 1024;
+
 /**
  * Best-effort PDF text extraction (zero deps).
  * Handles uncompressed and FlateDecode content streams and the common text
@@ -11,32 +16,41 @@ export function extractPdf(buffer) {
   const raw = buffer.toString('latin1');
 
   const texts = [];
+  let processedBytes = 0;
+  let extractedBytes = 0;
+  let streamCount = 0;
   const streamRe = /stream\r?\n/g;
   let match;
   while ((match = streamRe.exec(raw)) !== null) {
+    streamCount++;
+    if (streamCount > MAX_PDF_STREAM_COUNT) throw new Error('PDF contains too many streams');
     const start = match.index + match[0].length;
     const end = raw.indexOf('endstream', start);
     if (end === -1) break;
-    const dictStart = raw.lastIndexOf('<<', match.index);
-    const dict = dictStart === -1 ? '' : raw.slice(dictStart, match.index);
+    const windowStart = Math.max(0, match.index - MAX_PDF_DICT_BYTES);
+    const beforeStream = raw.slice(windowStart, match.index);
+    const dictStart = beforeStream.lastIndexOf('<<');
+    const dict = dictStart === -1 ? '' : beforeStream.slice(dictStart);
     streamRe.lastIndex = end;
 
     let content = buffer.subarray(start, end);
     if (/FlateDecode/.test(dict)) {
-      try {
-        content = zlib.inflateSync(content);
-      } catch {
-        try {
-          content = zlib.inflateRawSync(content);
-        } catch {
-          continue; // not inflatable (image, etc.)
-        }
-      }
+      const remaining = Math.min(MAX_PDF_STREAM_BYTES, MAX_PDF_TOTAL_STREAM_BYTES - processedBytes);
+      if (remaining <= 0) throw new Error('PDF contains too much decompressed stream data');
+      content = inflateBounded(content, remaining);
+      if (!content) continue; // not inflatable (image, etc.)
     } else if (/(DCTDecode|JPXDecode|CCITTFaxDecode|JBIG2Decode)/.test(dict)) {
       continue; // image data
     }
+    if (content.length > MAX_PDF_STREAM_BYTES) throw new Error('PDF stream is too large after decompression');
+    processedBytes += content.length;
+    if (processedBytes > MAX_PDF_TOTAL_STREAM_BYTES) throw new Error('PDF contains too much decompressed stream data');
     const text = extractTextOps(content.toString('latin1'));
-    if (text) texts.push(text);
+    if (text) {
+      extractedBytes += Buffer.byteLength(text);
+      if (extractedBytes > MAX_PDF_STREAM_BYTES) throw new Error('PDF extracted text is too large');
+      texts.push(text);
+    }
   }
 
   const result = texts.join('\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
@@ -45,6 +59,24 @@ export function extractPdf(buffer) {
     throw new Error('Could not extract readable text from this PDF (it may be scanned or use unsupported font encodings)');
   }
   return printable;
+}
+
+function inflateBounded(content, maxOutputLength) {
+  try {
+    return zlib.inflateSync(content, { maxOutputLength });
+  } catch (err) {
+    if (isOutputLimit(err)) throw new Error(`PDF stream is too large after decompression (maximum ${maxOutputLength} bytes)`);
+    try {
+      return zlib.inflateRawSync(content, { maxOutputLength });
+    } catch (rawErr) {
+      if (isOutputLimit(rawErr)) throw new Error(`PDF stream is too large after decompression (maximum ${maxOutputLength} bytes)`);
+      return null;
+    }
+  }
+}
+
+function isOutputLimit(err) {
+  return err?.code === 'ERR_BUFFER_TOO_LARGE' || /maxOutputLength|larger than/i.test(err?.message ?? '');
 }
 
 function extractTextOps(stream) {

@@ -1,4 +1,5 @@
 import { sseEvents, ensureOk } from './parsers.js';
+import { withTimeoutSignal } from '../util.js';
 
 /** Any OpenAI-compatible chat-completions server: vLLM, llama.cpp, LM Studio, Groq, Mistral, OpenAI… */
 export const openai = {
@@ -28,20 +29,16 @@ export const openai = {
     return data.map((m) => ({ id: m.id, label: m.id }));
   },
 
-  async *chatStream({ cfg, model, system, messages, temperature, signal }) {
+  async *chatStream({ cfg, model, system, messages, temperature, maxTokens = 32000, signal }) {
     const body = {
       model,
       stream: true,
+      stream_options: { include_usage: true },
+      max_tokens: maxTokens,
       messages: [...(system ? [{ role: 'system', content: system }] : []), ...messages],
     };
     if (temperature !== null && temperature !== undefined) body.temperature = temperature;
-    const res = await fetch(`${cfg.baseUrl}/v1/chat/completions`, {
-      method: 'POST',
-      headers: this.headers(cfg),
-      body: JSON.stringify(body),
-      signal,
-    });
-    await ensureOk(res, 'OpenAI-compatible endpoint');
+    const res = await compatibleChatRequest(cfg, this.headers(cfg), body, withTimeoutSignal(signal));
     let usage = {};
     let stopReason = 'end_turn';
     for await (const { data, raw } of sseEvents(res.body)) {
@@ -59,3 +56,61 @@ export const openai = {
     yield { type: 'done', usage, stopReason };
   },
 };
+
+async function compatibleChatRequest(cfg, headers, initialBody, signal) {
+  let body = initialBody;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const response = await fetch(`${cfg.baseUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal,
+    });
+    if (response.ok) return response;
+
+    let detail = '';
+    try { detail = await response.clone().text(); } catch { /* use the original provider error below */ }
+    const adjusted = compatibilityAdjustment(response.status, body, detail);
+    if (!adjusted) {
+      await ensureOk(response, 'OpenAI-compatible endpoint');
+      return response;
+    }
+    body = adjusted;
+  }
+  throw new Error('OpenAI-compatible endpoint rejected all supported chat parameter variants');
+}
+
+function compatibilityAdjustment(status, body, detail) {
+  if (status !== 400 && status !== 422) return null;
+  const message = detail.toLowerCase();
+  const unsupported = /(unsupported|unknown|unrecognized|unexpected|forbidden|not (?:allowed|supported|permitted)|extra (?:fields?|inputs?))/;
+  const invalidLimit = /(must be|maximum|less than|greater than|too (?:large|high)|context length|out of range|invalid)/;
+  const next = { ...body };
+  let changed = false;
+
+  // stream_options is an OpenAI usage-reporting extension that some otherwise
+  // compatible servers do not implement. Omitting it changes only telemetry.
+  if (next.stream_options && message.includes('stream_options') && unsupported.test(message)) {
+    delete next.stream_options;
+    changed = true;
+  }
+
+  if (
+    Object.hasOwn(next, 'max_tokens') &&
+    message.includes('max_tokens') &&
+    (unsupported.test(message) || invalidLimit.test(message))
+  ) {
+    if (message.includes('max_completion_tokens')) next.max_completion_tokens = next.max_tokens;
+    delete next.max_tokens;
+    changed = true;
+  } else if (
+    Object.hasOwn(next, 'max_completion_tokens') &&
+    message.includes('max_completion_tokens') &&
+    (unsupported.test(message) || invalidLimit.test(message))
+  ) {
+    delete next.max_completion_tokens;
+    changed = true;
+  }
+
+  return changed ? next : null;
+}

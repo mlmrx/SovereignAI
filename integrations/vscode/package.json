@@ -1,8 +1,8 @@
 {
   "name": "sovereignai",
-  "displayName": "SovereignAI — Your Own AI",
-  "description": "Chat with your self-hosted sovereign AI (local models, private memory, private knowledge) without leaving your editor. Works in VS Code, Cursor, Windsurf, and VSCodium.",
-  "version": "0.1.0",
+  "displayName": "SovereignAI — Your AI Workspace",
+  "description": "Use your SovereignAI workspace from the editor with streaming chat, personas, memory, and knowledge. Provider traffic follows your server configuration.",
+  "version": "0.3.0",
   "publisher": "sovereignai",
   "license": "MIT",
   "repository": {
@@ -20,12 +20,15 @@
   "keywords": [
     "ai",
     "chat",
-    "local",
     "ollama",
-    "private",
+    "knowledge",
+    "memory",
     "sovereign"
   ],
   "main": "./extension.js",
+  "scripts": {
+    "test": "node --test ../../test/vscode-integration.test.js"
+  },
   "activationEvents": [],
   "contributes": {
     "commands": [
@@ -44,6 +47,18 @@
       {
         "command": "sovereignai.remember",
         "title": "SovereignAI: Remember This (Long-term Memory)"
+      },
+      {
+        "command": "sovereignai.setAuthToken",
+        "title": "SovereignAI: Set Bearer Token"
+      },
+      {
+        "command": "sovereignai.clearAuthToken",
+        "title": "SovereignAI: Forget Bearer Token"
+      },
+      {
+        "command": "sovereignai.testConnection",
+        "title": "SovereignAI: Test Connection"
       }
     ],
     "menus": {
@@ -66,17 +81,21 @@
         "sovereignai.serverUrl": {
           "type": "string",
           "default": "http://127.0.0.1:4321",
-          "description": "URL of your SovereignAI server (run `sovereign start`)."
+          "scope": "machine",
+          "markdownDescription": "Origin of your SovereignAI server, without a path (for example, `http://127.0.0.1:4321`). Run `sovereign start` to launch it."
         },
         "sovereignai.persona": {
           "type": "string",
           "default": "Engineer",
-          "description": "Persona name to chat with (as defined in your SovereignAI instance)."
+          "scope": "window",
+          "markdownDescription": "Exact persona name to use for chat. Leave blank to use the server default."
         },
         "sovereignai.authToken": {
           "type": "string",
           "default": "",
-          "description": "Bearer token — only needed when the server is remote and protected."
+          "scope": "machine",
+          "description": "Deprecated migration setting. A bearer token is required whenever the SovereignAI server has a token configured, including on localhost.",
+          "deprecationMessage": "Use “SovereignAI: Set Bearer Token” so the token is stored in VS Code SecretStorage. Existing values are migrated automatically."
         }
       }
     }

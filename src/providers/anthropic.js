@@ -1,4 +1,5 @@
 import { sseEvents, ensureOk } from './parsers.js';
+import { withTimeoutSignal } from '../util.js';
 
 export const DEFAULT_ANTHROPIC_MODEL = 'claude-opus-4-8';
 const API_VERSION = '2023-06-01';
@@ -51,7 +52,7 @@ export const anthropic = {
       method: 'POST',
       headers: this.headers(cfg),
       body: JSON.stringify(body),
-      signal,
+      signal: withTimeoutSignal(signal),
     });
     await ensureOk(res, 'Anthropic');
     const usage = {};

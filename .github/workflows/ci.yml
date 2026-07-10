@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: 22
       - name: Run tests (zero dependencies — nothing to install)
-        run: node --no-warnings --test
+        run: npm test
 
   docker:
     runs-on: ubuntu-latest

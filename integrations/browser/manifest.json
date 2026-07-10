@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "SovereignAI — Your Own AI",
-  "version": "0.1.0",
-  "description": "Chat with your self-hosted sovereign AI and save anything you read into its private knowledge base. Talks only to your own server.",
+  "version": "0.3.0",
+  "description": "Chat through your configured SovereignAI server and save useful reading to its user-controlled knowledge base.",
   "action": {
     "default_popup": "popup.html",
     "default_title": "SovereignAI"
@@ -12,6 +12,7 @@
   },
   "permissions": ["contextMenus", "storage"],
   "host_permissions": ["http://127.0.0.1/*", "http://localhost/*"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
   "browser_specific_settings": {
     "gecko": {
       "id": "sovereignai@sovereignai.local",

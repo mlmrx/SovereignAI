@@ -2,6 +2,8 @@ import { Bm25Index } from './bm25.js';
 import { cosine } from '../util.js';
 import { getProvider } from '../providers/index.js';
 
+const keywordCache = new WeakMap();
+
 /**
  * Hybrid retrieval over the local knowledge base:
  *  - semantic search via embeddings when an embedding model is available
@@ -9,11 +11,21 @@ import { getProvider } from '../providers/index.js';
  * Scores are blended when both signals exist.
  */
 export async function retrieve({ store, config, query, limit }) {
-  const chunks = store.listAllChunks();
+  const version = store.getKnowledgeVersion?.() ?? null;
+  let cached = version === null ? null : keywordCache.get(store);
+  if (!cached || cached.version !== version) {
+    const chunks = store.listAllChunks();
+    cached = {
+      version,
+      chunks,
+      index: new Bm25Index(chunks.map((chunk) => ({ id: chunk.id, text: chunk.content }))),
+    };
+    if (version !== null) keywordCache.set(store, cached);
+  }
+  const { chunks, index: bm25 } = cached;
   if (chunks.length === 0) return [];
   limit = limit ?? config.limits.ragChunks;
 
-  const bm25 = new Bm25Index(chunks.map((c) => ({ id: c.id, text: c.content })));
   const keywordHits = bm25.search(query, limit * 4);
   const maxKeyword = keywordHits[0]?.score ?? 0;
   const keywordScore = new Map(keywordHits.map((h) => [h.id, maxKeyword ? h.score / maxKeyword : 0]));
@@ -41,6 +53,7 @@ export async function retrieve({ store, config, query, limit }) {
   scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, limit).map(({ chunk, score, semantic }) => ({
     id: chunk.id,
+    documentId: chunk.document_id,
     document: chunk.document_name,
     content: chunk.content,
     score: Number(score.toFixed(4)),

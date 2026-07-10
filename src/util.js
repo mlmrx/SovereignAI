@@ -1,5 +1,7 @@
 import crypto from 'node:crypto';
 
+export const CHAT_TIMEOUT_MS = 5 * 60 * 1000;
+
 export function newId() {
   return crypto.randomUUID();
 }
@@ -46,8 +48,30 @@ export function sendJson(res, status, data) {
   res.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'content-length': Buffer.byteLength(body),
+    'cache-control': 'no-store',
   });
   res.end(body);
+}
+
+/** Apply browser-facing hardening headers before any response is written. */
+export function applySecurityHeaders(res) {
+  res.setHeader('content-security-policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
+  res.setHeader('cross-origin-resource-policy', 'same-origin');
+  res.setHeader('permissions-policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('referrer-policy', 'no-referrer');
+  res.setHeader('x-content-type-options', 'nosniff');
+  res.setHeader('x-frame-options', 'DENY');
+}
+
+export function isJsonRequest(req) {
+  const type = req.headers['content-type'];
+  return typeof type === 'string' && type.split(';', 1)[0].trim().toLowerCase() === 'application/json';
+}
+
+/** Combine caller cancellation with a hard deadline for provider streams. */
+export function withTimeoutSignal(signal, timeoutMs = CHAT_TIMEOUT_MS) {
+  const timeout = AbortSignal.timeout(timeoutMs);
+  return signal ? AbortSignal.any([signal, timeout]) : timeout;
 }
 
 /** Server-Sent Events helper bound to a response. */
@@ -88,6 +112,9 @@ export function deepMerge(base, override) {
   if (!isPlainObject(base) || !isPlainObject(override)) return override ?? base;
   const out = { ...base };
   for (const [key, value] of Object.entries(override)) {
+    if (key === '__proto__' || key === 'prototype' || key === 'constructor') {
+      throw new TypeError(`Unsafe object key: ${key}`);
+    }
     out[key] = isPlainObject(base[key]) && isPlainObject(value) ? deepMerge(base[key], value) : value;
   }
   return out;

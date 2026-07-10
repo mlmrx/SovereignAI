@@ -1,8 +1,8 @@
 # SovereignAI inside ChatGPT (Custom GPT Actions)
 
-Give ChatGPT access to **your** sovereign AI — its memory, knowledge base, and local models — via a Custom GPT with Actions.
+Give ChatGPT access to **your** sovereign AI — its memory, knowledge base, and configured models — via a Custom GPT with Actions.
 
-> **Platform constraint:** OpenAI's servers must reach your SovereignAI instance over HTTPS, so you need a public tunnel. Your data still lives only on your machine; the tunnel is a doorway you control and can close anytime.
+> **Platform constraint:** OpenAI's servers must reach your SovereignAI instance over HTTPS, so you need a public tunnel. SovereignAI's database stays on your machine, but requests and selected context sent through this Action are processed by ChatGPT/OpenAI and your configured model provider. The tunnel is a doorway you control and can close anytime.
 
 ## 1. Protect your server
 
@@ -13,7 +13,7 @@ Set a token so only you (and your GPT) can use the tunnel:
 { "authToken": "a-long-random-string" }
 ```
 
-Restart the server. Remote requests now require `Authorization: Bearer <token>` (localhost stays open for you).
+Restart the server. **Every** API request now requires `Authorization: Bearer <token>`, including localhost and requests forwarded by a local tunnel. Open the `#token=` Web UI URL printed by `sovereign start`; the fragment is not sent to the tunnel and the browser converts it into an authorization header.
 
 ## 2. Open a tunnel
 

@@ -4,13 +4,13 @@ SovereignAI ships a built-in **MCP server** (`sovereign mcp`, stdio, zero depend
 
 | Tool | What it does |
 |---|---|
-| `ask_sovereign` | Ask your private AI (persona + memory + knowledge, on your machine) |
+| `ask_sovereign` | Ask through the configured persona, memory, knowledge, and model provider |
 | `search_knowledge` | Search your private knowledge base |
 | `add_knowledge` | Save a document into the knowledge base |
 | `add_memory` | Store a long-term memory note |
 | `list_memories` | List memory notes |
 
-All data stays in your local `data/` directory — the MCP client only sees tool results.
+The SovereignAI database stays in the configured local state directory. MCP clients receive tool results, and `ask_sovereign` sends the prompt plus selected memory/knowledge context to whichever local or remote model provider that persona uses. Search and write tools do not call a model provider.
 
 > Replace `C:/path/to/SovereignAI` below with the absolute path to this repo. `SOVEREIGN_HOME` tells the server where your config + `data/` live.
 

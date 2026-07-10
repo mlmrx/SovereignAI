@@ -3,224 +3,550 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#0b0d0c" />
   <title>SovereignAI</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>⬡</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d9a441' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%230b0d0c' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <aside id="sidebar">
-    <div class="brand">
-      <span class="brand-mark">⬡</span>
-      <div>
-        <div class="brand-name" id="instance-name">SovereignAI</div>
-        <div class="brand-sub">your models · your memory</div>
-      </div>
+  <svg class="icon-sprite" aria-hidden="true">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 15a4 4 0 0 1-4 4H8l-5 3 1.4-4.2A7 7 0 0 1 2 12V9a6 6 0 0 1 6-6h8a6 6 0 0 1 6 6v2"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5Zm0 0A2.5 2.5 0 0 0 6.5 22H20v-5"/></symbol>
+    <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9.5 4.5A3.5 3.5 0 0 0 6 8v.2A3.5 3.5 0 0 0 4.5 15 3.5 3.5 0 0 0 9 20.4M14.5 4.5A3.5 3.5 0 0 1 18 8v.2a3.5 3.5 0 0 1 1.5 6.8 3.5 3.5 0 0 1-4.5 5.4M12 3v18M8 12h4m4-4h-4m0 8h4"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Zm-11 11L22 2"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m0 0L7 8m5-5 5 5M5 14v6h14v-6"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6zM14 2v5h5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10ZM14 7l3 3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m0 0 5-5m-5 5-5-5M5 21h14"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-5"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 1.7 5.3L19 9l-5.3 1.7L12 16l-1.7-5.3L5 9l5.3-1.7ZM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8Z"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6m0-6-9 9M20 14v6H4V4h6"/></symbol>
+  </svg>
+
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div id="sidebar-scrim" class="sidebar-scrim" hidden></div>
+
+  <aside id="sidebar" aria-label="Workspace navigation">
+    <div class="brand-row">
+      <button id="brand-home" class="brand" type="button" aria-label="Open command center">
+        <span class="brand-mark" aria-hidden="true">S</span>
+        <span class="brand-copy">
+          <strong id="instance-name">SovereignAI</strong>
+          <span>Private AI workspace</span>
+        </span>
+      </button>
+      <button id="sidebar-close" class="icon-btn sidebar-close" type="button" aria-label="Close navigation">
+        <svg class="icon"><use href="#i-x"/></svg>
+      </button>
     </div>
 
-    <button id="new-chat" class="btn primary block">+ New chat</button>
+    <button id="runtime-card" class="runtime-card" type="button" data-view-target="settings" aria-label="Open provider settings">
+      <span id="runtime-dot" class="status-dot neutral" aria-hidden="true"></span>
+      <span class="runtime-copy">
+        <strong id="runtime-label">Checking runtime…</strong>
+        <span id="runtime-detail">Your provider status</span>
+      </span>
+      <svg class="icon"><use href="#i-chevron"/></svg>
+    </button>
 
+    <button id="new-chat" class="btn primary block new-chat" type="button">
+      <svg class="icon"><use href="#i-plus"/></svg>
+      New conversation
+    </button>
+
+    <nav class="primary-nav" aria-label="Main">
+      <button class="nav-item active" type="button" data-view="home" aria-current="page">
+        <svg class="icon"><use href="#i-home"/></svg><span>Command center</span>
+      </button>
+      <button class="nav-item" type="button" data-view="chat">
+        <svg class="icon"><use href="#i-chat"/></svg><span>Chat</span>
+      </button>
+      <button class="nav-item" type="button" data-view="knowledge">
+        <svg class="icon"><use href="#i-book"/></svg><span>Knowledge</span><span id="nav-doc-count" class="nav-count">0</span>
+      </button>
+      <button class="nav-item" type="button" data-view="memory">
+        <svg class="icon"><use href="#i-brain"/></svg><span>Memory</span><span id="nav-memory-count" class="nav-count">0</span>
+      </button>
+      <button class="nav-item" type="button" data-view="settings">
+        <svg class="icon"><use href="#i-settings"/></svg><span>Settings</span>
+      </button>
+    </nav>
+
+    <div class="history-head">
+      <span>Conversations</span>
+      <span id="conversation-count">0</span>
+    </div>
+    <label class="search-field compact" for="conversation-search">
+      <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+      <span class="sr-only">Search conversations</span>
+      <input id="conversation-search" type="search" placeholder="Search history" autocomplete="off" />
+    </label>
     <nav id="conversation-list" class="conversation-list" aria-label="Conversations"></nav>
 
-    <nav class="side-nav">
-      <button class="nav-item active" data-view="chat">💬 Chat</button>
-      <button class="nav-item" data-view="knowledge">📚 Knowledge</button>
-      <button class="nav-item" data-view="memory">🧠 Memory</button>
-      <button class="nav-item" data-view="settings">⚙️ Settings</button>
-    </nav>
+    <div class="ownership-note">
+      <svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg>
+      <span><strong>You own this workspace.</strong><br />No telemetry. Portable data.</span>
+    </div>
   </aside>
 
-  <main id="main">
-    <!-- Chat -->
-    <section id="view-chat" class="view active">
-      <header class="view-header">
-        <select id="persona-select" title="Persona"></select>
-        <span id="chat-model" class="model-chip"></span>
-      </header>
-      <div id="messages" class="messages">
-        <div class="empty-state" id="chat-empty">
-          <div class="empty-mark">⬡</div>
-          <h2>Your sovereign AI</h2>
-          <p>Runs on your machine. Remembers what you tell it. Answers from your own knowledge.<br/>Nothing leaves your control.</p>
+  <main id="main" tabindex="-1">
+    <header class="mobile-bar">
+      <button id="sidebar-open" class="icon-btn" type="button" aria-label="Open navigation">
+        <svg class="icon"><use href="#i-menu"/></svg>
+      </button>
+      <strong id="mobile-view-title">Command center</strong>
+      <span id="mobile-runtime-badge" class="runtime-badge neutral">Checking</span>
+    </header>
+
+    <!-- Command center -->
+    <section id="view-home" class="view active" aria-labelledby="home-title">
+      <header class="page-header home-header">
+        <div>
+          <p class="eyebrow">Your private intelligence layer</p>
+          <h1 id="home-title">Good to have you back.</h1>
+          <p id="home-subtitle" class="page-subtitle">Bring your model, memory, and knowledge together in one place you control.</p>
         </div>
+        <div class="header-actions">
+          <span id="home-runtime-badge" class="runtime-badge neutral">Checking runtime</span>
+          <button class="btn primary" type="button" data-action="new-chat">
+            <svg class="icon"><use href="#i-plus"/></svg>Start a conversation
+          </button>
+        </div>
+      </header>
+
+      <div class="page-body dashboard-body">
+        <section id="readiness-panel" class="hero-panel" aria-labelledby="readiness-title">
+          <div class="hero-content">
+            <div id="readiness-kicker" class="eyebrow">Workspace overview</div>
+            <h2 id="readiness-title">Everything you need, under your control.</h2>
+            <p id="readiness-copy">SovereignAI keeps your conversations, documents, and durable memory in your own local database.</p>
+            <div class="hero-actions">
+              <button class="btn primary" type="button" data-action="new-chat">Ask your AI</button>
+              <button class="btn ghost" type="button" data-action="upload">Add knowledge</button>
+            </div>
+          </div>
+          <div class="readiness-ring" aria-hidden="true">
+            <svg viewBox="0 0 120 120">
+              <circle class="ring-track" cx="60" cy="60" r="48"/>
+              <circle id="readiness-ring" class="ring-value" cx="60" cy="60" r="48" pathLength="100"/>
+            </svg>
+            <strong id="readiness-score">—</strong>
+            <span>ready</span>
+          </div>
+        </section>
+
+        <section class="stats-grid" aria-label="Workspace statistics">
+          <button class="stat-card" type="button" data-view-target="chat">
+            <span class="stat-icon"><svg class="icon"><use href="#i-chat"/></svg></span>
+            <span><strong id="stat-conversations">0</strong><small>Conversations</small></span>
+          </button>
+          <button class="stat-card" type="button" data-view-target="knowledge">
+            <span class="stat-icon"><svg class="icon"><use href="#i-book"/></svg></span>
+            <span><strong id="stat-documents">0</strong><small>Documents</small></span>
+          </button>
+          <button class="stat-card" type="button" data-view-target="memory">
+            <span class="stat-icon"><svg class="icon"><use href="#i-brain"/></svg></span>
+            <span><strong id="stat-memories">0</strong><small>Memories</small></span>
+          </button>
+          <button class="stat-card" type="button" data-view-target="settings">
+            <span class="stat-icon"><svg class="icon"><use href="#i-spark"/></svg></span>
+            <span><strong id="stat-personas">0</strong><small>Personas</small></span>
+          </button>
+        </section>
+
+        <div class="dashboard-grid">
+          <section class="section-block workflows-block" aria-labelledby="workflows-title">
+            <div class="section-heading">
+              <div><p class="eyebrow">Quick workflows</p><h2 id="workflows-title">Put your context to work</h2></div>
+            </div>
+            <div class="workflow-grid">
+              <button class="workflow-card" type="button" data-prompt="Summarize the most important ideas in my knowledge base and tell me what deserves my attention first.">
+                <span class="workflow-icon gold"><svg class="icon"><use href="#i-book"/></svg></span>
+                <span><strong>Brief my knowledge</strong><small>Surface themes and priorities across your documents.</small></span>
+                <svg class="icon arrow"><use href="#i-chevron"/></svg>
+              </button>
+              <button class="workflow-card" type="button" data-prompt="What do you remember about my preferences, goals, and current work? Organize it clearly and flag anything uncertain.">
+                <span class="workflow-icon violet"><svg class="icon"><use href="#i-brain"/></svg></span>
+                <span><strong>Review what it knows</strong><small>Inspect the durable context shaping your answers.</small></span>
+                <svg class="icon arrow"><use href="#i-chevron"/></svg>
+              </button>
+              <button class="workflow-card" type="button" data-prompt="Help me make a concrete plan for my highest-priority goal. Use relevant context you have, ask for what is missing, and give me the next three actions.">
+                <span class="workflow-icon blue"><svg class="icon"><use href="#i-spark"/></svg></span>
+                <span><strong>Plan with context</strong><small>Turn what your AI knows into an executable next step.</small></span>
+                <svg class="icon arrow"><use href="#i-chevron"/></svg>
+              </button>
+            </div>
+          </section>
+
+          <section class="section-block checklist-block" aria-labelledby="checklist-title">
+            <div class="section-heading">
+              <div><p class="eyebrow">Readiness</p><h2 id="checklist-title">Workspace health</h2></div>
+            </div>
+            <div id="setup-checklist" class="setup-checklist" aria-live="polite">
+              <div class="skeleton-line"></div><div class="skeleton-line short"></div><div class="skeleton-line"></div>
+            </div>
+          </section>
+        </div>
+
+        <section class="section-block recent-block" aria-labelledby="recent-title">
+          <div class="section-heading inline">
+            <div><p class="eyebrow">Pick up where you left off</p><h2 id="recent-title">Recent conversations</h2></div>
+            <button class="text-btn" type="button" data-view-target="chat">Open chat <svg class="icon"><use href="#i-chevron"/></svg></button>
+          </div>
+          <div id="recent-conversations" class="recent-grid"></div>
+        </section>
       </div>
-      <footer class="composer">
-        <textarea id="input" rows="1" placeholder="Message your AI… (Enter to send, Shift+Enter for newline)"></textarea>
-        <button id="send" class="btn primary">Send</button>
+    </section>
+
+    <!-- Chat -->
+    <section id="view-chat" class="view" aria-labelledby="chat-title">
+      <header class="page-header chat-header">
+        <div class="chat-heading">
+          <p class="eyebrow">Conversation</p>
+          <h1 id="chat-title">New conversation</h1>
+          <div id="chat-model" class="model-line">Choose a persona to begin</div>
+        </div>
+        <div class="chat-controls">
+          <label class="select-label" for="persona-select">
+            <span>Persona</span>
+            <select id="persona-select" title="Choose persona"></select>
+          </label>
+          <span id="chat-runtime-badge" class="runtime-badge neutral">Checking</span>
+        </div>
+      </header>
+      <div class="context-bar" aria-label="Active context">
+        <span id="chat-memory-state" class="context-chip"><svg class="icon"><use href="#i-brain"/></svg>Memory</span>
+        <span id="chat-knowledge-state" class="context-chip"><svg class="icon"><use href="#i-book"/></svg>Knowledge</span>
+        <span id="chat-context-note">Context is selected by your active persona.</span>
+      </div>
+      <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
+      <button id="scroll-bottom" class="scroll-bottom" type="button" hidden>Jump to latest</button>
+      <footer class="composer-wrap">
+        <div class="composer">
+          <label class="sr-only" for="input">Message your AI</label>
+          <textarea id="input" rows="1" placeholder="Ask a question, make a plan, or explore your knowledge…"></textarea>
+          <div class="composer-actions">
+            <button id="composer-upload" class="icon-btn" type="button" title="Add a document" aria-label="Add a document">
+              <svg class="icon"><use href="#i-plus"/></svg>
+            </button>
+            <span class="composer-hint">Enter to send · Shift+Enter for a new line</span>
+            <button id="send" class="send-btn" type="button" aria-label="Send message">
+              <svg class="icon send-icon"><use href="#i-send"/></svg>
+              <svg class="icon stop-icon"><use href="#i-stop"/></svg>
+              <span>Send</span>
+            </button>
+          </div>
+        </div>
+        <div id="chat-status" class="sr-only" role="status" aria-live="polite"></div>
+        <p id="composer-disclosure" class="composer-disclosure">Your data path depends on the selected provider.</p>
       </footer>
     </section>
 
     <!-- Knowledge -->
-    <section id="view-knowledge" class="view">
-      <header class="view-header"><h1>Knowledge base</h1></header>
-      <div class="panel-body">
-        <p class="hint">Add text, markdown, <strong>PDF</strong>, or <strong>DOCX</strong> files. Your AI personas with knowledge enabled will ground their answers in these documents — all indexed locally.</p>
-        <div class="row">
-          <input type="file" id="doc-file" accept=".txt,.md,.markdown,.csv,.json,.log,.html,.pdf,.docx" multiple hidden />
-          <button class="btn" id="doc-upload">＋ Add documents</button>
-          <input id="kb-search" placeholder="Test a search against your knowledge…" />
-        </div>
-        <div id="kb-results" class="kb-results"></div>
-        <table class="table" id="doc-table">
-          <thead><tr><th>Document</th><th>Chunks</th><th>Semantic</th><th>Added</th><th></th></tr></thead>
-          <tbody></tbody>
-        </table>
+    <section id="view-knowledge" class="view" aria-labelledby="knowledge-title">
+      <header class="page-header">
+        <div><p class="eyebrow">Private retrieval</p><h1 id="knowledge-title">Knowledge base</h1><p class="page-subtitle">Ground answers in documents indexed on your machine.</p></div>
+        <button class="btn primary" id="doc-upload" type="button"><svg class="icon"><use href="#i-upload"/></svg>Add documents</button>
+      </header>
+      <div class="page-body knowledge-body">
+        <section class="knowledge-overview" aria-label="Knowledge overview">
+          <div><strong id="knowledge-doc-count">0</strong><span>documents</span></div>
+          <div><strong id="knowledge-chunk-count">0</strong><span>searchable chunks</span></div>
+          <div><strong id="knowledge-semantic-count">0</strong><span>semantic-ready</span></div>
+        </section>
+
+        <button id="drop-zone" class="drop-zone" type="button">
+          <span class="drop-icon"><svg class="icon"><use href="#i-upload"/></svg></span>
+          <span><strong>Drop documents here, or browse files</strong><small>TXT, Markdown, CSV, JSON, HTML, PDF, and DOCX · parsed and stored locally</small></span>
+        </button>
+        <input type="file" id="doc-file" accept=".txt,.md,.markdown,.csv,.json,.log,.html,.pdf,.docx" multiple hidden />
+        <div id="upload-queue" class="upload-queue" aria-live="polite"></div>
+
+        <section class="section-block search-block" aria-labelledby="search-title">
+          <div class="section-heading inline">
+            <div><p class="eyebrow">Retrieval preview</p><h2 id="search-title">Search your knowledge</h2></div>
+            <span class="hint">See what your AI will receive as context.</span>
+          </div>
+          <form id="kb-search-form" class="knowledge-search" role="search">
+            <label class="search-field" for="kb-search">
+              <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+              <span class="sr-only">Search knowledge base</span>
+              <input id="kb-search" type="search" placeholder="Search concepts, names, or exact phrases" autocomplete="off" />
+            </label>
+            <button id="kb-search-btn" class="btn" type="submit">Search</button>
+            <button id="kb-clear" class="btn ghost" type="button" hidden>Clear</button>
+          </form>
+          <div id="kb-results" class="kb-results" aria-live="polite"></div>
+        </section>
+
+        <section class="section-block documents-block" aria-labelledby="documents-title">
+          <div class="section-heading inline">
+            <div><p class="eyebrow">Local library</p><h2 id="documents-title">Documents</h2></div>
+            <label class="search-field compact doc-filter" for="document-filter">
+              <svg class="icon"><use href="#i-search"/></svg><span class="sr-only">Filter documents</span>
+              <input id="document-filter" type="search" placeholder="Filter documents" />
+            </label>
+          </div>
+          <div id="document-list" class="document-list"></div>
+        </section>
       </div>
     </section>
 
     <!-- Memory -->
-    <section id="view-memory" class="view">
-      <header class="view-header"><h1>Long-term memory</h1></header>
-      <div class="panel-body">
-        <p class="hint">Notes your AI always keeps in mind (for personas with memory enabled). Stored only on this machine.</p>
-        <div class="row">
-          <input id="memory-input" placeholder="e.g. I prefer concise answers. My company is called…" />
-          <button class="btn" id="memory-add">Remember</button>
-        </div>
-        <ul id="memory-list" class="memory-list"></ul>
+    <section id="view-memory" class="view" aria-labelledby="memory-title">
+      <header class="page-header">
+        <div><p class="eyebrow">Durable context</p><h1 id="memory-title">Long-term memory</h1><p class="page-subtitle">Review exactly what your AI carries from one conversation to the next.</p></div>
+        <span id="memory-mode-badge" class="runtime-badge neutral">Manual memory</span>
+      </header>
+      <div class="page-body memory-body">
+        <section class="memory-explainer">
+          <span class="memory-graphic"><svg class="icon"><use href="#i-brain"/></svg></span>
+          <div><h2>Memory you can inspect and control</h2><p>Personas with memory enabled receive these notes as private context. Edit stale details or remove anything you no longer want used.</p></div>
+          <button class="text-btn" type="button" data-settings-target="memory-settings">Configure <svg class="icon"><use href="#i-chevron"/></svg></button>
+        </section>
+
+        <form id="memory-form" class="memory-compose">
+          <label for="memory-input"><strong>Add a memory</strong><span>Write a stable preference, fact, goal, or working convention.</span></label>
+          <textarea id="memory-input" rows="2" maxlength="2000" placeholder="Example: Prefer concise recommendations with the trade-offs stated first."></textarea>
+          <div class="memory-compose-foot"><span id="memory-char-count">0 / 2000</span><button class="btn primary" id="memory-add" type="submit">Remember this</button></div>
+        </form>
+
+        <section class="section-block" aria-labelledby="saved-memories-title">
+          <div class="section-heading inline">
+            <div><p class="eyebrow"><span id="memory-count">0</span> saved</p><h2 id="saved-memories-title">What your AI remembers</h2></div>
+            <label class="search-field compact" for="memory-search"><svg class="icon"><use href="#i-search"/></svg><span class="sr-only">Search memories</span><input id="memory-search" type="search" placeholder="Search memories" /></label>
+          </div>
+          <div id="memory-list" class="memory-list"></div>
+        </section>
       </div>
     </section>
 
     <!-- Settings -->
-    <section id="view-settings" class="view">
-      <header class="view-header"><h1>Settings</h1></header>
-      <div class="panel-body" id="settings-body">
-        <h3>Instance</h3>
-        <label>Name <input id="cfg-name" /></label>
+    <section id="view-settings" class="view" aria-labelledby="settings-title">
+      <header class="page-header">
+        <div><p class="eyebrow">Workspace controls</p><h1 id="settings-title">Settings</h1><p class="page-subtitle">Configure where intelligence runs and what context it can use.</p></div>
+        <div id="provider-status" class="provider-status" aria-live="polite"></div>
+      </header>
+      <div class="settings-layout">
+        <nav class="settings-nav" aria-label="Settings sections">
+          <button class="active" type="button" data-settings-target="general-settings">General</button>
+          <button type="button" data-settings-target="provider-settings">Providers</button>
+          <button type="button" data-settings-target="persona-settings">Personas</button>
+          <button type="button" data-settings-target="model-settings">Ollama models</button>
+          <button type="button" data-settings-target="memory-settings">Memory</button>
+          <button type="button" data-settings-target="data-settings">Data & privacy</button>
+        </nav>
 
-        <h3>Providers <button class="btn small" id="providers-check">Check status</button></h3>
-        <div id="provider-status" class="provider-status"></div>
+        <div class="settings-body" id="settings-body">
+          <section id="general-settings" class="settings-section" aria-labelledby="general-heading">
+            <div class="settings-heading"><h2 id="general-heading">General</h2><p>Name your workspace and choose its default intelligence.</p></div>
+            <div class="settings-card form-grid">
+              <label>Workspace name<input id="cfg-name" maxlength="80" /></label>
+              <label>Default provider
+                <select id="cfg-default-provider">
+                  <option value="ollama">Ollama · configured endpoint</option>
+                  <option value="openai">OpenAI-compatible · remote or self-hosted</option>
+                  <option value="anthropic">Anthropic · remote</option>
+                </select>
+              </label>
+              <label class="span-2">Default model<input id="cfg-default-model" list="model-options" placeholder="Select or enter a model ID" /></label>
+              <datalist id="model-options"></datalist>
+            </div>
+          </section>
 
-        <fieldset>
-          <legend>Ollama (local)</legend>
-          <label class="check"><input type="checkbox" id="cfg-ollama-enabled" /> Enabled</label>
-          <label>Base URL <input id="cfg-ollama-url" placeholder="http://localhost:11434" /></label>
-        </fieldset>
+          <section id="provider-settings" class="settings-section" aria-labelledby="providers-heading">
+            <div class="settings-heading inline"><div><h2 id="providers-heading">Providers</h2><p>Choose a local runtime or connect an API you control.</p></div><button class="btn small" id="providers-check" type="button">Test connections</button></div>
+            <div class="provider-cards">
+              <fieldset class="provider-card local-card">
+                <legend><span class="provider-mark">O</span><span><strong>Ollama</strong><small>Local or remote · follows the Base URL</small></span><label class="switch"><input type="checkbox" id="cfg-ollama-enabled" /><span></span><em>Enabled</em></label></legend>
+                <label>Base URL<input id="cfg-ollama-url" inputmode="url" placeholder="http://localhost:11434" /></label>
+                <p class="field-note">A loopback URL can stay fully local. Prompts and selected context are sent to whatever endpoint this Base URL identifies.</p>
+              </fieldset>
+              <fieldset class="provider-card remote-card">
+                <legend><span class="provider-mark">OAI</span><span><strong>OpenAI-compatible</strong><small>Remote or self-hosted · you choose the endpoint</small></span><label class="switch"><input type="checkbox" id="cfg-openai-enabled" /><span></span><em>Enabled</em></label></legend>
+                <label>Base URL<input id="cfg-openai-url" inputmode="url" placeholder="https://api.openai.com" /></label>
+                <label>API key<input id="cfg-openai-key" type="password" autocomplete="new-password" /></label>
+                <p class="field-note">Prompts and selected context are sent to this endpoint when used.</p>
+              </fieldset>
+              <fieldset class="provider-card remote-card">
+                <legend><span class="provider-mark">A</span><span><strong>Anthropic</strong><small>Remote · Claude API</small></span><label class="switch"><input type="checkbox" id="cfg-anthropic-enabled" /><span></span><em>Enabled</em></label></legend>
+                <label>API key<input id="cfg-anthropic-key" type="password" autocomplete="new-password" /></label>
+                <p class="field-note">Prompts and selected context are sent to Anthropic when used.</p>
+              </fieldset>
+            </div>
+          </section>
 
-        <fieldset>
-          <legend>OpenAI-compatible (vLLM, llama.cpp, LM Studio, Groq, OpenAI…)</legend>
-          <label class="check"><input type="checkbox" id="cfg-openai-enabled" /> Enabled</label>
-          <label>Base URL <input id="cfg-openai-url" placeholder="https://api.openai.com" /></label>
-          <label>API key <input id="cfg-openai-key" type="password" autocomplete="off" /></label>
-        </fieldset>
+          <section id="persona-settings" class="settings-section" aria-labelledby="personas-heading">
+            <div class="settings-heading inline"><div><h2 id="personas-heading">Personas</h2><p>Shape how your AI behaves and which context each role can access.</p></div><button class="btn" id="persona-new" type="button"><svg class="icon"><use href="#i-plus"/></svg>New persona</button></div>
+            <div id="persona-editor" class="persona-editor"></div>
+          </section>
 
-        <fieldset>
-          <legend>Anthropic (Claude)</legend>
-          <label class="check"><input type="checkbox" id="cfg-anthropic-enabled" /> Enabled</label>
-          <label>API key <input id="cfg-anthropic-key" type="password" autocomplete="off" /></label>
-        </fieldset>
+          <section id="model-settings" class="settings-section" aria-labelledby="models-heading">
+            <div class="settings-heading"><h2 id="models-heading">Ollama models</h2><p>Create a named model from a base model and system prompt on the configured Ollama endpoint.</p></div>
+            <div class="settings-card bake-card">
+              <div class="form-grid">
+                <label>New model name<input id="bake-name" placeholder="e.g. atlas" /></label>
+                <label>Base model<input id="bake-base" list="model-options" placeholder="e.g. llama3.1:latest" /></label>
+                <label class="span-2">Personality / system prompt<textarea id="bake-system" rows="5" placeholder="Describe the model's role, behavior, and boundaries."></textarea></label>
+              </div>
+              <div class="card-footer"><span id="bake-status" class="field-note" role="status"></span><button class="btn primary" id="bake-btn" type="button"><svg class="icon"><use href="#i-spark"/></svg>Bake model</button></div>
+            </div>
+          </section>
 
-        <h3>Defaults</h3>
-        <label>Provider
-          <select id="cfg-default-provider">
-            <option value="ollama">Ollama</option>
-            <option value="openai">OpenAI-compatible</option>
-            <option value="anthropic">Anthropic</option>
-          </select>
-        </label>
-        <label>Model <input id="cfg-default-model" list="model-options" placeholder="e.g. llama3.1:latest" /></label>
-        <datalist id="model-options"></datalist>
+          <section id="memory-settings" class="settings-section" aria-labelledby="memory-settings-heading">
+            <div class="settings-heading"><h2 id="memory-settings-heading">Memory behavior</h2><p>Control whether conversations can automatically create durable notes.</p></div>
+            <div class="settings-card option-card">
+              <label class="check-row"><input type="checkbox" id="cfg-auto-memory" /><span><strong>Learn durable facts automatically</strong><small>After each exchange, the active model makes one extra call to propose stable memories. With remote providers, that call is remote too.</small></span></label>
+            </div>
+            <div class="settings-heading secondary"><h3>Knowledge embeddings</h3><p>Semantic retrieval improves meaning-based search. Keyword search remains available without it.</p></div>
+            <div class="settings-card">
+              <label>Ollama embedding model<input id="cfg-embed-model" placeholder="nomic-embed-text" /></label>
+              <p class="field-note">Pull locally with <code>ollama pull nomic-embed-text</code>.</p>
+            </div>
+          </section>
 
-        <h3>Embeddings (semantic knowledge search)</h3>
-        <label>Ollama embedding model <input id="cfg-embed-model" placeholder="nomic-embed-text" /></label>
-        <p class="hint">Pull it with <code>ollama pull nomic-embed-text</code>. Without it, knowledge search falls back to keyword mode — still fully functional.</p>
+          <section id="data-settings" class="settings-section" aria-labelledby="data-heading">
+            <div class="settings-heading"><h2 id="data-heading">Data & privacy</h2><p>Your SQLite database stays in the SovereignAI state directory. Exports copy workspace data; chats may send prompts and selected memory or knowledge to the configured model provider.</p></div>
+            <div class="settings-card data-card">
+              <span class="data-icon"><svg class="icon"><use href="#i-download"/></svg></span>
+              <div><strong>Portable workspace backup</strong><p>Export personas, conversations, memories, and document chunks to one readable JSON file. API keys are never included.</p></div>
+              <div class="data-actions">
+                <button class="btn primary" id="export-btn" type="button">Export backup</button>
+                <button class="btn" id="import-btn" type="button">Import backup</button>
+              </div>
+              <input type="file" id="import-file" accept=".json,application/json" hidden />
+            </div>
+          </section>
 
-        <h3>Memory</h3>
-        <label class="check"><input type="checkbox" id="cfg-auto-memory" /> Learn about me automatically (extract durable facts from conversations into long-term memory — one extra local model call per exchange)</label>
-
-        <h3>Bake your own model <span class="hint" style="font-weight:400">(Ollama)</span></h3>
-        <p class="hint">Create a named local model — <em>your</em> model — from a base model plus a personality. It shows up in <code>ollama list</code> like any other model.</p>
-        <div class="row">
-          <input id="bake-name" placeholder="model name, e.g. mia" style="max-width:160px" />
-          <input id="bake-base" list="model-options" placeholder="base model, e.g. llama3.1:latest" />
+          <div class="save-bar">
+            <span id="save-status" role="status" aria-live="polite">No unsaved changes</span>
+            <button class="btn primary" id="settings-save" type="button">Save changes</button>
+          </div>
         </div>
-        <label>Personality / system prompt <textarea id="bake-system" rows="3" style="width:100%" placeholder="You are…"></textarea></label>
-        <div class="row"><button class="btn" id="bake-btn">⬡ Bake model</button><span id="bake-status" class="hint"></span></div>
-
-        <h3>Personas</h3>
-        <div id="persona-editor"></div>
-        <button class="btn" id="persona-new">＋ New persona</button>
-
-        <h3>Your data</h3>
-        <div class="row">
-          <button class="btn" id="export-btn">⬇ Export everything</button>
-          <button class="btn" id="import-btn">⬆ Import</button>
-          <input type="file" id="import-file" accept=".json" hidden />
-        </div>
-        <p class="hint">Everything — personas, conversations, memory, knowledge — in one portable JSON file. No lock-in, ever.</p>
-
-        <div class="save-bar"><button class="btn primary" id="settings-save">Save settings</button><span id="save-status"></span></div>
       </div>
     </section>
   </main>
 
   <!-- First-run setup wizard -->
-  <div id="wizard" class="wizard hidden" role="dialog" aria-label="Setup wizard">
+  <div id="wizard" class="wizard hidden" role="dialog" aria-modal="true" aria-labelledby="wz-title">
     <div class="wizard-card">
-      <div class="wizard-progress" id="wz-progress"></div>
+      <header class="wizard-head">
+        <div><span class="wizard-brand">S</span><strong>SovereignAI</strong></div>
+        <span id="wz-step-label">Step 1 of 5</span>
+      </header>
+      <div class="wizard-progress" id="wz-progress" role="progressbar" aria-label="Setup progress" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1"></div>
 
-      <section class="wz-step" data-step="0">
-        <div class="wz-mark">⬡</div>
-        <h2>Create your own AI</h2>
-        <p>In a few steps you'll have an AI that is <strong>yours</strong>: your models, your memory, your data — all on this machine.</p>
-        <label>What should your AI be called?
-          <input id="wz-name" placeholder="e.g. Mia, Atlas, Jarvis…" maxlength="40" />
-        </label>
-      </section>
+      <div class="wizard-content">
+        <section class="wz-step" data-step="0">
+          <p class="eyebrow">Make it yours</p>
+          <h2 id="wz-title">Create an AI workspace you control</h2>
+          <p>Bring your preferred model together with private memory and your own documents. No account and no telemetry.</p>
+          <label>What should your AI be called?
+            <input id="wz-name" placeholder="Atlas, Mia, Research Desk…" maxlength="40" autocomplete="off" />
+          </label>
+        </section>
 
-      <section class="wz-step" data-step="1">
-        <h2>Pick its brain</h2>
-        <p class="hint" id="wz-provider-hint">Checking what's available on your machine…</p>
-        <label class="wz-choice"><input type="radio" name="wz-provider" value="ollama" checked />
-          <div><strong>Local model (Ollama)</strong><br/><span class="hint">Fully private, runs on your hardware</span>
-          <select id="wz-ollama-model" style="margin-top:6px"></select></div>
-        </label>
-        <label class="wz-choice"><input type="radio" name="wz-provider" value="anthropic" />
-          <div><strong>Claude (Anthropic, your API key)</strong><br/>
-          <input id="wz-anthropic-key" type="password" placeholder="sk-ant-…" autocomplete="off" style="margin-top:6px;width:100%" /></div>
-        </label>
-        <label class="wz-choice"><input type="radio" name="wz-provider" value="openai" />
-          <div><strong>OpenAI-compatible server</strong><br/>
-          <input id="wz-openai-url" placeholder="Base URL, e.g. http://localhost:8000" style="margin-top:6px;width:100%" />
-          <input id="wz-openai-key" type="password" placeholder="API key (optional)" autocomplete="off" style="margin-top:6px;width:100%" /></div>
-        </label>
-      </section>
+        <section class="wz-step" data-step="1">
+          <p class="eyebrow">Choose the data path</p>
+          <h2>Pick its intelligence</h2>
+          <p class="hint" id="wz-provider-hint">Checking the providers configured for this workspace…</p>
 
-      <section class="wz-step" data-step="2">
-        <h2>Shape its personality</h2>
-        <label>Describe your AI in your own words
-          <textarea id="wz-personality" rows="3" placeholder="e.g. a sharp, no-nonsense assistant for my consulting business; explains clearly, challenges my assumptions"></textarea>
-        </label>
-        <div class="wz-chips" id="wz-traits">
-          <button data-trait="Be concise — no filler.">Concise</button>
-          <button data-trait="Be warm and encouraging.">Warm</button>
-          <button data-trait="Be technical and precise; show working code and calculations.">Technical</button>
-          <button data-trait="Challenge weak reasoning; play devil's advocate when useful.">Challenger</button>
-          <button data-trait="Explain like a patient teacher, step by step.">Teacher</button>
-        </div>
-      </section>
+          <div class="wz-choice">
+            <input id="wz-provider-ollama" type="radio" name="wz-provider" value="ollama" aria-describedby="wz-privacy-note" checked />
+            <div class="choice-copy">
+              <label class="provider-choice-label" for="wz-provider-ollama"><strong>Ollama · configured endpoint</strong><small>Prompts and context go only to the Ollama endpoint you configure.</small></label>
+              <div class="provider-fields" data-provider-fields="ollama"><label class="field-label" for="wz-ollama-model">Model</label><select id="wz-ollama-model"></select></div>
+            </div>
+            <label class="choice-badge remote" for="wz-provider-ollama">Endpoint</label>
+          </div>
+          <div class="wz-choice">
+            <input id="wz-provider-anthropic" type="radio" name="wz-provider" value="anthropic" aria-describedby="wz-privacy-note" />
+            <div class="choice-copy">
+              <label class="provider-choice-label" for="wz-provider-anthropic"><strong>Anthropic · Claude API</strong><small>Your prompt and selected context are sent to Anthropic.</small></label>
+              <div class="provider-fields" data-provider-fields="anthropic"><label class="field-label" for="wz-anthropic-key">API key</label><input id="wz-anthropic-key" type="password" placeholder="sk-ant-…" autocomplete="new-password" /></div>
+            </div>
+            <label class="choice-badge remote" for="wz-provider-anthropic">Remote</label>
+          </div>
+          <div class="wz-choice">
+            <input id="wz-provider-openai" type="radio" name="wz-provider" value="openai" aria-describedby="wz-privacy-note" />
+            <div class="choice-copy">
+              <label class="provider-choice-label" for="wz-provider-openai"><strong>OpenAI-compatible endpoint</strong><small>Use OpenAI, LM Studio, vLLM, Groq, or another compatible server.</small></label>
+              <div class="provider-fields" data-provider-fields="openai">
+                <label class="field-label" for="wz-openai-url">Base URL</label><input id="wz-openai-url" inputmode="url" placeholder="https://api.openai.com" />
+                <label class="field-label" for="wz-openai-model">Model ID</label><input id="wz-openai-model" placeholder="e.g. gpt-4.1-mini or your local model" />
+                <label class="field-label" for="wz-openai-key">API key <em>(optional for local servers)</em></label><input id="wz-openai-key" type="password" placeholder="API key" autocomplete="new-password" />
+              </div>
+            </div>
+            <label class="choice-badge remote" for="wz-provider-openai">Remote*</label>
+          </div>
+          <p id="wz-privacy-note" class="privacy-note"><svg class="icon"><use href="#i-shield"/></svg><span>Local mode keeps model traffic on this device.</span></p>
+        </section>
 
-      <section class="wz-step" data-step="3">
-        <h2>Feed it your data</h2>
-        <p class="hint">Drop in notes, docs, PDFs, Word files — your AI will ground its answers in them. Everything is indexed locally. You can skip this and add more anytime.</p>
-        <div class="wz-drop" id="wz-drop">Drop files here or click to choose<br/><span class="hint">.txt .md .pdf .docx .csv .json .html</span></div>
-        <input type="file" id="wz-files" accept=".txt,.md,.markdown,.csv,.json,.log,.html,.pdf,.docx" multiple hidden />
-        <ul id="wz-file-list" class="wz-file-list"></ul>
-        <label class="check"><input type="checkbox" id="wz-auto-memory" checked /> Learn about me automatically from our conversations</label>
-      </section>
+        <section class="wz-step" data-step="2">
+          <p class="eyebrow">Define the role</p>
+          <h2>Shape its personality</h2>
+          <label>Describe how this AI should help you
+            <textarea id="wz-personality" rows="4" placeholder="A sharp, practical thought partner for my consulting business. Challenge weak assumptions and make recommendations concrete."></textarea>
+          </label>
+          <div>
+            <span class="field-label">Add useful traits</span>
+            <div class="wz-chips" id="wz-traits">
+              <button type="button" aria-pressed="false" data-trait="Be concise — lead with the answer and remove filler.">Concise</button>
+              <button type="button" aria-pressed="false" data-trait="Be warm, candid, and encouraging.">Warm</button>
+              <button type="button" aria-pressed="false" data-trait="Be technical and precise; show working code and calculations.">Technical</button>
+              <button type="button" aria-pressed="false" data-trait="Challenge weak reasoning and surface hidden trade-offs.">Challenger</button>
+              <button type="button" aria-pressed="false" data-trait="Explain patiently with clear examples and progressive detail.">Teacher</button>
+            </div>
+          </div>
+        </section>
 
-      <section class="wz-step" data-step="4">
-        <h2>Make it real</h2>
-        <div id="wz-summary" class="wz-summary"></div>
-        <label class="check" id="wz-bake-row"><input type="checkbox" id="wz-bake" /> Also bake <strong id="wz-bake-name">it</strong> into a named local Ollama model (yours, forever — shows up in <code>ollama list</code>)</label>
-        <p class="hint" id="wz-error" style="color:var(--danger)"></p>
-      </section>
+        <section class="wz-step" data-step="3">
+          <p class="eyebrow">Add private context</p>
+          <h2>Give it something useful to know</h2>
+          <p>Documents are parsed and stored in your local index now. You can skip this and add an entire library later.</p>
+          <button class="wz-drop" id="wz-drop" type="button"> <svg class="icon"><use href="#i-upload"/></svg><strong>Drop files here or browse</strong><span>.txt · .md · .pdf · .docx · .csv · .json · .html</span></button>
+          <input type="file" id="wz-files" accept=".txt,.md,.markdown,.csv,.json,.log,.html,.pdf,.docx" multiple hidden />
+          <ul id="wz-file-list" class="wz-file-list" aria-live="polite"></ul>
+          <label class="check-row wizard-check"><input type="checkbox" id="wz-auto-memory" /><span><strong>Learn durable facts from conversations</strong><small>Optional. Adds one extra model call after each exchange; remote providers receive that call too.</small></span></label>
+        </section>
+
+        <section class="wz-step" data-step="4">
+          <p class="eyebrow">Review and create</p>
+          <h2>Make your workspace real</h2>
+          <div id="wz-summary" class="wz-summary"></div>
+          <label class="check-row wizard-check" id="wz-bake-row"><input type="checkbox" id="wz-bake" /><span><strong>Bake <span id="wz-bake-name">it</span> into a named Ollama model</strong><small>Creates the model on the configured Ollama endpoint, where it appears in <code>ollama list</code>.</small></span></label>
+          <p class="form-error" id="wz-error" role="alert"></p>
+        </section>
+      </div>
 
       <footer class="wz-nav">
-        <button class="btn" id="wz-back" style="visibility:hidden">Back</button>
-        <button class="btn primary" id="wz-next">Next</button>
+        <button class="btn ghost" id="wz-back" type="button">Back</button>
+        <button class="btn primary" id="wz-next" type="button">Continue</button>
       </footer>
     </div>
   </div>
+
+  <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title">
+    <form method="dialog">
+      <span class="confirm-icon"><svg class="icon"><use href="#i-trash"/></svg></span>
+      <h2 id="confirm-title">Are you sure?</h2>
+      <p id="confirm-message">This action cannot be undone.</p>
+      <div class="dialog-actions"><button class="btn ghost" value="cancel">Cancel</button><button id="confirm-action" class="btn danger solid" value="confirm">Delete</button></div>
+    </form>
+  </dialog>
+  <div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
 
   <script src="/app.js"></script>
   <script src="/wizard.js"></script>

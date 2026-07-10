@@ -7,6 +7,21 @@ REPO="mlmrx/SovereignAI"
 DEST="${SOVEREIGN_INSTALL_DIR:-$HOME/.sovereignai}"
 BIN_DIR="${SOVEREIGN_BIN_DIR:-$HOME/.local/bin}"
 
+TMP=""
+cleanup() {
+  if [ -n "$TMP" ] && [ -d "$TMP" ]; then rm -rf "$TMP"; fi
+}
+trap cleanup EXIT HUP INT TERM
+
+install_archive() {
+  TMP=$(mktemp -d)
+  curl -fsSL "https://github.com/$REPO/archive/refs/heads/main.tar.gz" | tar -xz -C "$TMP"
+  mkdir -p "$DEST"
+  cp -R "$TMP/SovereignAI-main/." "$DEST/"
+  rm -rf "$TMP"
+  TMP=""
+}
+
 printf '\n  ⬡ SovereignAI installer\n\n'
 
 # 1. Node 22.5+
@@ -23,22 +38,28 @@ fi
 
 # 2. Fetch source
 if [ -d "$DEST/.git" ]; then
-  echo "  Updating existing install at $DEST"
-  git -C "$DEST" pull --quiet
+  if ! command -v git >/dev/null 2>&1; then
+    echo "  Git is required to update the existing Git install at $DEST." >&2
+    exit 1
+  fi
+  echo "  Updating existing Git install at $DEST"
+  git -C "$DEST" pull --ff-only --quiet
+elif [ -d "$DEST" ]; then
+  echo "  Refreshing existing archive install at $DEST (config and data are preserved)"
+  install_archive
 elif command -v git >/dev/null 2>&1; then
   git clone --quiet "https://github.com/$REPO" "$DEST"
 else
-  TMP=$(mktemp -d)
-  curl -fsSL "https://github.com/$REPO/archive/refs/heads/main.tar.gz" | tar -xz -C "$TMP"
-  mkdir -p "$DEST"
-  cp -R "$TMP/SovereignAI-main/." "$DEST/"
-  rm -rf "$TMP"
+  install_archive
 fi
 
 # 3. Launcher on PATH
 mkdir -p "$BIN_DIR"
 cat > "$BIN_DIR/sovereign" <<EOF
 #!/usr/bin/env sh
+if [ -z "\${SOVEREIGN_HOME:-}" ]; then
+  export SOVEREIGN_HOME="$DEST"
+fi
 exec node --no-warnings "$DEST/bin/sovereign.js" "\$@"
 EOF
 chmod +x "$BIN_DIR/sovereign"
@@ -51,6 +72,7 @@ esac
 cat <<EOF
 
   Installed to $DEST
+  Config + data:     $DEST  (override with SOVEREIGN_HOME for another instance)
 
   Start your AI:     sovereign start
   Then open:         http://127.0.0.1:4321

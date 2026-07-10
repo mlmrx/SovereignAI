@@ -1,11 +1,17 @@
 # SovereignAI in Docker.
 #
-#   SOVEREIGN_TOKEN=$(openssl rand -hex 24) docker compose up -d
-#   → open http://localhost:4321/?token=<your token>
-#
-# With a containerized Ollama too (pulls models into the ollama volume):
+# Containerized Ollama (recommended; Sovereign reaches http://ollama:11434):
+#   export SOVEREIGN_TOKEN="$(openssl rand -hex 24)"
+#   echo "Save: http://localhost:4321/#token=$SOVEREIGN_TOKEN"
 #   docker compose --profile ollama up -d
+#
+# Pull models into the durable Ollama volume:
 #   docker compose exec ollama ollama pull llama3.1
+#
+# To use Ollama running on the HOST instead, do not enable the profile and set:
+#   OLLAMA_BASE_URL=http://host.docker.internal:11434
+# Example:
+#   SOVEREIGN_TOKEN=... OLLAMA_BASE_URL=http://host.docker.internal:11434 docker compose up -d
 services:
   sovereign:
     build: .
@@ -13,12 +19,16 @@ services:
       - "4321:4321"
     environment:
       SOVEREIGN_TOKEN: ${SOVEREIGN_TOKEN:?set SOVEREIGN_TOKEN to protect remote access}
-      # default: talk to Ollama on the host machine; the ollama profile overrides this
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      SOVEREIGN_HOME: /state
+      # Default is the profiled Ollama service. Override explicitly for host Ollama (above).
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - sovereign-data:/app/data
+      # Config and all future state live in sovereign-state. The nested data
+      # volume preserves compatibility with the previous /app/data mount.
+      - sovereign-state:/state
+      - sovereign-data:/state/data
     restart: unless-stopped
 
   ollama:
@@ -29,5 +39,6 @@ services:
     restart: unless-stopped
 
 volumes:
+  sovereign-state:
   sovereign-data:
   ollama-models:

@@ -28,7 +28,13 @@
     #settings { padding: 12px; border-top: 1px solid #2a3340; display: none; }
     #settings input { width: 100%; box-sizing: border-box; background: #151b23; color: #e6e9ee;
                       border: 1px solid #2a3340; border-radius: 6px; padding: 6px 8px; }
-    #settings label { font-size: 11px; color: #9aa4b2; }
+    #settings label { display: block; margin-bottom: 8px; font-size: 11px; color: #9aa4b2; }
+    #settings .actions { display: flex; gap: 6px; align-items: center; }
+    #settings button { min-height: 28px; }
+    #settings button.secondary { background: #2a3340; color: #e6e9ee; }
+    #settings-status { min-height: 18px; margin-top: 6px; color: #9aa4b2; font-size: 11px; }
+    #settings-status.err { color: #e5534b; }
+    #settings-status.ok { color: #4ac26b; }
   </style>
 </head>
 <body>
@@ -39,9 +45,15 @@
       <a href="#" id="toggle-settings">server</a>
     </div>
   </header>
-  <div id="log"><div id="empty">Ask your own AI anything.<br/>Private. Local. Yours.</div></div>
+  <div id="log"><div id="empty">Chat through your SovereignAI server.<br/>Use the server and provider you configured.</div></div>
   <div id="settings">
     <label>Server URL <input id="server-url" placeholder="http://127.0.0.1:4321" /></label>
+    <label>Bearer token <input id="auth-token" type="password" autocomplete="off" placeholder="Paste the token printed by SovereignAI" /></label>
+    <div class="actions">
+      <button id="save-settings" type="button">Save</button>
+      <button id="clear-token" class="secondary" type="button">Forget token</button>
+    </div>
+    <div id="settings-status" role="status" aria-live="polite"></div>
   </div>
   <footer>
     <textarea id="in" rows="2" placeholder="Message your AI…"></textarea>

@@ -40,8 +40,8 @@ Embeddings (Ollama `/api/embed`) are optional. Every chunk is always BM25-indexa
 ### ADR-5: MCP as the universal AI-platform integration
 Rather than one bespoke plugin per AI product, `sovereign mcp` (stdio JSON-RPC) surfaces memory/knowledge/chat as MCP tools. Claude Desktop/Code, Codex CLI, Cursor, Windsurf, and Gemini CLI all consume it with a few lines of config. ChatGPT is the exception (Actions + OpenAPI + tunnel) — handled separately.
 
-### ADR-6: Localhost-first security
-Server binds `127.0.0.1`. Remote requests are refused unless `authToken` is configured, then require Bearer auth. API keys are redacted in every config/export response (`••` masking); masked values sent back by the UI are recognized and preserved rather than overwriting the real secret.
+### ADR-6: Localhost-first, tunnel-safe security
+Server binds `127.0.0.1`. When `authToken` is configured, every API request—including loopback traffic from a local tunnel or reverse proxy—requires Bearer auth. Tokenless localhost mode permits native clients but rejects unsafe browser origins, untrusted Host headers, and non-JSON mutations. Browser bootstrap tokens travel in the URL fragment (never the HTTP request) and are then stored locally. API keys are masked in browser config responses; portable exports omit configuration entirely, and masked values sent back by the UI preserve the real secret.
 
 ### ADR-7: No-build web UI
 Vanilla HTML/CSS/JS served statically. No bundler, no framework, no telemetry. Chat streaming reads the SSE body via `fetch` + `ReadableStream` (POST-based SSE, since `EventSource` is GET-only). Markdown rendering is a minimal escaped-first subset (code fences, inline code, bold, links).
@@ -53,7 +53,7 @@ DOCX is a ZIP of XML; PDF text lives in content streams. Both are parseable with
 When `memory.autoExtract` is on, each chat exchange triggers one background model call that distills ≤3 durable facts into memory notes. It never blocks or delays the chat stream, failures are silent, and parsing tolerates model quirks (bullet variants, stray NONE lines). Off by default: it costs a model call per exchange and users should choose to be profiled, even locally.
 
 ### ADR-10: "Bake your own model" via Ollama Modelfile
-`POST /api/create-model` calls Ollama's `/api/create` (base model + system prompt → new named model). This gives users a literal model artifact they own (`ollama list` shows it), usable outside SovereignAI too. Fine-tuning is a different beast (planned as JSONL export first); baking delivers the "my own model" experience today at zero training cost.
+`POST /api/create-model` calls the configured Ollama endpoint's `/api/create` (base model + system prompt → new named model). This creates a literal model artifact on that endpoint (`ollama list` there shows it), usable outside SovereignAI too. Fine-tuning is a different beast (planned as JSONL export first); baking delivers a reusable named-model experience today at zero training cost.
 
 ## Data model
 
@@ -61,4 +61,4 @@ When `memory.autoExtract` is on, each chat exchange triggers one background mode
 
 ## Testing
 
-`node --test` (21 tests): BM25 ranking, chunker bounds/overlap, store CRUD + export/import round-trip, and API integration tests that boot the real server on an ephemeral port (hermetic: embeddings disabled, providers off). Live verification (manual, documented in commits): streamed chat via Ollama llama3.1, RAG-grounded citation, MCP handshake + tool calls.
+`npm test` (85+ checks): retrieval and chunking, store CRUD and portability, UI and editor/browser integration contracts, real-server API flows, tunnel/localhost security, config validation and atomic writes, bounded ingestion, provider cancellation and output limits, CLI behavior, and rendered Compose contracts. Live model verification remains provider-dependent.

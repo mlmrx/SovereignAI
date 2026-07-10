@@ -4,7 +4,8 @@ export const DEFAULT_PERSONAS = [
     name: 'Assistant',
     description: 'A capable, direct general assistant.',
     system_prompt:
-      'You are the user\'s personal sovereign AI: private, self-hosted, and loyal to the user alone. ' +
+      'You are the user\'s personal sovereign AI: user-controlled, candid, and loyal to the user alone. ' +
+      'Respect the configured provider data path; never claim inference is local when a remote provider is active. ' +
       'Be direct, warm, and genuinely useful. Give real answers, not hedges. ' +
       'When you are unsure, say so plainly.',
     use_memory: true,
@@ -35,4 +36,21 @@ export const DEFAULT_PERSONAS = [
 export function seedPersonas(store) {
   if (store.listPersonas().length > 0) return;
   for (const persona of DEFAULT_PERSONAS) store.createPersona(persona);
+}
+
+/** A fresh server seeds personas before an API/CLI restore can run. */
+export function shouldReplaceSeedPersonas(store, data) {
+  if (!Array.isArray(data?.personas) || !store.isEmptyExceptPersonas()) return false;
+  const existing = store.listPersonas();
+  if (existing.length !== DEFAULT_PERSONAS.length) return false;
+  return DEFAULT_PERSONAS.every((expected) => existing.some((actual) =>
+    actual.name === expected.name &&
+    actual.description === expected.description &&
+    actual.system_prompt === expected.system_prompt &&
+    actual.provider === null &&
+    actual.model === null &&
+    actual.temperature === null &&
+    actual.use_memory === (expected.use_memory ? 1 : 0) &&
+    actual.use_knowledge === (expected.use_knowledge ? 1 : 0)
+  ));
 }

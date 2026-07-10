@@ -11,6 +11,7 @@ import { HttpError } from './util.js';
 export async function handleChat({ store, config, body, sse, signal }) {
   const message = typeof body.message === 'string' ? body.message.trim() : '';
   if (!message) throw new HttpError(400, 'message is required');
+  if (message.length > 200_000) throw new HttpError(413, 'message must be at most 200,000 characters');
 
   const persona = resolvePersona(store, body.personaId, config);
   const { provider, providerCfg, model } = resolveModel(config, persona);
@@ -86,7 +87,14 @@ export async function handleChat({ store, config, body, sse, signal }) {
   sse.end();
 
   if (config.memory?.autoExtract && text && persona.use_memory) {
-    autoExtractMemories({ store, config, userMessage: message, assistantReply: text }).catch(() => {});
+    autoExtractMemories({
+      store,
+      config,
+      providerId: provider.id,
+      model,
+      userMessage: message,
+      assistantReply: text,
+    }).catch(() => {});
   }
 
   function persistAssistant(errorNote) {
@@ -128,7 +136,10 @@ function resolveModel(config, persona) {
   if (!provider.isConfigured(providerCfg)) {
     throw new HttpError(400, `Provider "${providerId}" is not configured — open Settings to set it up`);
   }
-  const model = persona.model || config.defaults.model;
+  // A workspace default model only belongs to its default provider. Reusing an
+  // Ollama model name for an Anthropic/OpenAI persona (or vice versa) produces
+  // a confusing upstream error; provider overrides must name their own model.
+  const model = persona.model || (providerId === config.defaults.provider ? config.defaults.model : '');
   if (!model && providerId !== 'anthropic') {
     throw new HttpError(400, 'No model selected — pick a default model in Settings');
   }
@@ -141,9 +152,12 @@ export function trimHistory(messages, maxChars) {
   let total = 0;
   for (let i = messages.length - 1; i >= 0; i--) {
     const m = messages[i];
-    total += m.content.length;
-    if (total > maxChars && out.length > 0) break;
-    out.unshift({ role: m.role, content: m.content });
+    const remaining = Math.max(0, maxChars - total);
+    if (remaining === 0) break;
+    const content = m.content.length > remaining ? m.content.slice(-remaining) : m.content;
+    out.unshift({ role: m.role, content });
+    total += content.length;
+    if (content.length < m.content.length) break;
   }
   // providers require the transcript to start with a user turn
   while (out.length > 0 && out[0].role !== 'user') out.shift();
@@ -155,9 +169,9 @@ async function buildSystemPrompt({ store, config, persona, query }) {
   let sources = [];
 
   if (persona.use_memory) {
-    const memories = store.listMemories();
+    const memories = selectMemories(store.listRecentMemories?.(1000) ?? store.listMemories(), query);
     if (memories.length > 0) {
-      parts.push('Long-term notes the user asked you to remember:\n' + memories.map((m) => `- ${m.content}`).join('\n'));
+      parts.push('Relevant long-term notes the user asked you to remember:\n' + memories.map((m) => `- ${m.content}`).join('\n'));
     }
   }
 
@@ -165,9 +179,55 @@ async function buildSystemPrompt({ store, config, persona, query }) {
     const results = await retrieve({ store, config, query });
     if (results.length > 0) {
       parts.push(formatContext(results));
-      sources = results.map((r) => ({ document: r.document, score: r.score, method: r.method }));
+      sources = results.map((r) => ({
+        id: r.id,
+        chunkId: r.id,
+        documentId: r.documentId,
+        document: r.document,
+        excerpt: r.content.slice(0, 600),
+        score: r.score,
+        method: r.method,
+      }));
     }
   }
 
   return { system: parts.join('\n\n---\n\n'), sources };
+}
+
+/** Rank memory notes by query overlap, then recency, within a hard prompt budget. */
+export function selectMemories(
+  memories,
+  query,
+  { maxChars = 6000, maxItems = 24, maxTerms = 128, maxCandidates = 1000 } = {}
+) {
+  // Both chat input and imported memory can be large. Retrieval must stay
+  // predictably bounded because it runs on the single Node event loop before
+  // provider streaming begins.
+  const terms = new Set();
+  for (const match of String(query).toLowerCase().matchAll(/[\p{L}\p{N}_-]{3,}/gu)) {
+    terms.add(match[0]);
+    if (terms.size >= maxTerms) break;
+  }
+  const firstCandidate = Math.max(0, memories.length - maxCandidates);
+  const candidates = memories.slice(firstCandidate);
+  const ranked = candidates.map((memory, candidateIndex) => {
+    const content = String(memory.content ?? '').slice(0, Math.max(maxChars, 2000));
+    const lower = content.toLowerCase();
+    let score = 0;
+    for (const term of terms) if (lower.includes(term)) score++;
+    return { memory, index: firstCandidate + candidateIndex, score, content };
+  });
+  ranked.sort((a, b) => b.score - a.score || b.index - a.index);
+
+  const selected = [];
+  let used = 0;
+  for (const entry of ranked) {
+    if (!entry.content || selected.length >= maxItems) continue;
+    const remaining = maxChars - used;
+    if (remaining <= 0) break;
+    const content = entry.content.slice(0, remaining);
+    selected.push({ ...entry.memory, content });
+    used += content.length + 2;
+  }
+  return selected;
 }

@@ -17,11 +17,14 @@ dist/
 build/
 out/
 *.egg-info/
+integrations/browser/sovereignai-browser-*.zip
+integrations/vscode/*.vsix
 
 # Local data / models (large artifacts stay out of git)
 data/
 models/
 sovereign.config.json
+sovereign.config.*.json
 sovereign-export-*.json
 *.gguf
 *.safetensors

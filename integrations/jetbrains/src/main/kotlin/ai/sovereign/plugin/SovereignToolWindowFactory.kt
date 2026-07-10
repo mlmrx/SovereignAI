@@ -31,7 +31,7 @@ class ChatPanel private constructor() : JPanel(BorderLayout()) {
         lineWrap = true
         wrapStyleWord = true
         margin = JBUI.insets(8)
-        text = "⬡ Your sovereign AI. Private. Local. Yours.\n\n"
+        text = "⬡ Your SovereignAI workspace. Use the server and provider you configured.\n\n"
     }
     private val input = JBTextArea(3, 0).apply {
         lineWrap = true

@@ -3,9 +3,9 @@
     <name>SovereignAI — Your Own AI</name>
     <vendor url="https://github.com/mlmrx/SovereignAI">SovereignAI</vendor>
     <description><![CDATA[
-        Chat with your self-hosted sovereign AI — local models, private memory, private
-        knowledge — without leaving your IDE. Requires a running SovereignAI server
-        (<code>sovereign start</code>). No telemetry; talks only to the server you configure.
+        Use your SovereignAI personas, memory, and knowledge without leaving your IDE.
+        Requires a running SovereignAI server (<code>sovereign start</code>). No telemetry;
+        requests go only to the configured server, whose model-provider data path applies.
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>

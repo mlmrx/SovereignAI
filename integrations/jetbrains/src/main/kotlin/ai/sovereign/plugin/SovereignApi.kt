@@ -17,15 +17,26 @@ object SovereignApi {
     var conversationId: String? = null
 
     fun serverUrl(): String =
-        PropertiesComponent.getInstance().getValue("sovereignai.serverUrl", "http://127.0.0.1:4321").trimEnd('/')
+        (PropertiesComponent.getInstance().getValue("sovereignai.serverUrl")
+            ?: System.getenv("SOVEREIGN_URL")
+            ?: "http://127.0.0.1:4321").trim().trimEnd('/')
 
     fun setServerUrl(url: String) =
         PropertiesComponent.getInstance().setValue("sovereignai.serverUrl", url.trimEnd('/'))
+
+    /** Token-protected/LAN servers can be configured without persisting a secret in IDE settings. */
+    private fun authToken(): String {
+        val token = (System.getenv("SOVEREIGN_TOKEN") ?: "").trim()
+            .takeIf { !it.contains('\n') && !it.contains('\r') } ?: ""
+        val tokenServer = (System.getenv("SOVEREIGN_URL") ?: "http://127.0.0.1:4321").trim().trimEnd('/')
+        return token.takeIf { serverUrl() == tokenServer } ?: ""
+    }
 
     private fun request(path: String, body: String? = null): HttpRequest {
         val builder = HttpRequest.newBuilder(URI.create(serverUrl() + path))
             .header("content-type", "application/json")
             .timeout(Duration.ofMinutes(5))
+        authToken().takeIf { it.isNotEmpty() }?.let { builder.header("Authorization", "Bearer $it") }
         return (if (body != null) builder.POST(HttpRequest.BodyPublishers.ofString(body)) else builder.GET()).build()
     }
 

@@ -15,6 +15,7 @@ import { seedPersonas } from './personas.js';
 import { chunkText } from './rag/chunker.js';
 import { retrieve, embedTexts } from './rag/retriever.js';
 import { handleChat } from './chat.js';
+import { MAX_EXTRACTED_TEXT_BYTES } from './ingest/index.js';
 
 const PROTOCOL_VERSION = '2025-03-26';
 
@@ -22,12 +23,12 @@ const TOOLS = [
   {
     name: 'ask_sovereign',
     description:
-      "Ask the user's private sovereign AI a question. It answers with the user's chosen persona, long-term memory, and private knowledge base — running on the user's own machine.",
+      "Ask the user's private sovereign AI a question. Its server and private data stay under the user's control; generation uses the configured model provider.",
     inputSchema: {
       type: 'object',
       properties: {
-        message: { type: 'string', description: 'The question or request' },
-        persona: { type: 'string', description: 'Optional persona name (e.g. Assistant, Engineer, Archivist)' },
+        message: { type: 'string', maxLength: 200000, description: 'The question or request' },
+        persona: { type: 'string', maxLength: 200, description: 'Optional persona name (e.g. Assistant, Engineer, Archivist)' },
       },
       required: ['message'],
     },
@@ -38,8 +39,8 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        query: { type: 'string' },
-        limit: { type: 'integer', description: 'Max results (default 6)' },
+        query: { type: 'string', maxLength: 20000 },
+        limit: { type: 'integer', minimum: 1, maximum: 50, description: 'Max results (default 6)' },
       },
       required: ['query'],
     },
@@ -50,8 +51,8 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        name: { type: 'string', description: 'Document name' },
-        content: { type: 'string', description: 'Full text content' },
+        name: { type: 'string', maxLength: 512, description: 'Document name' },
+        content: { type: 'string', maxLength: MAX_EXTRACTED_TEXT_BYTES, description: 'Full text content' },
       },
       required: ['name', 'content'],
     },
@@ -61,7 +62,7 @@ const TOOLS = [
     description: "Store a long-term memory note the user's sovereign AI should always keep in mind.",
     inputSchema: {
       type: 'object',
-      properties: { content: { type: 'string' } },
+      properties: { content: { type: 'string', maxLength: 2000 } },
       required: ['content'],
     },
   },
@@ -120,8 +121,11 @@ async function dispatch(req, ctx) {
   }
 }
 
-async function callTool({ name, arguments: args = {} }, { store, config }) {
+async function callTool(params, { store, config }) {
   try {
+    if (!isObject(params)) throw new Error('Tool call params must be an object');
+    const name = requiredString(params, 'name', { maxChars: 100 });
+    const args = params.arguments === undefined ? {} : params.arguments;
     const text = await runTool(name, args, { store, config });
     return { content: [{ type: 'text', text }] };
   } catch (err) {
@@ -130,11 +134,15 @@ async function callTool({ name, arguments: args = {} }, { store, config }) {
 }
 
 async function runTool(name, args, { store, config }) {
+  if (!isObject(args)) throw new Error('Tool arguments must be an object');
   switch (name) {
     case 'ask_sovereign': {
-      const persona = args.persona
-        ? store.listPersonas().find((p) => p.name.toLowerCase() === String(args.persona).toLowerCase())
+      const message = requiredString(args, 'message', { maxChars: 200_000, maxBytes: 800_000 });
+      const personaName = optionalString(args, 'persona', { maxChars: 200 });
+      const persona = personaName
+        ? store.listPersonas().find((p) => p.name.toLowerCase() === personaName.toLowerCase())
         : null;
+      if (personaName && !persona) throw new Error(`Persona not found: ${personaName}`);
       let answer = '';
       const sse = {
         send(event, data) {
@@ -146,25 +154,34 @@ async function runTool(name, args, { store, config }) {
       await handleChat({
         store,
         config,
-        body: { message: String(args.message), personaId: persona?.id },
+        body: { message, personaId: persona?.id },
         sse,
       });
       return answer || '(no response)';
     }
     case 'search_knowledge': {
-      const results = await retrieve({ store, config, query: String(args.query), limit: args.limit ?? 6 });
+      const query = requiredString(args, 'query', { maxChars: 20_000, maxBytes: 80_000 });
+      const limit = boundedInteger(args, 'limit', { fallback: 6, min: 1, max: 50 });
+      const results = await retrieve({ store, config, query, limit });
       if (results.length === 0) return 'No matches in the knowledge base.';
       return results.map((r, i) => `[${i + 1}] ${r.document} (${r.method}, ${r.score})\n${r.content}`).join('\n\n');
     }
     case 'add_knowledge': {
-      const pieces = chunkText(String(args.content));
+      const name = requiredString(args, 'name', { maxChars: 512, maxBytes: 2048 });
+      const content = requiredString(args, 'content', {
+        maxChars: MAX_EXTRACTED_TEXT_BYTES,
+        maxBytes: MAX_EXTRACTED_TEXT_BYTES,
+        trimResult: false,
+      });
+      const pieces = chunkText(content);
       const vectors = await embedTexts(config, pieces);
       const chunks = pieces.map((content, i) => ({ content, embedding: vectors?.[i] ?? null }));
-      const doc = store.addDocument({ name: String(args.name), size: String(args.content).length, chunks, embedded: Boolean(vectors) });
+      const doc = store.addDocument({ name, size: content.length, chunks, embedded: Boolean(vectors) });
       return `Saved "${doc.name}" (${doc.chunk_count} chunks, ${doc.embedded ? 'semantic' : 'keyword'} index).`;
     }
     case 'add_memory': {
-      store.addMemory(String(args.content));
+      const content = requiredString(args, 'content', { maxChars: 2000, maxBytes: 8000 });
+      store.addMemory(content);
       return 'Remembered.';
     }
     case 'list_memories': {
@@ -174,4 +191,30 @@ async function runTool(name, args, { store, config }) {
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
+}
+
+function requiredString(object, key, { maxChars, maxBytes = Infinity, trimResult = true }) {
+  const value = object[key];
+  if (typeof value !== 'string' || !value.trim()) throw new Error(`${key} is required and must be a non-empty string`);
+  if (value.length > maxChars || Buffer.byteLength(value, 'utf8') > maxBytes) throw new Error(`${key} is too large`);
+  return trimResult ? value.trim() : value;
+}
+
+function optionalString(object, key, { maxChars }) {
+  const value = object[key];
+  if (value === undefined || value === null || value === '') return null;
+  if (typeof value !== 'string' || !value.trim()) throw new Error(`${key} must be a non-empty string when provided`);
+  if (value.length > maxChars) throw new Error(`${key} is too large`);
+  return value.trim();
+}
+
+function boundedInteger(object, key, { fallback, min, max }) {
+  const value = object[key];
+  if (value === undefined) return fallback;
+  if (!Number.isInteger(value) || value < min || value > max) throw new Error(`${key} must be an integer from ${min} to ${max}`);
+  return value;
+}
+
+function isObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }

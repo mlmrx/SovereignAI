@@ -1,9 +1,8 @@
 /** Streaming body parsers shared by providers. `body` is a fetch response body (async iterable). */
 
-const decoder = new TextDecoder();
-
 /** Parse an SSE stream into { event, data } objects (data JSON-parsed when possible). */
 export async function* sseEvents(body) {
+  const decoder = new TextDecoder();
   let buffer = '';
   let event = 'message';
   let dataLines = [];
@@ -36,6 +35,7 @@ export async function* sseEvents(body) {
 
 /** Parse a newline-delimited JSON stream (Ollama's format). */
 export async function* ndjsonLines(body) {
+  const decoder = new TextDecoder();
   let buffer = '';
   for await (const chunk of body) {
     buffer += decoder.decode(chunk, { stream: true });
