@@ -91,3 +91,7 @@ npm test    # node:test, no dependencies to install — there are none
 - [ ] PDF/DOCX ingestion, auto memory extraction
 - [ ] JetBrains plugin; signed store releases of the extensions
 - [ ] Packaged installers (single binary), Docker image, LAN/tailnet mode
+
+## License
+
+[MIT](LICENSE) — free to use, modify, and distribute. Your AI should be yours; so should the code that runs it.

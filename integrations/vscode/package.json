@@ -4,7 +4,7 @@
   "description": "Chat with your self-hosted sovereign AI (local models, private memory, private knowledge) without leaving your editor. Works in VS Code, Cursor, Windsurf, and VSCodium.",
   "version": "0.1.0",
   "publisher": "sovereignai",
-  "license": "SEE LICENSE IN LICENSE.txt",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/mlmrx/SovereignAI"
