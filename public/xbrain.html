@@ -6,139 +6,208 @@
 <title>XBrain — SovereignAI</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d9a441' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%230b0d0c' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
 <style>
-/* XBrain — the cognition is the interface.
-   Registers: the Voice (serif) speaks, the Command (mono) instructs,
-   the Machinery (small mono) reports. One accent family: gold. */
+/* XBrain v3 — the Mind Field.
+   The cortex is no longer a strip above the page: it is the ground the page
+   floats on. Every cell in the field is a real memory or document; recall
+   ripples through the lattice and threads run from the recalled cells to the
+   answer while it streams. Nothing glows that didn't rank. */
 :root {
-  --ground: #f3eede;
-  --panel: #faf7ec;
-  --panel-2: #ece5d0;
-  --ink: #211e12;
-  --dim: #71694f;
-  --gold: #9c6f16;
-  --gold-hot: #7d570c;
-  --gold-glow: rgba(156, 111, 22, 0.24);
+  --ground: #f3eede; --panel: #faf7ec; --panel-2: #ece5d0;
+  --vellum: rgba(250, 247, 236, 0.86);
+  --ink: #211e12; --dim: #71694f;
+  --gold: #9c6f16; --gold-hot: #7d570c; --gold-glow: rgba(156, 111, 22, 0.24);
   --line: rgba(125, 95, 25, 0.26);
-  --ok: #4d7c33;
-  --err: #a84a28;
-  --cell: #e2d8bc;
-  --cell-lit: #d9a441;
+  --ok: #4d7c33; --err: #a84a28;
   --cell-ink: #211e12;
+  --field-cell: rgba(125, 95, 25, 0.16);
+  --field-lit: #b98a1e;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --ground: #0d0f0b;
-    --panel: #14170f;
-    --panel-2: #1b1f14;
-    --ink: #eae4d1;
-    --dim: #948d78;
-    --gold: #d9a441;
-    --gold-hot: #f2c66a;
-    --gold-glow: rgba(217, 164, 65, 0.30);
+    --ground: #0d0f0b; --panel: #14170f; --panel-2: #1b1f14;
+    --vellum: rgba(17, 20, 13, 0.82);
+    --ink: #eae4d1; --dim: #948d78;
+    --gold: #d9a441; --gold-hot: #f2c66a; --gold-glow: rgba(217, 164, 65, 0.30);
     --line: rgba(217, 164, 65, 0.22);
-    --ok: #8fbf6f;
-    --err: #d06b4a;
-    --cell: #232719;
-    --cell-lit: #d9a441;
+    --ok: #8fbf6f; --err: #d06b4a;
     --cell-ink: #0d0f0b;
+    --field-cell: rgba(217, 164, 65, 0.13);
+    --field-lit: #d9a441;
   }
 }
 :root[data-theme="dark"] {
   --ground: #0d0f0b; --panel: #14170f; --panel-2: #1b1f14;
+  --vellum: rgba(17, 20, 13, 0.82);
   --ink: #eae4d1; --dim: #948d78;
   --gold: #d9a441; --gold-hot: #f2c66a; --gold-glow: rgba(217, 164, 65, 0.30);
   --line: rgba(217, 164, 65, 0.22); --ok: #8fbf6f; --err: #d06b4a;
-  --cell: #232719; --cell-lit: #d9a441; --cell-ink: #0d0f0b;
+  --cell-ink: #0d0f0b;
+  --field-cell: rgba(217, 164, 65, 0.13); --field-lit: #d9a441;
 }
 :root[data-theme="light"] {
   --ground: #f3eede; --panel: #faf7ec; --panel-2: #ece5d0;
+  --vellum: rgba(250, 247, 236, 0.86);
   --ink: #211e12; --dim: #71694f;
   --gold: #9c6f16; --gold-hot: #7d570c; --gold-glow: rgba(156, 111, 22, 0.24);
   --line: rgba(125, 95, 25, 0.26); --ok: #4d7c33; --err: #a84a28;
-  --cell: #e2d8bc; --cell-lit: #d9a441; --cell-ink: #211e12;
+  --cell-ink: #211e12;
+  --field-cell: rgba(125, 95, 25, 0.16); --field-lit: #b98a1e;
 }
+
+@view-transition { navigation: auto; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 body {
-  background: var(--ground);
-  color: var(--ink);
+  background: var(--ground); color: var(--ink);
   font-family: ui-monospace, "Cascadia Code", Consolas, "SF Mono", monospace;
   font-size: 15px;
-  display: flex;
-  flex-direction: column;
+  overflow: hidden;
 }
 button { font: inherit; cursor: pointer; }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+a { color: var(--gold-hot); }
 
-/* ---------- crown: identity + cortex ---------- */
+/* ---------- layer 0: the mind field ---------- */
+#mindfield { position: fixed; inset: 0; z-index: 0; display: block; }
+
+/* ---------- layer 1: the instrument ---------- */
+.instrument {
+  position: relative; z-index: 1;
+  height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column;
+  pointer-events: none; /* the field receives idle pointer play; real controls re-enable below */
+}
+.instrument > * { pointer-events: auto; }
+
 header.crown {
-  border-bottom: 1px solid var(--line);
-  background: var(--panel);
-  padding: 14px clamp(16px, 4vw, 40px) 0;
+  display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+  padding: 16px clamp(16px, 4vw, 44px) 12px;
 }
-.crown-row { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
 .brainname {
-  font-size: 1.05rem; font-weight: 700; letter-spacing: 0.04em;
+  font-size: 1.02rem; font-weight: 700; letter-spacing: 0.04em;
   display: flex; align-items: center; gap: 9px; margin: 0;
+  text-shadow: 0 0 14px var(--ground);
 }
-.brainname .hex { color: var(--gold); font-size: 1.15rem; }
-.crown .triptych {
+.brainname .hex { color: var(--gold); font-size: 1.12rem; }
+.triptych {
   display: flex; gap: 14px; align-items: baseline;
-  font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase;
+  font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--dim);
 }
-.crown .triptych a { color: var(--dim); text-decoration: none; }
-.crown .triptych a:hover { color: var(--gold); }
-.crown .triptych .here { color: var(--gold); }
-.crown .triptych .hex { color: var(--gold); margin-right: 3px; }
-.crown .mode-badge {
-  margin-left: auto;
-  font-size: 0.66rem; letter-spacing: 0.14em;
+.triptych a { color: var(--dim); text-decoration: none; }
+.triptych a:hover { color: var(--gold); }
+.triptych .here { color: var(--gold); }
+.triptych .hex { color: var(--gold); margin-right: 3px; }
+.crown-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.mode-badge {
+  font-size: 0.64rem; letter-spacing: 0.14em;
   border: 1px solid var(--line); border-radius: 999px;
   padding: 2px 10px; color: var(--dim);
+  background: var(--vellum);
 }
-.crown .mode-badge.demo { color: var(--err); border-color: var(--err); }
-button.theme-btn {
-  background: none; border: 1px solid var(--line); border-radius: 999px;
-  color: var(--dim); font-size: 0.66rem; letter-spacing: 0.12em;
+.mode-badge.demo { color: var(--err); border-color: var(--err); }
+button.theme-btn, .index-toggle {
+  background: var(--vellum); border: 1px solid var(--line); border-radius: 999px;
+  color: var(--dim); font-size: 0.64rem; letter-spacing: 0.12em;
   padding: 2px 10px;
 }
-button.theme-btn:hover { color: var(--gold); border-color: var(--gold); }
+button.theme-btn:hover, .index-toggle:hover { color: var(--gold); border-color: var(--gold); }
+.field-legend {
+  padding: 0 clamp(16px, 4vw, 44px) 6px;
+  font-size: 0.66rem; color: var(--dim); letter-spacing: 0.06em;
+  text-shadow: 0 0 10px var(--ground);
+}
+.field-legend b { color: var(--gold); font-weight: 600; }
 
-/* the cortex: every cell is a real memory or document */
-.cortex {
-  display: flex; flex-wrap: wrap; gap: 5px;
-  padding: 14px 0 16px;
-  min-height: 44px;
-  align-content: flex-start;
+/* cortex index: the keyboard/mobile door into the field */
+.cortex-index {
+  position: fixed; top: 64px; right: clamp(12px, 3vw, 40px); z-index: 25;
+  width: min(330px, calc(100vw - 32px)); max-height: 55vh; overflow-y: auto;
+  background: var(--panel); border: 1px solid var(--gold); border-radius: 8px;
+  padding: 12px;
 }
-.cell {
-  width: 26px; height: 30px;
-  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  background: var(--cell);
-  border: none; padding: 0;
-  position: relative;
-  transition: background 400ms ease, transform 400ms ease;
+.cortex-index[hidden] { display: none; }
+.cortex-index h2 { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); margin: 0 0 8px; }
+.cortex-index button.cell-row {
+  display: block; width: 100%; text-align: left;
+  background: none; border: none; border-top: 1px dashed var(--line);
+  color: var(--dim); font-size: 0.72rem; line-height: 1.5; padding: 6px 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.cell:hover, .cell:focus-visible { background: var(--gold); transform: translateY(-2px); }
-.cell.lit { background: var(--cell-lit); box-shadow: 0 0 14px var(--gold-glow); }
-.cell.born { animation: born 700ms ease; }
-@keyframes born { 0% { transform: scale(0); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
-@media (prefers-reduced-motion: no-preference) {
-  .cell.breathing { animation: breathe 4s ease-in-out infinite; }
-  @keyframes breathe { 0%, 100% { background: var(--cell); } 50% { background: var(--gold-glow); } }
-}
-.cortex-legend { font-size: 0.68rem; color: var(--dim); padding-bottom: 12px; letter-spacing: 0.06em; }
-.cortex-legend b { color: var(--gold); font-weight: 600; }
+.cortex-index button.cell-row:hover { color: var(--gold); }
+.cortex-index button.cell-row .k { color: var(--gold); margin-right: 6px; }
+.cortex-index button.cell-row.lit { color: var(--ink); }
 
-/* cell inspector */
+/* ---------- the manuscript: vellum over the field ---------- */
+main.manuscript {
+  flex: 1; overflow-y: auto; overscroll-behavior: contain;
+  padding: 10px clamp(10px, 3vw, 40px) 150px;
+}
+.thread {
+  max-width: 720px; margin: 0 auto;
+  background: var(--vellum);
+  backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+  border: 1px solid var(--line); border-radius: 12px;
+  padding: 30px clamp(18px, 4vw, 42px) 40px;
+  min-height: 50vh;
+}
+.empty-mind { color: var(--dim); font-size: 0.85rem; line-height: 1.85; max-width: 54ch; }
+.empty-mind .hex { color: var(--gold); }
+.empty-mind b { color: var(--ink); font-weight: 600; }
+
+.exchange { margin-bottom: 46px; }
+.command {
+  color: var(--gold);
+  font-size: 0.78rem; letter-spacing: 0.1em;
+  border-left: 2px solid var(--gold);
+  padding-left: 12px; margin-bottom: 14px;
+  word-break: break-word;
+}
+.command::before { content: "you ⟶ "; color: var(--dim); letter-spacing: 0.06em; }
+
+.voice {
+  font-family: Charter, Georgia, Cambria, "Times New Roman", serif;
+  font-size: 1.05rem; line-height: 1.75; max-width: 64ch; word-break: break-word;
+}
+.voice p { margin: 0 0 12px; }
+.voice code { font-family: ui-monospace, Consolas, monospace; font-size: 0.85em; background: var(--panel-2); padding: 1px 5px; border-radius: 3px; }
+.voice pre { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; overflow-x: auto; font-size: 0.8rem; line-height: 1.55; }
+.voice pre code { background: none; padding: 0; }
+.voice a { color: var(--gold-hot); }
+.voice .caret { color: var(--gold); animation: caret 1s steps(2) infinite; }
+@media (prefers-reduced-motion: reduce) { .voice .caret { animation: none; } }
+@keyframes caret { 50% { opacity: 0; } }
+
+/* three faces as an underline rail */
+.faces { display: flex; gap: 18px; margin-top: 16px; border-bottom: 1px solid var(--line); }
+.face-tab {
+  background: none; border: none; padding: 3px 1px 7px;
+  color: var(--dim); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.face-tab[aria-selected="true"] { color: var(--gold); border-bottom-color: var(--gold); }
+.face-pane { padding: 12px 2px 0; font-size: 0.78rem; line-height: 1.6; }
+.face-pane[hidden] { display: none; }
+.recall-item { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.recall-item:last-child { border-bottom: none; }
+.recall-score { flex: 0 0 46px; align-self: flex-start; color: var(--gold); font-variant-numeric: tabular-nums; font-size: 0.72rem; padding-top: 2px; }
+.recall-bar { height: 3px; background: var(--panel-2); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+.recall-bar i { display: block; height: 100%; background: var(--gold); }
+.recall-doc { color: var(--ink); font-weight: 600; display: block; margin-bottom: 2px; }
+.recall-jump { color: var(--dim); font-weight: 400; font-size: 0.64rem; letter-spacing: 0.08em; text-decoration: none; }
+.recall-jump:hover { color: var(--gold); }
+.recall-excerpt { color: var(--dim); font-family: Charter, Georgia, serif; font-size: 0.84rem; }
+.recall-none, .trace-grid { color: var(--dim); }
+.trace-grid { display: grid; grid-template-columns: auto 1fr; gap: 3px 18px; font-variant-numeric: tabular-nums; }
+.trace-grid dt { color: var(--dim); }
+.trace-grid dd { margin: 0; color: var(--ink); }
+
+/* inspector */
 .inspector {
-  position: fixed; z-index: 30;
-  max-width: 340px;
-  background: var(--panel-2); border: 1px solid var(--gold);
-  border-radius: 6px; padding: 12px 14px;
-  font-size: 0.78rem; line-height: 1.5;
+  position: fixed; z-index: 30; max-width: 340px;
+  background: var(--panel-2); border: 1px solid var(--gold); border-radius: 6px;
+  padding: 12px 14px; font-size: 0.78rem; line-height: 1.5;
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
 }
 .inspector .kind { color: var(--gold); font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; display: block; margin-bottom: 5px; }
@@ -146,201 +215,127 @@ button.theme-btn:hover { color: var(--gold); border-color: var(--gold); }
 .inspector .body { color: var(--ink); font-family: Charter, Georgia, Cambria, serif; }
 .inspector[hidden] { display: none; }
 
-/* ---------- the manuscript ---------- */
-main.manuscript {
-  flex: 1; overflow-y: auto;
-  padding: 34px clamp(16px, 4vw, 40px) 140px;
-}
-.thread { max-width: 700px; margin: 0 auto; }
-.empty-mind { color: var(--dim); font-size: 0.85rem; line-height: 1.8; max-width: 54ch; }
-.empty-mind .hex { color: var(--gold); }
-
-.exchange { margin-bottom: 44px; }
-.command {
-  color: var(--gold);
-  font-size: 0.78rem; letter-spacing: 0.1em;
-  border-left: 2px solid var(--gold);
-  padding-left: 12px;
-  margin-bottom: 14px;
-  word-break: break-word;
-}
-.command::before { content: "you ⟶ "; color: var(--dim); letter-spacing: 0.06em; }
-
-.voice {
-  font-family: Charter, Georgia, Cambria, "Times New Roman", serif;
-  font-size: 1.04rem; line-height: 1.75;
-  max-width: 66ch;
-  word-break: break-word;
-}
-.voice p { margin: 0 0 12px; }
-.voice code {
-  font-family: ui-monospace, Consolas, monospace;
-  font-size: 0.85em;
-  background: var(--panel-2);
-  padding: 1px 5px; border-radius: 3px;
-}
-.voice pre {
-  background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px;
-  padding: 12px 14px; overflow-x: auto;
-  font-size: 0.8rem; line-height: 1.55;
-}
-.voice pre code { background: none; padding: 0; }
-.voice a { color: var(--gold-hot); }
-.voice .caret { color: var(--gold); animation: caret 1s steps(2) infinite; }
-@media (prefers-reduced-motion: reduce) { .voice .caret { animation: none; } }
-@keyframes caret { 50% { opacity: 0; } }
-
-/* the three faces */
-.faces { display: flex; gap: 2px; margin-top: 14px; }
-.face-tab {
-  background: none; border: 1px solid var(--line); border-bottom: none;
-  border-radius: 5px 5px 0 0;
-  color: var(--dim); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase;
-  padding: 4px 12px;
-}
-.face-tab[aria-selected="true"] { color: var(--gold); border-color: var(--gold); background: var(--panel); }
-.face-pane {
-  border-top: 1px solid var(--line);
-  padding: 12px 2px 0;
-  font-size: 0.78rem; line-height: 1.6;
-}
-.face-pane[hidden] { display: none; }
-.recall-item { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
-.recall-item:last-child { border-bottom: none; }
-.recall-score {
-  flex: 0 0 46px; align-self: flex-start;
-  color: var(--gold); font-variant-numeric: tabular-nums; font-size: 0.72rem;
-  padding-top: 2px;
-}
-.recall-bar { height: 3px; background: var(--panel-2); border-radius: 2px; margin-top: 4px; overflow: hidden; }
-.recall-bar i { display: block; height: 100%; background: var(--gold); }
-.recall-doc { color: var(--ink); font-weight: 600; display: block; margin-bottom: 2px; }
-.recall-jump { color: var(--dim); font-weight: 400; font-size: 0.64rem; letter-spacing: 0.08em; text-decoration: none; }
-.recall-jump:hover { color: var(--gold); }
-.recall-excerpt { color: var(--dim); font-family: Charter, Georgia, serif; font-size: 0.82rem; }
-.recall-none, .trace-grid { color: var(--dim); }
-.trace-grid { display: grid; grid-template-columns: auto 1fr; gap: 3px 18px; font-variant-numeric: tabular-nums; }
-.trace-grid dt { color: var(--dim); }
-.trace-grid dd { margin: 0; color: var(--ink); }
-
-/* keep chip (consented memory) */
+/* keep chip */
 .keep-chip {
   position: fixed; z-index: 40;
   background: var(--gold); color: var(--cell-ink);
   border: none; border-radius: 999px;
   font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
-  padding: 4px 12px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+  padding: 4px 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.3);
 }
 .keep-chip[hidden] { display: none; }
 
-/* ---------- the stem ---------- */
+/* ---------- the stem: a floating capsule ---------- */
 .stem {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
-  background: var(--panel);
-  border-top: 1px solid var(--line);
-  padding: 12px clamp(16px, 4vw, 40px) 14px;
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: 18px; z-index: 20;
+  width: min(720px, calc(100vw - 24px));
 }
-.stem-inner { max-width: 700px; margin: 0 auto; }
-.stem-row { display: flex; gap: 10px; align-items: flex-end; }
-.stem .hexmark { color: var(--gold); font-size: 1.1rem; padding-bottom: 9px; }
+.stem-capsule {
+  display: flex; gap: 10px; align-items: flex-end;
+  background: var(--panel);
+  border: 1px solid var(--line); border-radius: 14px;
+  padding: 10px 16px 8px;
+  box-shadow: 0 10px 34px rgba(0,0,0,0.22);
+  transition: border-color 300ms ease, box-shadow 300ms ease;
+}
+.stem.streaming .stem-capsule { border-color: var(--gold); box-shadow: 0 10px 34px var(--gold-glow); }
+.stem .hexmark { color: var(--gold); font-size: 1.1rem; padding-bottom: 8px; }
 .stem textarea {
-  flex: 1; resize: none;
-  background: none; border: none; outline: none;
-  color: var(--ink);
-  font: inherit; font-size: 0.92rem; line-height: 1.5;
-  max-height: 130px;
-  padding: 8px 0;
+  flex: 1; resize: none; background: none; border: none; outline: none;
+  color: var(--ink); font: inherit; font-size: 0.92rem; line-height: 1.5;
+  max-height: 130px; padding: 7px 0;
 }
 .stem textarea::placeholder { color: var(--dim); }
 button.send, button.stop {
-  border: 1px solid var(--gold); border-radius: 6px;
+  border: 1px solid var(--gold); border-radius: 8px;
   background: var(--gold); color: var(--cell-ink);
-  font-size: 0.74rem; font-weight: 700; letter-spacing: 0.1em;
-  padding: 8px 16px;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; padding: 8px 15px;
 }
 button.stop { background: none; color: var(--err); border-color: var(--err); }
 button.send:disabled { opacity: 0.45; cursor: default; }
 .stem-meta {
-  display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
-  font-size: 0.66rem; color: var(--dim); letter-spacing: 0.08em;
-  padding-top: 6px;
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  font-size: 0.64rem; color: var(--dim); letter-spacing: 0.08em;
+  padding: 7px 6px 0;
+  text-shadow: 0 0 10px var(--ground);
 }
 .persona-chip {
-  background: none; border: 1px solid var(--line); border-radius: 999px;
-  color: var(--dim); font-size: 0.66rem; letter-spacing: 0.1em;
-  padding: 2px 10px;
+  background: var(--vellum); border: 1px solid var(--line); border-radius: 999px;
+  color: var(--dim); font-size: 0.64rem; letter-spacing: 0.1em; padding: 2px 10px;
 }
 .persona-chip[aria-pressed="true"] { color: var(--gold); border-color: var(--gold); }
-.fresh { background: none; border: none; color: var(--dim); font-size: 0.66rem; letter-spacing: 0.1em; text-decoration: underline; padding: 0; }
+.fresh { background: none; border: none; color: var(--dim); font-size: 0.64rem; letter-spacing: 0.1em; text-decoration: underline; padding: 0; }
 .fresh:hover { color: var(--gold); }
-.stem-status { margin-left: auto; }
+.stem-status { margin-left: auto; font-variant-numeric: tabular-nums; }
 .stem-status.err { color: var(--err); }
+.stem-status .pulse { color: var(--gold); }
 
 .toast {
-  position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%); z-index: 50;
+  position: fixed; bottom: 108px; left: 50%; transform: translateX(-50%); z-index: 50;
   background: var(--panel-2); border: 1px solid var(--gold);
-  color: var(--ink); font-size: 0.76rem;
-  border-radius: 6px; padding: 8px 16px;
+  color: var(--ink); font-size: 0.76rem; border-radius: 6px; padding: 8px 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
 .toast[hidden] { display: none; }
 
 @media (max-width: 640px) {
-  .cortex .cell { width: 20px; height: 23px; }
+  .thread { padding: 22px 16px 32px; }
   main.manuscript { padding-bottom: 170px; }
 }
 </style>
 </head>
 <body>
 
-<header class="crown">
-  <div class="crown-row">
+<canvas id="mindfield" aria-label="The mind field: a constellation where every hexagonal cell is one real memory or document. Recalled cells ignite during answers. Use the cortex index button for keyboard access."></canvas>
+
+<div class="instrument">
+  <header class="crown">
     <h1 class="brainname"><span class="hex" aria-hidden="true">⬡</span> <span id="brain-name">…</span></h1>
     <nav class="triptych" aria-label="XBrain surfaces">
       <span class="here"><span class="hex" aria-hidden="true">⬡</span>dialogue</span>
       <a href="/xbrain-ledger.html"><span class="hex" aria-hidden="true">⬡</span>ledger</a>
       <a href="/xbrain-atlas.html"><span class="hex" aria-hidden="true">⬡</span>atlas</a>
     </nav>
-    <span class="mode-badge" id="mode-badge">connecting</span>
-    <button class="theme-btn" id="theme-btn" type="button" aria-label="Cycle color theme">theme: auto</button>
-  </div>
-  <div class="cortex" id="cortex" role="list" aria-label="Cortex: every cell is one memory or document in this workspace"></div>
-  <div class="cortex-legend" id="cortex-legend">cortex — <b>0</b> cells · cells ignite when your AI recalls them</div>
-</header>
+    <span class="crown-right">
+      <span class="mode-badge" id="mode-badge">connecting</span>
+      <button class="index-toggle" id="index-toggle" type="button" aria-expanded="false" aria-controls="cortex-index">cortex index</button>
+      <button class="theme-btn" id="theme-btn" type="button" aria-label="Cycle color theme">theme: auto</button>
+    </span>
+  </header>
+  <div class="field-legend" id="field-legend">the field holds <b>0</b> cells · recalled cells ignite and thread into the answer</div>
 
-<div class="inspector" id="inspector" hidden role="dialog" aria-label="Cell contents"></div>
-
-<main class="manuscript" id="manuscript">
-  <div class="thread" id="thread">
-    <div class="empty-mind" id="empty-mind">
-      <p><span class="hex">⬡</span> This is your mind's instrument panel, not a chat app.</p>
-      <p>Above: the cortex — one hexagonal cell for every memory and document your AI
-      actually holds. Ask something below and watch the cells it recalls ignite.
-      Every answer carries three faces: <b>voice</b>, <b>recall</b>, and <b>trace</b> —
-      what it said, what it used, what it cost.</p>
-      <p>Select any phrase in an answer to <b>⬡ keep</b> it — memory here is an act
-      you perform, never something done to you.</p>
+  <main class="manuscript" id="manuscript">
+    <div class="thread" id="thread">
+      <div class="empty-mind" id="empty-mind">
+        <p><span class="hex">⬡</span> You are standing inside your AI's mind.</p>
+        <p>Every faint hexagon in the field around this page is a <b>real</b> memory or document
+        it holds — nothing decorative, nothing invented. Ask something below: the cells it
+        actually recalls will ignite and thread into the answer while it streams.</p>
+        <p>Each answer carries three faces — <b>voice</b>, <b>recall</b>, <b>trace</b> — and any
+        phrase you select can be kept: <b>⬡ keep</b> births a new cell in the field, because
+        memory here is an act you perform, never something done to you.</p>
+      </div>
     </div>
-  </div>
-</main>
+  </main>
+</div>
 
+<div class="cortex-index" id="cortex-index" hidden role="dialog" aria-label="Cortex index"></div>
+<div class="inspector" id="inspector" hidden role="dialog" aria-label="Cell contents"></div>
 <button class="keep-chip" id="keep-chip" type="button" hidden>⬡ keep</button>
 <div class="toast" id="toast" hidden role="status"></div>
 
-<footer class="stem">
-  <div class="stem-inner">
-    <div class="stem-row">
-      <span class="hexmark" aria-hidden="true">⬡</span>
-      <textarea id="stem-input" rows="1" placeholder="speak to your mind — / to focus, Esc to stop" aria-label="Message your AI"></textarea>
-      <button class="send" id="send-btn" type="button">ASK</button>
-      <button class="stop" id="stop-btn" type="button" hidden>STOP</button>
-    </div>
-    <div class="stem-meta">
-      <span id="persona-chips"></span>
-      <button class="fresh" id="fresh-btn" type="button">fresh session</button>
-      <span class="stem-status" id="stem-status" role="status" aria-live="polite"></span>
-    </div>
+<footer class="stem" id="stem">
+  <div class="stem-capsule">
+    <span class="hexmark" aria-hidden="true">⬡</span>
+    <textarea id="stem-input" rows="1" placeholder="speak to your mind — / to focus, Esc to stop" aria-label="Message your AI"></textarea>
+    <button class="send" id="send-btn" type="button">ASK</button>
+    <button class="stop" id="stop-btn" type="button" hidden>STOP</button>
+  </div>
+  <div class="stem-meta">
+    <span id="persona-chips"></span>
+    <button class="fresh" id="fresh-btn" type="button">fresh session</button>
+    <span class="stem-status" id="stem-status" role="status" aria-live="polite"></span>
   </div>
 </footer>
 
@@ -364,12 +359,12 @@ const HEADERS = (() => {
 })();
 
 const $ = (sel) => document.querySelector(sel);
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)');
 const state = {
   demo: false,
   personas: [],
   personaId: null,
   conversationId: null,
-  cells: [],            // { id, kind: 'memory'|'document', label, body, el }
   streaming: false,
   abort: null,
 };
@@ -378,7 +373,6 @@ const state = {
 function esc(text) {
   return String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
-/* escape-first markdown subset: fences, inline code, bold, links */
 function renderVoice(text) {
   const safe = esc(text);
   const withFences = safe.replace(/```([^`]*)```/g, (_, code) => `<pre><code>${code.replace(/^\n/, '')}</code></pre>`);
@@ -433,9 +427,9 @@ function toast(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
 }
-function status(message, isError) {
+function status(html, isError) {
   const el = $('#stem-status');
-  el.textContent = message || '';
+  el.innerHTML = html || '';
   el.classList.toggle('err', Boolean(isError));
 }
 
@@ -448,56 +442,257 @@ function status(message, isError) {
     if (current === 'auto') delete document.documentElement.dataset.theme;
     else document.documentElement.dataset.theme = current;
     $('#theme-btn').textContent = `theme: ${current}`;
+    field.recolor();
   };
   $('#theme-btn').addEventListener('click', () => {
     current = order[(order.indexOf(current) + 1) % order.length];
     try { localStorage.setItem('xbrain-theme', current); } catch { /* fine */ }
     apply();
   });
-  apply();
+  queueMicrotask(apply);
 })();
 
-/* ================= cortex ================= */
-const CORTEX_LIMIT = 96;
-function addCell(kind, label, body, { lit = false, born = false, id = null } = {}) {
-  const cortex = $('#cortex');
-  const el = document.createElement('button');
-  el.type = 'button';
-  el.className = 'cell';
-  el.setAttribute('role', 'listitem');
-  el.setAttribute('aria-label', `${kind}: ${label.slice(0, 80)}`);
-  if (lit) el.classList.add('lit');
-  if (born) el.classList.add('born');
-  const cell = { id, kind, label, body, el };
-  el.addEventListener('click', (event) => inspect(cell, event));
-  cortex.appendChild(el);
-  state.cells.push(cell);
-  updateLegend();
-  return cell;
-}
-function updateLegend() {
-  const memories = state.cells.filter((c) => c.kind === 'memory').length;
-  const documents = state.cells.length - memories;
-  $('#cortex-legend').innerHTML =
-    `cortex — <b>${state.cells.length}</b> cells (${memories} memories · ${documents} knowledge) · cells ignite when your AI recalls them`;
-}
-function breathe() {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  setInterval(() => {
-    for (const cell of state.cells) cell.el.classList.remove('breathing');
-    const idle = state.cells.filter((c) => !c.el.classList.contains('lit'));
-    for (let i = 0; i < Math.min(3, idle.length); i++) {
-      idle[Math.floor(Math.random() * idle.length)].el.classList.add('breathing');
+/* ================= the mind field (canvas cortex) ================= */
+const FIELD_LIMIT = 220;
+const field = {
+  canvas: null, ctx: null, dpr: 1, w: 0, h: 0,
+  cells: [],           // { id, kind, label, body, slot, x, y, phase, lit, litAt, bornAt }
+  slots: [],           // available lattice positions
+  ripples: [],         // { x, y, startedAt }
+  threads: [],         // { cell, targetEl, startedAt, fading }
+  colors: {},
+  raf: null,
+  lastDraw: 0,
+
+  init() {
+    this.canvas = $('#mindfield');
+    this.ctx = this.canvas.getContext('2d');
+    addEventListener('resize', () => this.layout());
+    this.canvas.addEventListener('pointermove', (event) => this.hover(event, this.canvas));
+    this.canvas.addEventListener('click', (event) => {
+      const cell = this.hitTest(event.clientX, event.clientY);
+      if (cell) { inspect(cell, event); event.stopPropagation(); }
+    });
+    // the manuscript's margins sit above the canvas: forward their clicks to the field
+    const manuscript = $('#manuscript');
+    manuscript.addEventListener('pointermove', (event) => {
+      if (event.target === manuscript) this.hover(event, manuscript);
+    });
+    manuscript.addEventListener('click', (event) => {
+      if (event.target !== manuscript) return;
+      const cell = this.hitTest(event.clientX, event.clientY);
+      if (cell) { inspect(cell, event); event.stopPropagation(); }
+    });
+    this.layout();
+    this.loop();
+  },
+  recolor() {
+    const styles = getComputedStyle(document.documentElement);
+    this.colors = {
+      cell: styles.getPropertyValue('--field-cell').trim(),
+      lit: styles.getPropertyValue('--field-lit').trim(),
+      thread: styles.getPropertyValue('--gold').trim(),
+    };
+  },
+  layout() {
+    this.dpr = Math.min(devicePixelRatio || 1, 2);
+    this.w = innerWidth;
+    this.h = innerHeight;
+    this.canvas.width = Math.round(this.w * this.dpr);
+    this.canvas.height = Math.round(this.h * this.dpr);
+    this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    // pointy-top hex lattice across the viewport
+    const R = 13;
+    const dx = Math.sqrt(3) * R;
+    const dy = 1.5 * R;
+    this.slots = [];
+    for (let row = 0; row * dy < this.h + dy; row++) {
+      for (let col = 0; col * dx < this.w + dx; col++) {
+        this.slots.push({ x: col * dx + (row % 2 ? dx / 2 : 0) + 8, y: row * dy + 10 });
+      }
     }
-  }, 4200);
+    // deterministic scatter: cell i claims slot (i * prime) mod slots, skipping collisions
+    const taken = new Set();
+    for (let i = 0; i < this.cells.length; i++) {
+      let slot = (i * 48271 + 11) % this.slots.length;
+      while (taken.has(slot)) slot = (slot + 97) % this.slots.length;
+      taken.add(slot);
+      this.cells[i].x = this.slots[slot].x;
+      this.cells[i].y = this.slots[slot].y;
+    }
+    this.recolor();
+    this.draw(performance.now());
+  },
+  addCell(kind, label, body, { lit = false, born = false, id = null } = {}) {
+    if (this.cells.length >= FIELD_LIMIT) return null;
+    const cell = {
+      id, kind, label, body,
+      x: 0, y: 0,
+      phase: Math.random() * Math.PI * 2,
+      lit, litAt: lit ? performance.now() : 0,
+      bornAt: born ? performance.now() : 0,
+    };
+    this.cells.push(cell);
+    this.layout();
+    updateLegend();
+    renderIndex();
+    return cell;
+  },
+  ignite(predicate, targetEl) {
+    const now = performance.now();
+    let hits = 0;
+    for (const cell of this.cells) {
+      if (!predicate(cell)) continue;
+      hits++;
+      if (!cell.lit) {
+        cell.lit = true;
+        cell.litAt = now;
+        this.ripples.push({ x: cell.x, y: cell.y, startedAt: now });
+      }
+      if (targetEl) this.threads.push({ cell, targetEl, startedAt: now, fading: false });
+    }
+    renderIndex();
+    return hits;
+  },
+  extinguish() {
+    for (const cell of this.cells) cell.lit = false;
+    this.threads = [];
+    this.ripples = [];
+    renderIndex();
+  },
+  fadeThreads() {
+    const now = performance.now();
+    for (const thread of this.threads) { thread.fading = true; thread.fadedAt = now; }
+  },
+  hitTest(x, y) {
+    for (const cell of this.cells) {
+      const dx = cell.x - x;
+      const dy = cell.y - y;
+      if (dx * dx + dy * dy < 14 * 14) return cell;
+    }
+    return null;
+  },
+  hover(event, surface) {
+    surface.style.cursor = this.hitTest(event.clientX, event.clientY) ? 'pointer' : '';
+  },
+  hexPath(x, y, r) {
+    const ctx = this.ctx;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = Math.PI / 6 + (i * Math.PI) / 3;
+      const px = x + r * Math.cos(angle);
+      const py = y + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+  },
+  draw(now) {
+    const ctx = this.ctx;
+    ctx.clearRect(0, 0, this.w, this.h);
+    const still = REDUCED.matches;
+
+    // threads first, under the cells
+    this.threads = this.threads.filter((thread) => !thread.fading || now - thread.fadedAt < 900);
+    for (const thread of this.threads) {
+      const rect = thread.targetEl.getBoundingClientRect();
+      if (rect.bottom < 0 || rect.top > this.h) continue;
+      const tx = rect.left + 14;
+      const ty = rect.top + 14;
+      const alpha = thread.fading ? Math.max(0, 0.35 * (1 - (now - thread.fadedAt) / 900)) : 0.35;
+      ctx.strokeStyle = this.colors.thread;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(thread.cell.x, thread.cell.y);
+      ctx.quadraticCurveTo((thread.cell.x + tx) / 2, Math.min(thread.cell.y, ty) - 40, tx, ty);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // ripples
+    this.ripples = this.ripples.filter((ripple) => now - ripple.startedAt < 1100);
+    if (!still) {
+      for (const ripple of this.ripples) {
+        const t = (now - ripple.startedAt) / 1100;
+        ctx.strokeStyle = this.colors.lit;
+        ctx.globalAlpha = 0.4 * (1 - t);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(ripple.x, ripple.y, 12 + t * 70, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // cells
+    for (const cell of this.cells) {
+      let r = 8;
+      if (cell.bornAt && now - cell.bornAt < 700 && !still) {
+        const t = (now - cell.bornAt) / 700;
+        r = 8 * (t < 0.6 ? t / 0.6 * 1.35 : 1.35 - (t - 0.6) / 0.4 * 0.35);
+      }
+      if (cell.lit) {
+        const settle = Math.min(1, (now - cell.litAt) / 500);
+        ctx.shadowColor = this.colors.lit;
+        ctx.shadowBlur = still ? 8 : 8 + 6 * settle;
+        ctx.fillStyle = this.colors.lit;
+        this.hexPath(cell.x, cell.y, r + 1.5);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      } else {
+        const breathe = still ? 0 : 0.35 * Math.sin(now / 2600 + cell.phase);
+        ctx.globalAlpha = Math.max(0.25, 0.7 + breathe) ;
+        ctx.fillStyle = this.colors.cell;
+        this.hexPath(cell.x, cell.y, r);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+  },
+  loop() {
+    const step = (now) => {
+      // ~30fps is plenty for ambience; skip entirely when hidden
+      if (!document.hidden && now - this.lastDraw > 33) {
+        this.lastDraw = now;
+        this.draw(now);
+      }
+      this.raf = requestAnimationFrame(step);
+    };
+    this.raf = requestAnimationFrame(step);
+  },
+};
+
+function addCell(kind, label, body, options) { return field.addCell(kind, label, body, options); }
+function ignite(predicate, targetEl) { return field.ignite(predicate, targetEl); }
+function updateLegend() {
+  const memories = field.cells.filter((cell) => cell.kind === 'memory').length;
+  const documents = field.cells.length - memories;
+  $('#field-legend').innerHTML =
+    `the field holds <b>${field.cells.length}</b> cells (${memories} memories · ${documents} knowledge) · recalled cells ignite and thread into the answer`;
 }
-function ignite(predicate) {
-  let hits = 0;
-  for (const cell of state.cells) {
-    if (predicate(cell)) { cell.el.classList.add('lit'); hits++; }
+
+/* cortex index: keyboard door into the field */
+function renderIndex() {
+  const index = $('#cortex-index');
+  if (index.hidden) return;
+  index.innerHTML = '<h2>cortex index</h2>' + (field.cells.length ? '' : '<span style="font-size:0.72rem;color:var(--dim)">no cells yet</span>');
+  for (const cell of field.cells) {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = `cell-row${cell.lit ? ' lit' : ''}`;
+    row.innerHTML = `<span class="k">${cell.lit ? '⬢' : '⬡'}</span>`;
+    row.appendChild(document.createTextNode(`${cell.kind}: ${cell.label.slice(0, 80)}`));
+    row.addEventListener('click', (event) => inspect(cell, event));
+    index.appendChild(row);
   }
-  return hits;
 }
+$('#index-toggle').addEventListener('click', () => {
+  const index = $('#cortex-index');
+  index.hidden = !index.hidden;
+  $('#index-toggle').setAttribute('aria-expanded', String(!index.hidden));
+  renderIndex();
+});
+
 function inspect(cell, event) {
   const panel = $('#inspector');
   const jump = cell.kind === 'memory'
@@ -505,13 +700,20 @@ function inspect(cell, event) {
     : '<a href="/xbrain-atlas.html">view in atlas ↗</a>';
   panel.innerHTML = `<span class="kind">${esc(cell.kind)} · ${jump}</span><span class="body">${esc(cell.body.slice(0, 420))}${cell.body.length > 420 ? '…' : ''}</span>`;
   panel.hidden = false;
-  const x = Math.min(event.clientX, innerWidth - 360);
-  const y = Math.min(event.clientY + 14, innerHeight - 180);
+  const x = Math.min(event.clientX ?? innerWidth / 2, innerWidth - 360);
+  const y = Math.min((event.clientY ?? innerHeight / 3) + 14, innerHeight - 180);
   panel.style.left = `${Math.max(8, x)}px`;
   panel.style.top = `${y}px`;
 }
 document.addEventListener('click', (event) => {
-  if (!event.target.closest('.cell') && !event.target.closest('#inspector')) $('#inspector').hidden = true;
+  if (!event.target.closest('#inspector') && !event.target.closest('#cortex-index') &&
+      !event.target.closest('#index-toggle') && event.target.id !== 'mindfield') {
+    $('#inspector').hidden = true;
+  }
+  if (!event.target.closest('#cortex-index') && !event.target.closest('#index-toggle') && event.target.id !== 'mindfield') {
+    $('#cortex-index').hidden = true;
+    $('#index-toggle').setAttribute('aria-expanded', 'false');
+  }
 });
 
 /* ================= exchanges ================= */
@@ -568,6 +770,7 @@ function finishExchange(exchange, { text, sources, memories = [], trace }) {
   const tracePane = exchange.querySelector('[data-pane="trace"]');
   tracePane.innerHTML = `<dl class="trace-grid">${Object.entries(trace)
     .map(([key, value]) => `<dt>${esc(key)}</dt><dd>${esc(String(value))}</dd>`).join('')}</dl>`;
+  field.fadeThreads();
 }
 
 /* ================= consented memory: select → keep ================= */
@@ -595,7 +798,7 @@ function finishExchange(exchange, { text, sources, memories = [], trace }) {
     try {
       if (!state.demo) await api('POST', '/api/memories', { content });
       addCell('memory', content, content, { lit: true, born: true });
-      toast('⬡ kept — a new cell joined your cortex');
+      toast('⬡ kept — a new cell joined the field');
       document.getSelection()?.removeAllRanges();
     } catch (error) {
       toast(`could not keep: ${error.message}`);
@@ -615,10 +818,10 @@ async function bootLive() {
 
   const memories = await api('GET', '/api/memories').catch(() => []);
   const documents = await api('GET', '/api/documents').catch(() => []);
-  for (const memory of memories.slice(0, CORTEX_LIMIT / 2)) {
+  for (const memory of memories.slice(0, FIELD_LIMIT / 2)) {
     addCell('memory', memory.content, memory.content, { id: memory.id });
   }
-  for (const doc of documents.slice(0, CORTEX_LIMIT / 2)) {
+  for (const doc of documents.slice(0, FIELD_LIMIT / 2)) {
     const docName = doc.name || doc.title || 'document';
     addCell('document', docName, `${docName} — knowledge base document`, { id: doc.id });
   }
@@ -650,36 +853,48 @@ async function askLive(question, exchange) {
   let streamError = null;
   state.abort = new AbortController();
 
-  const response = await fetch('/api/chat', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', ...HEADERS() },
-    signal: state.abort.signal,
-    body: JSON.stringify({ message: question, conversationId: state.conversationId, personaId: state.personaId }),
-  });
-  if (!response.ok) {
-    const payload = await response.json().catch(() => ({}));
-    throw new Error(payload.error || response.statusText);
-  }
-  const voice = exchange.querySelector('.voice');
-  for await (const packet of sseIterate(response.body)) {
-    if (packet.event === 'meta') {
-      meta = packet.data;
-      state.conversationId = meta.conversationId;
-      const docIds = new Set((meta.sources || []).map((s) => s.documentId));
-      const memoryIds = new Set((meta.memories || []).map((m) => m.id));
-      ignite((cell) =>
-        (cell.kind === 'document' && docIds.has(cell.id)) ||
-        (cell.kind === 'memory' && memoryIds.has(cell.id)));
-    } else if (packet.event === 'delta') {
-      if (firstToken === null) firstToken = performance.now() - started;
-      text += packet.data.text || '';
-      voice.innerHTML = renderVoice(text) + '<span class="caret">▌</span>';
-      $('#manuscript').scrollTop = $('#manuscript').scrollHeight;
-    } else if (packet.event === 'done') {
-      usage = packet.data.usage || null;
-    } else if (packet.event === 'error') {
-      streamError = packet.data.message || 'the model request failed';
+  const waitTimer = setInterval(() => {
+    if (firstToken === null) status(`<span class="pulse">recalling…</span> ${Math.round(performance.now() - started)} ms`);
+  }, 90);
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...HEADERS() },
+      signal: state.abort.signal,
+      body: JSON.stringify({ message: question, conversationId: state.conversationId, personaId: state.personaId }),
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload.error || response.statusText);
     }
+    const voice = exchange.querySelector('.voice');
+    for await (const packet of sseIterate(response.body)) {
+      if (packet.event === 'meta') {
+        meta = packet.data;
+        state.conversationId = meta.conversationId;
+        const docIds = new Set((meta.sources || []).map((s) => s.documentId));
+        const memoryIds = new Set((meta.memories || []).map((m) => m.id));
+        const hits = ignite((cell) =>
+          (cell.kind === 'document' && docIds.has(cell.id)) ||
+          (cell.kind === 'memory' && memoryIds.has(cell.id)), exchange);
+        if (hits) status(`<span class="pulse">${hits} cell${hits === 1 ? '' : 's'} ignited</span> · composing…`);
+      } else if (packet.event === 'delta') {
+        if (firstToken === null) {
+          firstToken = performance.now() - started;
+          status(`first token in ${Math.round(firstToken)} ms · streaming…`);
+        }
+        text += packet.data.text || '';
+        voice.innerHTML = renderVoice(text) + '<span class="caret">▌</span>';
+        $('#manuscript').scrollTop = $('#manuscript').scrollHeight;
+      } else if (packet.event === 'done') {
+        usage = packet.data.usage || null;
+      } else if (packet.event === 'error') {
+        streamError = packet.data.message || 'the model request failed';
+      }
+    }
+  } finally {
+    clearInterval(waitTimer);
   }
   if (!text) throw new Error(streamError || 'the model returned an empty response');
   finishExchange(exchange, {
@@ -709,19 +924,21 @@ const DEMO_CELLS = [
   ['document', 'STORE_SUBMISSION.md — the last mile to every marketplace, accounts excluded.'],
   ['document', 'trainer protocol v1 — content-addressed blobs, idempotent jobs, attested artifacts.'],
   ['document', 'OPERATIONS.md — one stable home, portable exports, binaries that behave like installs.'],
+  ['memory', 'The interface never fakes machinery: nothing glows that did not rank.'],
+  ['document', 'XBRAIN_DESIGN_BRIEF.md — the standing prompt: the cognition is the interface.'],
 ];
 const DEMO_ANSWERS = [
   {
-    match: /xbrain|interface|design|ux|this/i,
-    text: 'XBrain is built on one refusal: the refusal to hide the machine.\n\nEvery cell above me is a **real thing I hold** — a memory you let me keep, a document you gave me. When you ask, the cells I actually reach for ignite. The *recall* face shows you the exact excerpts I used; *trace* shows what the answer cost. And when you select a phrase and press **⬡ keep**, you watch the memory being born — because remembering you is a privilege you grant, not a default I exploit.',
+    match: /xbrain|interface|design|ux|field|this/i,
+    text: 'You are inside the Mind Field — XBrain\'s third form.\n\nEvery hexagon drifting around this page is a **real thing I hold**: a memory you let me keep, a document you gave me. When you ask, the cells I truly reach for ignite and thread into the answer while it streams. The *recall* face shows the exact excerpts; *trace* shows what the answer cost, down to the first-token millisecond.\n\nNothing here is theatre: in the live product every glow is driven by genuine retrieval ids, and the silence when nothing ranks is shown honestly too.',
   },
   {
     match: /memory|remember|keep/i,
-    text: 'My memory is not a log — it is a ledger of things you chose.\n\nSelect any phrase in this answer and a **⬡ keep** chip will appear. Press it, and a new cell joins the cortex above, lit gold. In the live product that cell is a row in *your* SQLite file, on *your* disk, exportable and deletable. Nothing about you is learned silently.',
+    text: 'My memory is not a log — it is a ledger of things you chose.\n\nSelect any phrase in this answer and press **⬡ keep**: you will watch a new cell being born into the field around you. In the live product that cell is a row in *your* SQLite file, auditable in the Memory Ledger, amendable, and strikable from the record forever.',
   },
   {
     match: /.*/,
-    text: 'I am running in **demo mode** — no SovereignAI server is reachable from this page, so my cortex is a plausible fiction and this voice is scripted.\n\nServe me from your own machine (`sovereign start`, then open `/xbrain.html`) and everything here becomes real: the cells become your actual memories and documents, ignition follows genuine retrieval scores, and the trace face reports your model, your latency, your tokens.',
+    text: 'I am running in **demo mode** — no SovereignAI server is reachable from this page, so this field is a plausible fiction and my voice is scripted.\n\nRun `sovereign start` on your own machine and open `/xbrain.html`: the field becomes your actual memories and documents, ignition follows real retrieval, threads run to real answers, and the trace face reports your model, your latency, your tokens.',
   },
 ];
 function bootDemo() {
@@ -739,18 +956,18 @@ async function askDemo(question, exchange) {
   const voice = exchange.querySelector('.voice');
   const answer = DEMO_ANSWERS.find((a) => a.match.test(question));
   const words = question.toLowerCase().split(/\W+/).filter((w) => w.length > 3);
-  const relevant = state.cells.filter((cell) => words.some((w) => cell.body.toLowerCase().includes(w)));
-  const chosen = (relevant.length ? relevant : [...state.cells].sort(() => Math.random() - 0.5)).slice(0, 3);
-  await new Promise((resolve) => setTimeout(resolve, 400));
-  ignite((cell) => chosen.includes(cell));
+  const relevant = field.cells.filter((cell) => words.some((w) => cell.body.toLowerCase().includes(w)));
+  const chosen = (relevant.length ? relevant : [...field.cells].sort(() => Math.random() - 0.5)).slice(0, 3);
+  await new Promise((resolve) => setTimeout(resolve, 420));
+  ignite((cell) => chosen.includes(cell), exchange);
+  status(`<span class="pulse">${chosen.length} cells ignited</span> · composing…`);
   let text = '';
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   for (const token of answer.text.split(/(?<=\s)/)) {
     if (state.abort?.signal.aborted) break;
     text += token;
     voice.innerHTML = renderVoice(text) + '<span class="caret">▌</span>';
     $('#manuscript').scrollTop = $('#manuscript').scrollHeight;
-    if (!reduced) await new Promise((resolve) => setTimeout(resolve, 14));
+    if (!REDUCED.matches) await new Promise((resolve) => setTimeout(resolve, 14));
   }
   finishExchange(exchange, {
     text,
@@ -760,7 +977,7 @@ async function askDemo(question, exchange) {
     trace: {
       persona: state.personas.find((p) => p.id === state.personaId)?.name || 'Atlas',
       model: 'demo/scripted',
-      'first token': '400 ms',
+      'first token': '420 ms',
       'total time': `${((performance.now() - started) / 1000).toFixed(1)} s`,
       tokens: 'not a real model',
     },
@@ -778,7 +995,8 @@ async function ask() {
   state.abort = new AbortController();
   $('#send-btn').hidden = true;
   $('#stop-btn').hidden = false;
-  status('thinking…');
+  $('#stem').classList.add('streaming');
+  status('<span class="pulse">recalling…</span>');
   const exchange = addExchange(question);
   try {
     await (state.demo ? askDemo(question, exchange) : askLive(question, exchange));
@@ -789,13 +1007,14 @@ async function ask() {
       status('stopped');
     } else {
       finishExchange(exchange, { text: `I could not complete that: ${error.message}`, sources: [], trace: { failed: error.message } });
-      status(error.message, true);
+      status(esc(error.message), true);
     }
   } finally {
     state.streaming = false;
     state.abort = null;
     $('#send-btn').hidden = false;
     $('#stop-btn').hidden = true;
+    $('#stem').classList.remove('streaming');
   }
 }
 function autosize() {
@@ -811,8 +1030,8 @@ $('#send-btn').addEventListener('click', ask);
 $('#stop-btn').addEventListener('click', () => state.abort?.abort());
 $('#fresh-btn').addEventListener('click', () => {
   state.conversationId = null;
-  for (const cell of state.cells) cell.el.classList.remove('lit');
-  toast('fresh session — the cortex remembers, the thread does not');
+  field.extinguish();
+  toast('fresh session — the field remembers, the thread does not');
 });
 document.addEventListener('keydown', (event) => {
   if (event.key === '/' && document.activeElement !== $('#stem-input')) { event.preventDefault(); $('#stem-input').focus(); }
@@ -820,13 +1039,14 @@ document.addEventListener('keydown', (event) => {
 });
 
 /* ================= boot ================= */
+field.init();
 (async () => {
   try {
     await bootLive();
   } catch {
     bootDemo();
   }
-  breathe();
+  updateLegend();
   $('#stem-input').focus();
 })();
 </script>

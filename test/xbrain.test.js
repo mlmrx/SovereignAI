@@ -57,6 +57,19 @@ test('Dialogue keeps the cognition-loop contracts wired', () => {
   assert.match(script, /const safe = esc\(text\);/, 'the voice renders escaped-first markdown');
 });
 
+test('the Mind Field stays honest machinery with an accessible door', () => {
+  const script = scriptOf(surfaces.dialogue);
+  assert.match(surfaces.dialogue, /<canvas id="mindfield"/, 'the cortex is a full-viewport canvas field');
+  assert.match(script, /cell\.kind === 'document' && docIds\.has\(cell\.id\)/, 'document ignition maps to real source ids');
+  assert.match(script, /cell\.kind === 'memory' && memoryIds\.has\(cell\.id\)/, 'memory ignition maps to reported recall ids');
+  assert.match(script, /first token in \$\{Math\.round\(firstToken\)\} ms/, 'latency is measured, not implied');
+  assert.match(script, /REDUCED\.matches|prefers-reduced-motion/, 'field animation must respect reduced motion');
+  assert.match(surfaces.dialogue, /cortex-index/, 'the field must have a keyboard-accessible index');
+  for (const html of Object.values(surfaces)) {
+    assert.match(html, /@view-transition \{ navigation: auto; \}/, 'surfaces share cross-page transitions');
+  }
+});
+
 test('the chat meta event truthfully reports recalled memories to clients', () => {
   const chat = fs.readFileSync(path.join(root, 'src', 'chat.js'), 'utf8');
   assert.match(chat, /sse\.send\('meta', \{[\s\S]*?memories,[\s\S]*?\}\)/, 'meta must carry recalled memories');
