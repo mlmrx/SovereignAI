@@ -45,7 +45,7 @@ jobs:
 
       - name: Zip browser extension
         working-directory: integrations/browser
-        run: zip -r "$RUNNER_TEMP/sovereignai-browser-${GITHUB_REF_NAME#v}.zip" manifest.json background.js popup.html popup.js
+        run: zip -r "$RUNNER_TEMP/sovereignai-browser-${GITHUB_REF_NAME#v}.zip" manifest.json background.js popup.html popup.js icons
 
       - uses: actions/setup-java@v4
         with:
@@ -84,6 +84,31 @@ jobs:
         run: |
           if [ -z "$OVSX_PAT" ]; then echo "OVSX_PAT not set — skipping Open VSX publish"; exit 0; fi
           npx --yes ovsx publish "$RUNNER_TEMP/sovereignai-${GITHUB_REF_NAME#v}.vsix" -p "$OVSX_PAT"
+
+  binaries:
+    # Single-file executables (Node SEA). Waits for `artifacts` because that
+    # job creates the GitHub Release these binaries are uploaded into.
+    needs: [test, artifacts]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: windows-latest
+          - os: macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build and smoke-test single binary
+        run: node scripts/build-sea.mjs
+      - name: Upload binary to release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/sovereign-v* --clobber
 
   docker:
     needs: test

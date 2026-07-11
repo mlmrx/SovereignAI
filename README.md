@@ -58,6 +58,12 @@ Training is disabled by default and has no hosted fallback. The workflow never c
 
 ## Install
 
+**Single binary (no Node, no install):** download `sovereign-v*` for Windows,
+macOS, or Linux from [Releases](https://github.com/mlmrx/SovereignAI/releases),
+make it executable, and run it — the Node runtime, app, and web UI are all
+inside one file. See [operations](docs/OPERATIONS.md#single-binary-installs)
+for the one-time SmartScreen/Gatekeeper confirmation unsigned binaries need.
+
 **Windows (PowerShell):**
 ```powershell
 irm https://raw.githubusercontent.com/mlmrx/SovereignAI/main/scripts/install.ps1 | iex
@@ -110,7 +116,7 @@ sovereign import <file>    # restore from an export
 | **Browser extension** (MV3) | Popup chat + right-click "save to my AI's knowledge / memory" | [`integrations/browser/`](integrations/browser/README.md) |
 | **ChatGPT Custom GPT** | Actions schema so ChatGPT can query *your* AI (needs a tunnel) | [`integrations/chatgpt/`](integrations/chatgpt/README.md) |
 
-Releases: tagging `v*` triggers CI that packages the `.vsix`, browser zip, and JetBrains plugin zip into a GitHub Release and publishes the Docker image to GHCR. Marketplace publishing activates when `VSCE_PAT` / `OVSX_PAT` repo secrets are added (see [`.github/workflows/release.yml`](.github/workflows/release.yml)).
+Releases: tagging `v*` triggers CI that packages the `.vsix`, browser zip, JetBrains plugin zip, and single-file executables for Windows/macOS/Linux into a GitHub Release and publishes the Docker image to GHCR. Marketplace publishing activates when `VSCE_PAT` / `OVSX_PAT` repo secrets are added; every store artifact ships icons and listing copy per the [store submission guide](docs/STORE_SUBMISSION.md).
 
 ## Architecture
 
@@ -128,7 +134,7 @@ src/
   rag/                  chunker · BM25 · hybrid retriever
 public/                 responsive command center + wizard + guided Fine-Tuning Studio
 integrations/           mcp · vscode · jetbrains · browser · chatgpt · trainer protocol
-scripts/                install.ps1 · install.sh
+scripts/                install.ps1 · install.sh · build-sea.mjs (single binary) · make-icons.mjs
 Dockerfile / compose    container distribution (ghcr.io image via CI)
 test/                   node:test suite
 ```
@@ -150,7 +156,8 @@ Plain HTTP does not encrypt bearer tokens, prompts, or retrieved context. Use it
 ## Development
 
 ```bash
-npm test    # node:test — nothing to install, there are no dependencies
+npm test                    # node:test — nothing to install, there are no dependencies
+node scripts/build-sea.mjs  # build + smoke-test the single binary for this platform
 ```
 
 The suite includes 100+ core, UI-contract, integration, API, security, config, provider, training, ingestion, CLI, and Compose checks. Docker image builds remain covered by CI.
@@ -163,10 +170,10 @@ The suite includes 100+ core, UI-contract, integration, API, security, config, p
 - [x] PDF/DOCX ingestion, auto memory extraction
 - [x] JetBrains plugin; release pipeline for store publishing
 - [x] Install scripts, Docker image, LAN/tailnet mode
-- [ ] Store listings live (needs marketplace accounts: VS Code, Chrome, AMO, JetBrains)
+- [ ] Store listings live — everything is submission-ready ([guide](docs/STORE_SUBMISSION.md)); the remaining step is marketplace accounts (VS Code, Chrome, AMO, JetBrains)
 - [x] Guided local/self-hosted LoRA/QLoRA workflow with reviewed JSONL export
 - [x] Mobile-friendly command center, visible citations, editable memory, and safe streaming controls
-- [ ] Single-binary builds (Node SEA)
+- [x] Single-binary builds (Node SEA) for Windows, macOS, and Linux
 
 ## License
 

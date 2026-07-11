@@ -11,7 +11,9 @@
   "scripts": {
     "start": "node --no-warnings bin/sovereign.js start",
     "init": "node --no-warnings bin/sovereign.js init",
-    "test": "node --no-warnings --test test/*.test.js"
+    "test": "node --no-warnings --test test/*.test.js",
+    "build:binary": "node scripts/build-sea.mjs",
+    "icons": "node scripts/make-icons.mjs"
   },
   "engines": {
     "node": ">=22.5.0"

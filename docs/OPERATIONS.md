@@ -7,6 +7,8 @@ terminal's current directory:
 
 - Windows installer: `%LOCALAPPDATA%\SovereignAI`
 - macOS/Linux installer: `~/.sovereignai`
+- Single binary (`sovereign-v*-{win,macos,linux}-*` from GitHub Releases): the
+  same stable home as the platform installer
 - Docker: `/state`
 
 The home contains `sovereign.config.json` and `data/sovereign.db`. Set
@@ -183,6 +185,29 @@ The old `sovereign-data` database volume is mounted automatically at
 `OLLAMA_BASE_URL=http://host.docker.internal:11434`; v0.3 otherwise defaults to
 the containerized `ollama` profile service. After this one-time migration,
 `sovereign-state` persists settings and `sovereign-data` persists the database.
+
+## Single-binary installs
+
+Each release attaches self-contained executables built with Node's single
+executable application support: `sovereign-v<version>-win-x64.exe`,
+`-macos-arm64`, and `-linux-x64`. They embed the Node runtime, the unmodified
+SovereignAI source modules, and the web UI — nothing to install, nothing else
+to download, fully offline-capable.
+
+- **Home:** same stable location as the installers (`%LOCALAPPDATA%\SovereignAI`
+  or `~/.sovereignai`); `SOVEREIGN_HOME` overrides it. A binary and an
+  installed launcher on the same machine share one workspace by default.
+- **Upgrade:** replace the file. Downgrades follow the same state rules as any
+  other install ([see the migration section](#upgrading-from-v02)).
+- **First launch:** binaries are not store-signed (macOS builds are ad-hoc
+  signed), so Windows SmartScreen or macOS Gatekeeper may ask for a one-time
+  confirmation (macOS: right-click → Open, or
+  `xattr -d com.apple.quarantine <file>`). Checksums for verification come
+  from the GitHub Release page.
+- **Reproduce locally:** `node scripts/build-sea.mjs` on the target platform
+  (Node 22.15+; fetches the `postject` injector at build time only) produces
+  the same artifact in `dist/` and runs a version/doctor/live-server smoke
+  test against it.
 
 ## Docker and Ollama
 

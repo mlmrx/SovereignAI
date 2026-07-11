@@ -1,8 +1,6 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
-import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import {
   loadConfig,
   saveConfig,
@@ -44,7 +42,7 @@ import {
   cancel as cancelTraining,
 } from './training/client.js';
 
-const PUBLIC_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');
+import { readPublicFile } from './static-assets.js';
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -1270,16 +1268,14 @@ function safeBrowserOrigin(origin, host) {
 
 function serveStatic(pathname, res) {
   let rel = pathname === '/' ? 'index.html' : pathname.slice(1);
-  const file = path.normalize(path.join(PUBLIC_DIR, rel));
-  if (!file.startsWith(PUBLIC_DIR) || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
+  let body = readPublicFile(rel);
+  if (body === null) {
     // SPA fallback
-    const index = path.join(PUBLIC_DIR, 'index.html');
-    res.writeHead(200, { 'content-type': MIME['.html'] });
-    res.end(fs.readFileSync(index));
-    return;
+    rel = 'index.html';
+    body = readPublicFile(rel);
   }
-  res.writeHead(200, { 'content-type': MIME[path.extname(file)] ?? 'application/octet-stream' });
-  res.end(fs.readFileSync(file));
+  res.writeHead(200, { 'content-type': MIME[path.extname(rel)] ?? 'application/octet-stream' });
+  res.end(body ?? '');
 }
 
 export function startServer(rootDir, { host, port, env = process.env } = {}) {
