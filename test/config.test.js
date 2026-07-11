@@ -9,6 +9,7 @@ import {
   configPath,
   loadConfig,
   mergeConfigUpdate,
+  redactConfig,
   saveConfig,
 } from '../src/config.js';
 
@@ -37,6 +38,39 @@ test('config updates are normalized and reject unknown or malformed fields', () 
     () => mergeConfigUpdate(current, JSON.parse('{"defaults":{"__proto__":{"provider":"anthropic"}}}')),
     ConfigValidationError
   );
+});
+
+test('self-hosted trainer settings are explicit, bounded, and redact credentials', () => {
+  const current = structuredClone(DEFAULT_CONFIG);
+  const local = mergeConfigUpdate(current, {
+    training: { enabled: true, baseUrl: 'http://127.0.0.1:7331/', authToken: 'trainer-secret' },
+  });
+  assert.equal(local.training.baseUrl, 'http://127.0.0.1:7331');
+  assert.equal(local.training.enabled, true);
+  assert.notEqual(redactConfig(local).training.authToken, 'trainer-secret');
+
+  assert.throws(
+    () => mergeConfigUpdate(current, { training: { enabled: true, baseUrl: 'https://trainer.example' } }),
+    /allowRemote/
+  );
+  assert.throws(
+    () => mergeConfigUpdate(current, {
+      training: { enabled: true, baseUrl: 'http://10.0.0.5:7331', allowRemote: true },
+    }),
+    /allowInsecurePrivateNetwork/
+  );
+
+  const remote = mergeConfigUpdate(current, {
+    training: {
+      enabled: true,
+      baseUrl: 'https://trainer.example/',
+      allowRemote: true,
+      authToken: 'self-hosted-secret',
+    },
+  });
+  assert.equal(remote.training.baseUrl, 'https://trainer.example');
+  assert.equal(remote.training.allowRemote, true);
+  assert.equal(mergeConfigUpdate(remote, { training: { authToken: redactConfig(remote).training.authToken } }).training.authToken, 'self-hosted-secret');
 });
 
 test('config writes are atomic, reloadable, and private on POSIX', () => {

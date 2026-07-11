@@ -74,7 +74,7 @@ test('status counts and memory edits use focused store operations', () => {
   const memory = store.addMemory('old memory');
   store.addDocument({ name: 'D', size: 1, chunks: [{ content: 'x', embedding: null }], embedded: false });
 
-  assert.deepEqual(store.getCounts(), { personas: 1, conversations: 1, documents: 1, memories: 1 });
+  assert.deepEqual(store.getCounts(), { personas: 1, conversations: 1, documents: 1, memories: 1, training_projects: 0 });
   assert.equal(store.updateMemory(memory.id, 'updated memory').content, 'updated memory');
   assert.equal(store.updateMemory('missing', 'nope'), null);
   store.close();

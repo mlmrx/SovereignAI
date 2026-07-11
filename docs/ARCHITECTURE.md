@@ -23,6 +23,10 @@
 
 One chat turn (`POST /api/chat`): resolve persona → load trimmed history → inject long-term memory notes (if persona uses memory) → retrieve top-k knowledge chunks for the query (if persona uses knowledge) → compose system prompt → stream from the provider → persist both turns + usage → emit SSE (`meta`, `delta`*, `done`).
 
+One Model Studio build (`POST /api/model-recipes/:id/build`): load the user-owned recipe from SQLite → validate its base model, system prompt, parameters, template, license, quantization, and seed messages → render a portable Modelfile → call `/api/create` at the configured Ollama endpoint → return both build status and ownership metadata. Recipe persistence and model-artifact storage are intentionally separate boundaries.
+
+One fine-tuning run: explicitly select conversations → derive one-turn supervised examples → review/redact and save every included pair → freeze a deterministic conversation-grouped train/eval snapshot → bind consent to its hash and canonical trainer endpoint → content-address and upload both JSONL blobs → submit one idempotent LoRA/QLoRA job → poll the trainer's authoritative state → inspect evaluation-specific holdout metrics → record approval/rejection/skip notes → verify the trainer-attested Ollama tag and digest → assign it to a persona. `src/training/` owns the pure dataset and wire-contract logic; the external user-operated trainer owns Python/accelerator dependencies and weight updates.
+
 ## Decision records
 
 ### ADR-1: Zero runtime dependencies
@@ -52,13 +56,27 @@ DOCX is a ZIP of XML; PDF text lives in content streams. Both are parseable with
 ### ADR-9: Auto memory extraction is opt-in and fire-and-forget
 When `memory.autoExtract` is on, each chat exchange triggers one background model call that distills ≤3 durable facts into memory notes. It never blocks or delays the chat stream, failures are silent, and parsing tolerates model quirks (bullet variants, stray NONE lines). Off by default: it costs a model call per exchange and users should choose to be profiled, even locally.
 
-### ADR-10: "Bake your own model" via Ollama Modelfile
-`POST /api/create-model` calls the configured Ollama endpoint's `/api/create` (base model + system prompt → new named model). This creates a literal model artifact on that endpoint (`ollama list` there shows it), usable outside SovereignAI too. Fine-tuning is a different beast (planned as JSONL export first); baking delivers a reusable named-model experience today at zero training cost.
+### ADR-10: Model Studio creates configurable Ollama artifacts, not trained weights
+Model Studio stores editable model recipes and builds them through the configured Ollama endpoint's `/api/create`. A recipe can describe the artifact name, base model, system prompt, inference parameters, prompt template, license, quantization, and seed messages. The build returns a readable Modelfile and produces a named model artifact that can be used outside SovereignAI on that Ollama endpoint. Quantization is passed only for eligible FP16/FP32 sources; an unsupported source/format combination remains an Ollama build error rather than being silently changed.
+
+This is model packaging, inference configuration, and optional quantization—not weight fine-tuning. Building does not train on conversations, update the source model, or create a new foundation model. When quantization is selected, Ollama transforms the derived artifact's weight representation to the requested lower precision. That distinction is part of the product contract: the UI and API may say "build" or "create artifact," but must not imply that a recipe performs training. Fine-Tuning Studio is a separate workflow with its own consent and trainer boundary.
+
+### ADR-11: Ownership is explicit at every storage and processing boundary
+SovereignAI owns no hosted control plane. Workspace records and model recipes live in the user's selected home as SQLite state; the code is inspectable and MIT licensed; full-workspace JSON export/import carries every portable data table, including `model_recipes`. Runtime configuration and secrets are intentionally excluded from that export so a backup can be moved without silently copying credentials or redirecting restored data to an old endpoint.
+
+A model artifact lives at the Ollama endpoint that built it. With a loopback endpoint, recipe inputs and artifact storage stay on that machine. With a non-local endpoint, build inputs cross the network and the artifact is stored by that remote Ollama service. The API reports this boundary rather than labeling every Ollama build "local." SovereignAI does not mirror or escrow the resulting weights, so artifact backup and deletion follow the operator's Ollama procedures. Portable export carries the recipe and Modelfile ingredients, not Ollama weight blobs. User control of a recipe and generated artifact does not supersede third-party base-model licenses; the recipe's `license` field is metadata, not a license grant from SovereignAI.
+
+### ADR-12: Fine-tuning is an external, endpoint-bound weight-training protocol
+SovereignAI remains a dependency-free control plane. It can curate and validate training data but cannot honestly hide Axolotl, TRL/PEFT, Unsloth, MLX-LM, drivers, and accelerator requirements inside the Node process. Training therefore uses a small, versioned HTTP contract to a trainer the user operates. The capability handshake must assert actual weight training; blobs are immutable and content-addressed; job creation uses a stable idempotency key; indeterminate jobs block duplicates and retry the same key; imported snapshots are revalidated before upload.
+
+Source consent records the exact canonical trainer endpoint disclosed during curation. Final run consent records dataset hash, current endpoint, base model, method, and normalized hyperparameters; a changed endpoint therefore requires a fresh run confirmation while retaining the original snapshot audit trail. Credentials/private keys are blocked rather than merely acknowledged; other personal-data and quality flags require explicit acceptance. The trainer may register a merged GGUF in Ollama, but one-click assignment additionally compares the trainer-attested Ollama digest with the configured Ollama tag. Adapter/checkpoint and model deletion remain responsibilities of the trainer and Ollama operators. There is no OpenAI fine-tuning adapter or hosted fallback.
 
 ## Data model
 
-`personas` (system prompt, provider/model override, memory/knowledge switches) · `conversations` → `messages` (role, content, provider, model, token usage) · `memories` (long-term notes) · `documents` → `chunks` (content + optional embedding JSON). Export = all six tables + redacted config, one JSON file.
+`personas` (system prompt, provider/model override, memory/knowledge switches) · `conversations` → `messages` (role, content, provider, model, token usage) · `memories` (long-term notes) · `documents` → `chunks` (content + optional embedding JSON) · `model_recipes` (portable Ollama build specification and last-build metadata) · `training_projects` → `training_examples` → immutable `training_datasets` → `training_runs` (submission consent, state, metrics, artifact attestations, evaluation decision, deployment lineage).
+
+Full export = all eleven data tables in one JSON file. Configuration is omitted entirely: provider/trainer URLs, model defaults, bearer tokens, and API keys are reconfigured separately after restore. Imported training snapshots are treated as untrusted and revalidated before submission.
 
 ## Testing
 
-`npm test` (85+ checks): retrieval and chunking, store CRUD and portability, UI and editor/browser integration contracts, real-server API flows, tunnel/localhost security, config validation and atomic writes, bounded ingestion, provider cancellation and output limits, CLI behavior, and rendered Compose contracts. Live model verification remains provider-dependent.
+`npm test` (100+ checks): retrieval and chunking, store CRUD and portability (including model recipes and training lineage), UI and editor/browser integration contracts, real-server API flows, tunnel/localhost security, config validation and atomic writes, bounded ingestion, provider/trainer cancellation and output limits, idempotent training recovery, digest-gated deployment, CLI behavior, and rendered Compose contracts. Live artifact creation remains operator-dependent; deterministic tests use protocol-faithful mock trainer and Ollama endpoints.

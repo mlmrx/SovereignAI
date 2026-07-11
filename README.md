@@ -1,13 +1,13 @@
 # SovereignAI
 
-**Your private AI command center.** Bring your preferred model, durable memory, and personal knowledge into one workspace you can inspect, move, and run yourself. Name it, shape its behavior, add your documents, and optionally bake a named model on your configured Ollama endpoint. Zero runtime dependencies. MIT licensed.
+**Your private AI command center.** Bring your preferred model, durable memory, and personal knowledge into one workspace you can inspect, move, and run yourself. Name it, shape its behavior, add your documents, and use Model Studio to create an inspectable, portable recipe for a named model on your configured Ollama endpoint. Zero runtime dependencies. MIT licensed.
 
 ```bash
 node bin/sovereign.js start
 # → open http://127.0.0.1:4321 — the setup wizard walks you through the rest
 ```
 
-> **Status:** v0.3.0 — command center UI, source-aware chat, hardened local security, and production-grade CLI/Docker workflows.
+> **Status:** v0.3.0 — command center UI, source-aware chat, local/self-hosted Fine-Tuning Studio, hardened local security, and production-grade CLI/Docker workflows.
 
 ## Create your own AI in 5 simple steps
 
@@ -17,7 +17,25 @@ First run opens a guided wizard in the web UI:
 2. **Pick its brain** — a local Ollama model, Claude with your API key, or any OpenAI-compatible endpoint. The wizard tells you exactly where prompts and context will be processed.
 3. **Shape its personality** — describe it in your own words, tap trait chips (concise / warm / technical / challenger / teacher)
 4. **Feed it your data** — drop in TXT, Markdown, **PDF**, and **DOCX** files; everything is indexed locally. Optionally let it learn about you automatically from conversations
-5. **Make it real** — review the runtime, privacy path, knowledge, and memory choices before creation. On Ollama you can also **bake it into a named model** on the configured endpoint, e.g. `mia:latest`.
+5. **Make it real** — review the runtime, privacy path, knowledge, and memory choices before creation. On Ollama you can also **build it into a named model artifact** on the configured endpoint, e.g. `mia:latest`.
+
+## Model Studio: build without giving up ownership
+
+Model Studio turns the model build into data you control instead of a one-shot form. Save reusable recipes in your local SovereignAI SQLite database, tune the base model, system prompt, generation parameters, prompt template, license, quantization, and seed messages, then build or revise the artifact whenever you choose. Every recipe has a readable Ollama Modelfile representation and is included in full-workspace JSON export/import, so it can be inspected, versioned, copied, or restored without SovereignAI.
+
+The ownership boundary is explicit:
+
+- **The recipe is yours here** — it lives with your personas, conversations, memory, and knowledge in the SovereignAI home you selected.
+- **The artifact is yours there** — a build calls `/api/create` on the Ollama endpoint you configured. A local endpoint keeps build inputs and the resulting artifact on that machine; a remote endpoint receives the recipe inputs and stores the artifact remotely.
+- **There is no hidden training claim** — Model Studio packages a base model with configurable inference behavior and metadata. It does not update the source model's weights or perform fine-tuning. Actual LoRA/QLoRA training is a separate, explicitly consented Fine-Tuning Studio workflow.
+
+SovereignAI does not upload recipes, workspace data, or model artifacts to a project-owned cloud. Remote processing happens only when you select a remote provider or configure a non-local Ollama endpoint. Portable exports contain the recipe and the ingredients needed to render its Modelfile—not Ollama weight blobs. Your control of the recipe and artifact does not replace the license of the selected base model; review and follow those terms before use or redistribution. Quantization is available only when the source and selected format are eligible (Ollama supports it for FP16/FP32 sources).
+
+## Fine-Tuning Studio: actual training on infrastructure you control
+
+Fine-Tuning Studio guides a user through selecting conversations, recording source and destination consent, reviewing/redacting every example, freezing leakage-protected train/evaluation JSONL, and submitting a real LoRA or QLoRA job to a compatible local or self-hosted trainer. Trainer status is authoritative—SovereignAI never simulates training progress or success. Deployment requires evaluation evidence or an explicit documented skip, a trainer-attested Ollama tag and digest, and a matching model at the configured Ollama endpoint.
+
+Training is disabled by default and has no hosted fallback. The workflow never calls an OpenAI fine-tuning API; OpenAI-compatible chat remains an independent optional provider configured with the user's own key. See the [guided fine-tuning design](docs/FINE_TUNING.md) and [trainer v1 protocol](integrations/trainer/README.md).
 
 ## Useful from the first conversation
 
@@ -26,15 +44,16 @@ First run opens a guided wizard in the web UI:
 - **Sources, not mystery** — knowledge-grounded answers include an expandable drawer with the exact retrieved excerpts, documents, methods, and scores.
 - **Retrieval preview** — search your local knowledge index directly to see what the model will receive before asking it anything.
 - **Memory you control** — add, search, edit, or forget durable context; automatic extraction is an explicit opt-in.
+- **Weights you control** — curate immutable datasets and run actual LoRA/QLoRA training through a trainer you operate, with consent, holdout, lineage, and deployment gates.
 - **Responsive and accessible** — full mobile navigation, keyboard-visible actions, labeled controls, live generation status, and reduced-motion support.
 - **Race-safe streaming** — stop generation, switch views safely, copy answers or code, and keep a persona consistent for each conversation.
 
 ## Why sovereign
 
 - **Own the runtime** — one Node process on your hardware. **Zero npm dependencies**: no supply chain, auditable, works offline. Docker image available.
-- **Own the brain** — Ollama models, OpenAI-compatible servers (vLLM, llama.cpp, LM Studio, Groq…), or BYO-key Anthropic; switchable per persona. Bake custom named models on the Ollama endpoint you control.
+- **Own the brain** — Ollama models, OpenAI-compatible servers (vLLM, llama.cpp, LM Studio, Groq…), or BYO-key Anthropic; switchable per persona. Model Studio saves portable recipes and builds custom named artifacts on the Ollama endpoint you control.
 - **Own the memory** — conversations, long-term memory (manual notes + optional automatic fact extraction), and a document knowledge base in local SQLite. Hybrid retrieval: semantic embeddings when available, BM25 keyword always — fully offline capable.
-- **Own the data** — PDF/DOCX/text ingestion runs entirely locally (even the parsers are dependency-free). Portable JSON backups cover personas, chats, memory, and knowledge; provider settings and secrets are reconfigured separately.
+- **Own the data** — PDF/DOCX/text ingestion runs entirely locally (even the parsers are dependency-free). Portable JSON backups cover personas, chats, memory, knowledge, model recipes, and fine-tuning project history; provider/trainer settings and secrets are deliberately omitted and reconfigured separately.
 - **Share on your terms** — `sovereign start --lan` exposes it on your LAN or tailnet behind an auto-generated bearer token. The `#token=` fragment keeps the secret out of HTTP request URLs and access logs. Default is localhost-only.
 
 ## Install
@@ -104,10 +123,11 @@ src/
   memory-extract.js     automatic long-term memory extraction (opt-in)
   db.js                 SQLite storage (node:sqlite, built into Node 22)
   providers/            gateway: ollama (chat/embed/create) · openai-compat · anthropic
+  training/             canonical dataset snapshots · self-hosted trainer protocol client
   ingest/               zero-dep file ingestion: ZIP reader → DOCX · PDF · text
   rag/                  chunker · BM25 · hybrid retriever
-public/                 responsive command center + accessible first-run wizard
-integrations/           mcp · vscode (.vsix) · jetbrains · browser (MV3) · chatgpt
+public/                 responsive command center + wizard + guided Fine-Tuning Studio
+integrations/           mcp · vscode · jetbrains · browser · chatgpt · trainer protocol
 scripts/                install.ps1 · install.sh
 Dockerfile / compose    container distribution (ghcr.io image via CI)
 test/                   node:test suite
@@ -117,7 +137,11 @@ Decision records: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## API (localhost)
 
-`POST /api/chat` (SSE) · `POST /api/ask` (JSON) · `POST /api/create-model` (bake a named Ollama model) · `POST /api/documents` (text or base64 PDF/DOCX) · `GET /api/search?q=` · CRUD for `personas` / `conversations` / `memories` · `GET /api/export` / `POST /api/import` · `GET /api/providers` · `GET /api/models` · `GET/PUT /api/config`
+`POST /api/chat` (SSE) · `POST /api/ask` (JSON) · CRUD and build routes under `/api/model-recipes` · `POST /api/create-model` (legacy direct Ollama build) · `POST /api/documents` (text or base64 PDF/DOCX) · `GET /api/search?q=` · CRUD for `personas` / `conversations` / `memories` · `GET /api/export` / `POST /api/import` · `GET /api/providers` · `GET /api/models` · `GET/PUT /api/config`
+
+Fine-tuning routes live under `/api/training`: project/source/example curation, immutable dataset locking/export, trainer capabilities, run submit/refresh/cancel, evaluation decisions, and digest-gated Ollama persona assignment. Dataset bytes are sent only by the run-submission route after endpoint-bound consent.
+
+Model recipe routes are `GET/POST /api/model-recipes`, `GET/PUT/DELETE /api/model-recipes/:id`, and `POST /api/model-recipes/:id/build`. A build response includes the generated Modelfile and ownership metadata so clients can show where the artifact was created.
 
 Security: binds `127.0.0.1` by default. When `authToken` or `SOVEREIGN_TOKEN` is configured, **every** API request—including loopback and tunnel traffic—requires the bearer token. `--lan` generates one and prints a `#token=` browser URL; the browser stores it locally and sends it only as an authorization header. Tokenless localhost mode also rejects cross-origin browser writes, unsafe host headers, and non-JSON mutations.
 
@@ -129,7 +153,7 @@ Plain HTTP does not encrypt bearer tokens, prompts, or retrieved context. Use it
 npm test    # node:test — nothing to install, there are no dependencies
 ```
 
-The suite includes 85+ core, UI-contract, integration, API, security, config, provider, ingestion, CLI, and Compose checks. Docker image builds remain covered by CI.
+The suite includes 100+ core, UI-contract, integration, API, security, config, provider, training, ingestion, CLI, and Compose checks. Docker image builds remain covered by CI.
 
 ## Roadmap
 
@@ -140,7 +164,7 @@ The suite includes 85+ core, UI-contract, integration, API, security, config, pr
 - [x] JetBrains plugin; release pipeline for store publishing
 - [x] Install scripts, Docker image, LAN/tailnet mode
 - [ ] Store listings live (needs marketplace accounts: VS Code, Chrome, AMO, JetBrains)
-- [ ] Fine-tuning exports (training-ready JSONL from your conversations)
+- [x] Guided local/self-hosted LoRA/QLoRA workflow with reviewed JSONL export
 - [x] Mobile-friendly command center, visible citations, editable memory, and safe streaming controls
 - [ ] Single-binary builds (Node SEA)
 

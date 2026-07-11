@@ -2,8 +2,22 @@
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-const VIEW_TITLES = { home: 'Command center', chat: 'Chat', knowledge: 'Knowledge', memory: 'Memory', settings: 'Settings' };
+const VIEW_TITLES = { home: 'Command center', chat: 'Chat', knowledge: 'Knowledge', memory: 'Memory', finetune: 'Fine-tuning', settings: 'Settings' };
 const MAX_UPLOAD_BYTES = 14 * 1024 * 1024;
+const MAX_MODEL_RECIPE_BYTES = 20 * 1024 * 1024;
+const MODEL_RECIPE_FORMAT = 'sovereignai.model-recipe';
+const MODEL_RECIPE_VERSION = 1;
+const MODEL_PARAMETER_FIELDS = Object.freeze({
+  temperature: 'model-temperature',
+  num_ctx: 'model-num-ctx',
+  top_k: 'model-top-k',
+  top_p: 'model-top-p',
+  min_p: 'model-min-p',
+  repeat_last_n: 'model-repeat-last-n',
+  repeat_penalty: 'model-repeat-penalty',
+  seed: 'model-seed',
+  num_predict: 'model-num-predict',
+});
 
 const state = {
   view: 'home',
@@ -14,6 +28,14 @@ const state = {
   conversations: [],
   documents: [],
   memories: [],
+  modelRecipes: [],
+  modelRecipe: null,
+  modelRecipeId: null,
+  modelRecipeDirty: false,
+  modelRecipesLoaded: false,
+  modelRecipeRequestId: 0,
+  modelRecipeDetailRequestId: 0,
+  modelRecipeBusy: false,
   conversationId: null,
   conversationPersonaId: null,
   conversationRequestId: 0,
@@ -25,6 +47,7 @@ const state = {
   documentsRequestId: 0,
   memoriesRequestId: 0,
   modelRequestId: 0,
+  ollamaModelRequestId: 0,
   settingsDirty: false,
   settingsLoaded: false,
 };
@@ -327,7 +350,7 @@ document.addEventListener('keydown', (event) => {
 syncSidebarAccessibility();
 
 function routeFromHash() {
-  const match = location.hash.match(/^#\/(home|chat|knowledge|memory|settings)\/?$/);
+  const match = location.hash.match(/^#\/(home|chat|knowledge|memory|finetune|settings)\/?$/);
   return match?.[1] || null;
 }
 
@@ -347,6 +370,7 @@ function showView(name, { updateHash = true, focus = false } = {}) {
   closeSidebar();
   if (name === 'knowledge') loadDocuments().catch(showLoadError);
   if (name === 'memory') loadMemories().catch(showLoadError);
+  if (name === 'finetune') setTimeout(() => window.SOVEREIGN_FINE_TUNE?.load().catch(showLoadError), 0);
   if (name === 'settings' && (!state.settingsLoaded || !state.settingsDirty)) loadSettings().catch(showLoadError);
   if (focus) {
     const heading = $(`#view-${name} h1`);
@@ -433,6 +457,7 @@ function renderDashboard() {
   $('#stat-personas').textContent = counts.personas ?? state.personas.length;
   $('#nav-doc-count').textContent = counts.documents ?? state.documents.length;
   $('#nav-memory-count').textContent = counts.memories ?? state.memories.length;
+  $('#nav-training-count').textContent = counts.training_projects ?? 0;
 
   const runtime = runtimeInfo();
   const providerReady = runtime.status?.ok === true;
@@ -1265,16 +1290,19 @@ async function loadSettings() {
   renderPersonaEditor();
   state.settingsLoaded = true;
   markSettingsDirty(false);
-  await refreshModelOptions();
+  renderModelOwnership();
+  await Promise.all([refreshModelOptions(), refreshOllamaModelOptions(), loadModelRecipes()]);
   renderProviderStatus();
 }
 
 function markSettingsDirty(dirty = true) {
   state.settingsDirty = dirty;
-  $('#save-status').textContent = dirty ? 'Unsaved changes' : 'No unsaved changes';
+  $('#save-status').textContent = dirty
+    ? 'Unsaved workspace changes'
+    : state.modelRecipeDirty ? 'Recipe edits save separately in Model Studio' : 'No unsaved changes';
 }
 $('#settings-body').addEventListener('input', (event) => {
-  if (!event.target.closest('.save-bar')) markSettingsDirty(true);
+  if (!event.target.closest('.save-bar, [data-independent-settings]')) markSettingsDirty(true);
 });
 
 async function refreshModelOptions() {
@@ -1289,6 +1317,552 @@ async function refreshModelOptions() {
   }
 }
 $('#cfg-default-provider').addEventListener('change', refreshModelOptions);
+
+async function refreshOllamaModelOptions() {
+  const requestId = ++state.ollamaModelRequestId;
+  try {
+    const { models } = await api.get('/api/models?provider=ollama');
+    if (requestId !== state.ollamaModelRequestId) return;
+    $('#ollama-model-options').innerHTML = (models || []).map((model) => `<option value="${escapeHtml(model.id)}"></option>`).join('');
+  } catch {
+    if (requestId === state.ollamaModelRequestId) $('#ollama-model-options').innerHTML = '';
+  }
+}
+
+/* Model Studio */
+function currentModelRecipe() {
+  return state.modelRecipe?.id === state.modelRecipeId ? state.modelRecipe : null;
+}
+
+function modelEndpointInfo() {
+  const configured = state.config?.providers?.ollama || {};
+  let endpoint = configured.baseUrl || 'configured Ollama endpoint';
+  let local = false;
+  try {
+    const url = new URL(endpoint);
+    const host = url.hostname.toLowerCase().replace(/\.$/, '');
+    local = host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '[::1]';
+    url.username = '';
+    url.password = '';
+    endpoint = url.toString().replace(/\/$/, '');
+  } catch { /* Keep the generic endpoint label for malformed legacy settings. */ }
+  return { endpoint, local, enabled: Boolean(configured.enabled) };
+}
+
+function renderModelOwnership() {
+  const { endpoint, local, enabled } = modelEndpointInfo();
+  const host = $('#model-ownership');
+  host.dataset.mode = local ? 'local' : 'remote';
+  $('#model-endpoint-kind').textContent = local ? 'Local Ollama' : 'Remote Ollama endpoint';
+  const location = local ? `on this device at ${endpoint}` : `at ${endpoint}`;
+  $('#model-endpoint-note').textContent = enabled
+    ? `Recipes stay in this workspace's local SQLite database. Builds send the recipe to Ollama ${location}, where the artifact is stored.`
+    : `Recipes stay in this workspace's local SQLite database. Enable and save Ollama in Providers before building at ${endpoint}.`;
+}
+
+function setModelStudioStatus(message, type = '') {
+  const status = $('#model-studio-status');
+  status.textContent = message;
+  status.className = `model-studio-status${type ? ` ${type}` : ''}`;
+}
+
+function renderModelRecipeControls() {
+  const recipe = currentModelRecipe();
+  const busy = state.modelRecipeBusy;
+  const form = $('#model-recipe-form');
+  $$('input:not([type="hidden"]), textarea, select, button', form).forEach((control) => { control.disabled = busy; });
+  $('#model-import-btn').disabled = busy;
+  $('#model-new-btn').disabled = busy;
+  $('#model-import-file').disabled = busy;
+  $$('.model-recipe-item', $('#model-recipe-list')).forEach((button) => { button.disabled = busy; });
+  if (!busy) {
+    $('#model-delete-btn').disabled = !recipe;
+    $('#model-modelfile-btn').disabled = !recipe?.modelfile || state.modelRecipeDirty;
+  }
+}
+
+function setModelStudioBusy(busy) {
+  state.modelRecipeBusy = Boolean(busy);
+  renderModelRecipeControls();
+}
+
+function renderModelRecipeState() {
+  const badge = $('#model-recipe-state');
+  const recipe = currentModelRecipe();
+  badge.className = 'recipe-state';
+  if (state.modelRecipeDirty) {
+    badge.textContent = 'Unsaved changes';
+    badge.classList.add('dirty');
+  } else if (recipe?.last_built_at) {
+    badge.textContent = 'Build recorded';
+    badge.classList.add('built');
+  } else if (recipe) {
+    badge.textContent = 'Saved';
+  } else {
+    badge.textContent = 'Not saved';
+  }
+  renderModelRecipeControls();
+}
+
+function markModelRecipeDirty(dirty = true) {
+  state.modelRecipeDirty = Boolean(dirty);
+  if (!state.settingsDirty) {
+    $('#save-status').textContent = state.modelRecipeDirty ? 'Recipe edits save separately in Model Studio' : 'No unsaved changes';
+  }
+  renderModelRecipeState();
+}
+
+function renderModelRecipeList() {
+  const host = $('#model-recipe-list');
+  $('#model-recipe-count').textContent = state.modelRecipes.length;
+  if (!state.modelRecipes.length) {
+    host.innerHTML = '<div class="model-library-empty">No saved recipes yet. Start with a new portable blueprint.</div>';
+    return;
+  }
+  host.innerHTML = state.modelRecipes.map((recipe) => {
+    const active = recipe.id === state.modelRecipeId;
+    const activity = recipe.last_built_at
+      ? `Build recorded ${formatDate(recipe.last_built_at, { relative: true })}`
+      : `Saved ${formatDate(recipe.updated_at, { relative: true })}`;
+    return `<div role="listitem"><button class="model-recipe-item${active ? ' active' : ''}" type="button" data-id="${escapeHtml(recipe.id)}"${active ? ' aria-current="true"' : ''}${state.modelRecipeBusy ? ' disabled' : ''}>
+      <strong>${escapeHtml(recipe.title)}</strong>
+      <span>${escapeHtml(recipe.name)}</span>
+      <small class="${recipe.last_built_at ? 'recipe-built' : ''}">${escapeHtml(activity)}</small>
+    </button></div>`;
+  }).join('');
+  $$('.model-recipe-item', host).forEach((button) => button.addEventListener('click', () => selectModelRecipe(button.dataset.id)));
+}
+
+function renderModelMessages(messages = []) {
+  const host = $('#model-message-list');
+  if (!messages.length) {
+    host.innerHTML = '<div class="model-message-empty">No seed messages. Add a user or assistant example when the behavior needs one.</div>';
+    return;
+  }
+  host.innerHTML = messages.map((message, index) => `
+    <div class="model-message-row" data-index="${index}">
+      <select class="model-message-role" aria-label="Seed message ${index + 1} role">
+        ${['system', 'user', 'assistant'].map((role) => `<option value="${role}"${message.role === role ? ' selected' : ''}>${role.charAt(0).toUpperCase() + role.slice(1)}</option>`).join('')}
+      </select>
+      <textarea class="model-message-content" rows="2" maxlength="65536" aria-label="Seed message ${index + 1} content" placeholder="Example message content">${escapeHtml(message.content || '')}</textarea>
+      <button class="mini-btn danger model-message-remove" type="button" aria-label="Remove seed message ${index + 1}">${icon('trash')}</button>
+    </div>`).join('');
+  $$('.model-message-remove', host).forEach((button) => button.addEventListener('click', () => {
+    const index = Number(button.closest('.model-message-row').dataset.index);
+    const next = modelMessagesFromForm({ allowEmpty: true });
+    next.splice(index, 1);
+    renderModelMessages(next);
+    markModelRecipeDirty(true);
+  }));
+}
+
+function renderModelStops(stops = []) {
+  const host = $('#model-stop-list');
+  if (!stops.length) {
+    host.innerHTML = '<div class="model-stop-empty">No custom stop sequences. The base model or Ollama defaults will apply.</div>';
+    return;
+  }
+  host.innerHTML = stops.map((stop, index) => `
+    <div class="model-stop-row" data-index="${index}">
+      <textarea class="model-stop-content" rows="2" maxlength="4096" aria-label="Stop sequence ${index + 1}" placeholder="Exact sequence to stop on">${escapeHtml(stop)}</textarea>
+      <button class="mini-btn danger model-stop-remove" type="button" aria-label="Remove stop sequence ${index + 1}">${icon('trash')}</button>
+    </div>`).join('');
+  $$('.model-stop-remove', host).forEach((button) => button.addEventListener('click', () => {
+    const index = Number(button.closest('.model-stop-row').dataset.index);
+    const next = modelStopsFromForm({ allowEmpty: true });
+    next.splice(index, 1);
+    renderModelStops(next);
+    markModelRecipeDirty(true);
+  }));
+}
+
+function modelStopsFromForm({ allowEmpty = false } = {}) {
+  return $$('.model-stop-row', $('#model-stop-list')).map((row, index) => {
+    const content = $('.model-stop-content', row).value;
+    if (!allowEmpty && content.length === 0) {
+      $('.model-stop-content', row).setAttribute('aria-invalid', 'true');
+      throw new Error(`Stop sequence ${index + 1} needs content or should be removed.`);
+    }
+    return content;
+  });
+}
+
+function modelMessagesFromForm({ allowEmpty = false } = {}) {
+  return $$('.model-message-row', $('#model-message-list')).map((row, index) => {
+    const content = $('.model-message-content', row).value;
+    if (!allowEmpty && !content.trim()) {
+      $('.model-message-content', row).setAttribute('aria-invalid', 'true');
+      throw new Error(`Seed message ${index + 1} needs content or should be removed.`);
+    }
+    return { role: $('.model-message-role', row).value, content };
+  });
+}
+
+function newModelRecipeDefaults() {
+  const useDefault = state.config?.defaults?.provider === 'ollama';
+  return {
+    title: '',
+    name: '',
+    base: useDefault ? state.config.defaults?.model || '' : '',
+    system: '',
+    parameters: {},
+    template: '',
+    license: '',
+    messages: [],
+    quantize: null,
+  };
+}
+
+function displayModelRecipe(recipe = null) {
+  const value = recipe || newModelRecipeDefaults();
+  state.modelRecipe = recipe;
+  state.modelRecipeId = recipe?.id || null;
+  $('#model-recipe-id').value = recipe?.id || '';
+  $('#model-recipe-name').value = value.title || '';
+  $('#model-artifact-name').value = value.name || '';
+  $('#model-base').value = value.base || '';
+  $('#model-system').value = value.system || '';
+  for (const [parameter, id] of Object.entries(MODEL_PARAMETER_FIELDS)) {
+    $(`#${id}`).value = value.parameters?.[parameter] ?? '';
+  }
+  renderModelStops(value.parameters?.stop || []);
+  $('#model-quantize').value = value.quantize || '';
+  $('#model-template').value = value.template || '';
+  $('#model-license').value = value.license || '';
+  renderModelMessages(value.messages || []);
+  $$('[aria-invalid="true"]', $('#model-recipe-form')).forEach((field) => field.removeAttribute('aria-invalid'));
+  $('#model-editor-heading').textContent = recipe?.title || 'New model recipe';
+  const advanced = $$('.model-advanced', $('#model-recipe-form'));
+  if (advanced[0]) advanced[0].open = Boolean(Object.keys(value.parameters || {}).length || value.quantize);
+  if (advanced[1]) advanced[1].open = Boolean(value.template || value.license || value.messages?.length);
+  renderModelRecipeList();
+  markModelRecipeDirty(false);
+  setModelStudioStatus(recipe
+    ? `Saved locally. ${recipe.last_built_at ? `Last build recorded ${formatDate(recipe.last_built_at, { relative: true })}.` : 'Build it whenever the recipe is ready.'}`
+    : 'Create a recipe, save it locally, then build the artifact when you choose.');
+}
+
+async function confirmDiscardModelRecipe() {
+  if (!state.modelRecipeDirty) return true;
+  return confirmAction({
+    title: 'Discard unsaved recipe changes?',
+    message: 'The current Model Studio edits have not been saved to your workspace.',
+    action: 'Discard changes',
+  });
+}
+
+async function selectModelRecipe(id) {
+  if (id === state.modelRecipeId) return;
+  if (!await confirmDiscardModelRecipe()) return;
+  if (!state.modelRecipes.some((item) => item.id === id)) return;
+  try { await loadModelRecipeDetail(id, { restoreListFocus: true }); }
+  catch (error) { toast(error.message, { type: 'error', title: 'Could not load recipe' }); }
+}
+
+async function loadModelRecipes({ force = false, selectId = null } = {}) {
+  if (state.modelRecipesLoaded && !force) {
+    renderModelRecipeList();
+    if (!state.modelRecipeId && !state.modelRecipeDirty) {
+      if (state.modelRecipes[0]) await loadModelRecipeDetail(state.modelRecipes[0].id);
+      else displayModelRecipe(null);
+    }
+    return state.modelRecipes;
+  }
+  const requestId = ++state.modelRecipeRequestId;
+  setModelStudioBusy(true);
+  setModelStudioStatus('Loading saved model recipes...');
+  try {
+    const recipes = await api.get('/api/model-recipes');
+    if (requestId !== state.modelRecipeRequestId) return state.modelRecipes;
+    state.modelRecipes = recipes;
+    state.modelRecipesLoaded = true;
+    if (state.modelRecipeDirty && !selectId) {
+      renderModelRecipeList();
+      return recipes;
+    }
+    const selectedId = recipes.some((recipe) => recipe.id === (selectId || state.modelRecipeId))
+      ? (selectId || state.modelRecipeId)
+      : recipes[0]?.id || null;
+    if (selectedId) await loadModelRecipeDetail(selectedId);
+    else displayModelRecipe(null);
+    return recipes;
+  } finally {
+    if (requestId === state.modelRecipeRequestId) setModelStudioBusy(false);
+  }
+}
+
+async function loadModelRecipeDetail(id, { restoreListFocus = false } = {}) {
+  const requestId = ++state.modelRecipeDetailRequestId;
+  setModelStudioBusy(true);
+  setModelStudioStatus('Loading the selected recipe...');
+  try {
+    const recipe = await api.get(`/api/model-recipes/${encodeURIComponent(id)}`);
+    if (requestId !== state.modelRecipeDetailRequestId) return null;
+    displayModelRecipe(recipe);
+    if (restoreListFocus) {
+      requestAnimationFrame(() => {
+        $$('.model-recipe-item', $('#model-recipe-list')).find((button) => button.dataset.id === id)?.focus();
+      });
+    }
+    return recipe;
+  } catch (error) {
+    if (requestId === state.modelRecipeDetailRequestId) setModelStudioStatus(error.message, 'error');
+    throw error;
+  } finally {
+    if (requestId === state.modelRecipeDetailRequestId) setModelStudioBusy(false);
+  }
+}
+
+function collectModelRecipeForm() {
+  const form = $('#model-recipe-form');
+  $$('[aria-invalid="true"]', form).forEach((field) => field.removeAttribute('aria-invalid'));
+  if (!form.checkValidity()) {
+    $$('input, textarea, select', form).forEach((field) => {
+      if (!field.checkValidity()) field.setAttribute('aria-invalid', 'true');
+    });
+    form.reportValidity();
+    throw new Error('Fix the highlighted recipe fields before continuing.');
+  }
+  const parameters = {};
+  for (const [parameter, id] of Object.entries(MODEL_PARAMETER_FIELDS)) {
+    const raw = $(`#${id}`).value.trim();
+    if (!raw) continue;
+    const value = Number(raw);
+    if (!Number.isFinite(value)) throw new Error(`${parameter} must be a valid number.`);
+    parameters[parameter] = value;
+  }
+  const stops = modelStopsFromForm();
+  if (stops.length) parameters.stop = stops;
+  return {
+    title: $('#model-recipe-name').value.trim(),
+    name: $('#model-artifact-name').value.trim(),
+    base: $('#model-base').value.trim(),
+    system: $('#model-system').value,
+    parameters,
+    template: $('#model-template').value,
+    license: $('#model-license').value,
+    messages: modelMessagesFromForm(),
+    quantize: $('#model-quantize').value || null,
+  };
+}
+
+function putClientModelRecipe(recipe) {
+  state.modelRecipeRequestId++;
+  state.modelRecipeDetailRequestId++;
+  state.modelRecipe = recipe;
+  const summary = {
+    id: recipe.id,
+    title: recipe.title,
+    name: recipe.name,
+    base: recipe.base,
+    quantize: recipe.quantize,
+    created_at: recipe.created_at,
+    updated_at: recipe.updated_at,
+    last_built_at: recipe.last_built_at,
+  };
+  state.modelRecipes = [summary, ...state.modelRecipes.filter((item) => item.id !== recipe.id)]
+    .sort((left, right) => String(right.updated_at || '').localeCompare(String(left.updated_at || '')));
+  state.modelRecipesLoaded = true;
+}
+
+async function saveModelRecipe({ announce = true } = {}) {
+  const payload = collectModelRecipeForm();
+  const button = $('#model-save-btn');
+  button.textContent = 'Saving...';
+  setModelStudioBusy(true);
+  setModelStudioStatus('Saving this portable recipe to the local workspace...');
+  try {
+    const saved = state.modelRecipeId
+      ? await api.send('PUT', `/api/model-recipes/${encodeURIComponent(state.modelRecipeId)}`, payload)
+      : await api.send('POST', '/api/model-recipes', payload);
+    putClientModelRecipe(saved);
+    displayModelRecipe(saved);
+    setModelStudioStatus('Recipe saved in the local SovereignAI database.', 'success');
+    if (announce) toast('Model recipe saved locally.', { type: 'success' });
+    return saved;
+  } catch (error) {
+    setModelStudioStatus(error.message, 'error');
+    throw error;
+  } finally {
+    button.textContent = 'Save recipe';
+    setModelStudioBusy(false);
+  }
+}
+
+function safeDownloadName(value, fallback = 'model-recipe') {
+  const normalized = String(value || '').toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
+  return normalized.slice(0, 80) || fallback;
+}
+
+function downloadModelFile(content, filename, type) {
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  link.href = url;
+  link.download = filename;
+  link.hidden = true;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+$('#model-recipe-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  try { await saveModelRecipe(); }
+  catch (error) { toast(error.message, { type: 'error', title: 'Could not save recipe' }); }
+});
+
+$('#model-recipe-form').addEventListener('input', (event) => {
+  event.target.removeAttribute?.('aria-invalid');
+  $('#model-editor-heading').textContent = $('#model-recipe-name').value.trim() || 'New model recipe';
+  markModelRecipeDirty(true);
+});
+
+$('#model-message-add').addEventListener('click', () => {
+  const messages = modelMessagesFromForm({ allowEmpty: true });
+  if (messages.length >= 128) {
+    setModelStudioStatus('A recipe may contain at most 128 seed messages.', 'error');
+    return;
+  }
+  messages.push({ role: messages.length && messages[messages.length - 1].role === 'user' ? 'assistant' : 'user', content: '' });
+  renderModelMessages(messages);
+  markModelRecipeDirty(true);
+  const rows = $$('.model-message-row', $('#model-message-list'));
+  $('.model-message-content', rows[rows.length - 1])?.focus();
+});
+
+$('#model-stop-add').addEventListener('click', () => {
+  const stops = modelStopsFromForm({ allowEmpty: true });
+  if (stops.length >= 64) {
+    setModelStudioStatus('A recipe may contain at most 64 stop sequences.', 'error');
+    return;
+  }
+  stops.push('');
+  renderModelStops(stops);
+  markModelRecipeDirty(true);
+  const rows = $$('.model-stop-row', $('#model-stop-list'));
+  $('.model-stop-content', rows[rows.length - 1])?.focus();
+});
+
+$('#model-new-btn').addEventListener('click', async () => {
+  if (!await confirmDiscardModelRecipe()) return;
+  displayModelRecipe(null);
+  $('#model-recipe-name').focus();
+});
+
+$('#model-delete-btn').addEventListener('click', async () => {
+  const recipe = currentModelRecipe();
+  if (!recipe) return;
+  const confirmed = await confirmAction({
+    title: 'Delete this model recipe?',
+    message: `“${recipe.title}” will be removed from this workspace. Any artifact already built in Ollama is not deleted.`,
+    action: 'Delete recipe',
+  });
+  if (!confirmed) return;
+  setModelStudioBusy(true);
+  setModelStudioStatus('Deleting the local recipe...');
+  try {
+    await api.send('DELETE', `/api/model-recipes/${encodeURIComponent(recipe.id)}`);
+    state.modelRecipeRequestId++;
+    state.modelRecipeDetailRequestId++;
+    state.modelRecipes = state.modelRecipes.filter((item) => item.id !== recipe.id);
+    state.modelRecipe = null;
+    state.modelRecipeId = null;
+    toast('Model recipe deleted. The Ollama artifact, if built, was left intact.', { type: 'success' });
+    if (state.modelRecipes[0]) {
+      try { await loadModelRecipeDetail(state.modelRecipes[0].id); }
+      catch (error) {
+        setModelStudioStatus(`Recipe deleted, but the next recipe could not be loaded: ${error.message}`, 'error');
+        toast(error.message, { type: 'error', title: 'Could not load next recipe' });
+      }
+    } else {
+      displayModelRecipe(null);
+    }
+  } catch (error) {
+    setModelStudioStatus(error.message, 'error');
+    toast(error.message, { type: 'error', title: 'Could not delete recipe' });
+  } finally { setModelStudioBusy(false); }
+});
+
+$('#model-build-btn').addEventListener('click', async () => {
+  const button = $('#model-build-btn');
+  try {
+    let recipe = currentModelRecipe();
+    if (!recipe || state.modelRecipeDirty) recipe = await saveModelRecipe({ announce: false });
+    button.innerHTML = `${icon('spark')}Building...`;
+    setModelStudioBusy(true);
+    const { endpoint } = modelEndpointInfo();
+    setModelStudioStatus(`Building “${recipe.name}” at ${endpoint}. Large models can take several minutes...`);
+    const result = await api.send('POST', `/api/model-recipes/${encodeURIComponent(recipe.id)}/build`, {});
+    if (result.recipe) {
+      putClientModelRecipe(result.recipe);
+      displayModelRecipe(result.recipe);
+    }
+    setModelStudioStatus(`Built “${result.model || recipe.name}” at ${endpoint}. The portable recipe remains stored locally.`, 'success');
+    toast(`Ollama model ${result.model || recipe.name} is ready.`, { type: 'success' });
+    await Promise.allSettled([refreshOllamaModelOptions(), refreshModelOptions()]);
+  } catch (error) {
+    setModelStudioStatus(error.message, 'error');
+    toast(error.message, { type: 'error', title: 'Model build failed' });
+  } finally {
+    button.innerHTML = `${icon('spark')}Build on Ollama`;
+    setModelStudioBusy(false);
+  }
+});
+
+$('#model-download-btn').addEventListener('click', () => {
+  try {
+    const saved = currentModelRecipe();
+    const draft = !saved?.portable || state.modelRecipeDirty;
+    const core = draft ? collectModelRecipeForm() : saved.portable.recipe;
+    const portable = draft ? { format: MODEL_RECIPE_FORMAT, version: MODEL_RECIPE_VERSION, recipe: core } : saved.portable;
+    downloadModelFile(`${JSON.stringify(portable, null, 2)}\n`, `${safeDownloadName(core.name)}.sovereign-model.json`, 'application/json');
+    setModelStudioStatus(draft
+      ? 'Draft recipe JSON downloaded. Save it to run server-side validation before building.'
+      : 'Portable recipe JSON downloaded.', 'success');
+  } catch (error) {
+    setModelStudioStatus(error.message, 'error');
+    toast(error.message, { type: 'error', title: 'Could not export recipe' });
+  }
+});
+
+$('#model-modelfile-btn').addEventListener('click', () => {
+  const recipe = currentModelRecipe();
+  if (!recipe?.modelfile || state.modelRecipeDirty) return;
+  downloadModelFile(recipe.modelfile, `${safeDownloadName(recipe.name)}.Modelfile`, 'text/plain;charset=utf-8');
+  setModelStudioStatus('Ollama Modelfile downloaded.', 'success');
+});
+
+$('#model-import-btn').addEventListener('click', () => $('#model-import-file').click());
+$('#model-import-file').addEventListener('change', async (event) => {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  if (file.size > MAX_MODEL_RECIPE_BYTES) {
+    toast('Recipe files must be 20 MB or smaller.', { type: 'error', title: 'Import failed' });
+    return;
+  }
+  if (!await confirmDiscardModelRecipe()) return;
+  setModelStudioBusy(true);
+  setModelStudioStatus('Validating and importing the recipe...');
+  try {
+    const parsed = JSON.parse(await file.text());
+    const created = await api.send('POST', '/api/model-recipes', parsed);
+    putClientModelRecipe(created);
+    displayModelRecipe(created);
+    setModelStudioStatus('Portable recipe imported into the local workspace.', 'success');
+    toast('Model recipe imported.', { type: 'success' });
+  } catch (error) {
+    setModelStudioStatus(error instanceof SyntaxError ? 'This file is not valid JSON.' : error.message, 'error');
+    toast(error instanceof SyntaxError ? 'This file is not valid JSON.' : error.message, { type: 'error', title: 'Import failed' });
+  } finally { setModelStudioBusy(false); }
+});
+
+window.addEventListener('beforeunload', (event) => {
+  if (!state.settingsDirty && !state.modelRecipeDirty && !window.SOVEREIGN_FINE_TUNE?.isDirty?.()) return;
+  event.preventDefault();
+  event.returnValue = '';
+});
 
 async function checkProviders() {
   const button = $('#providers-check');
@@ -1343,8 +1917,9 @@ $('#settings-save').addEventListener('click', async () => {
     $('#instance-name').textContent = state.config.name || 'SovereignAI';
     document.title = state.config.name || 'SovereignAI';
     markSettingsDirty(false);
+    renderModelOwnership();
     toast('Workspace settings saved.', { type: 'success' });
-    await Promise.allSettled([checkProviders(), loadMemories()]);
+    await Promise.allSettled([checkProviders(), loadMemories(), refreshOllamaModelOptions(), refreshModelOptions()]);
   } catch (error) {
     $('#save-status').textContent = 'Save failed — your changes are still here';
     toast(error.message, { type: 'error', title: 'Could not save settings' });
@@ -1465,26 +2040,6 @@ async function savePersonas(changes = collectPersonaChanges()) {
   renderPersonaEditor();
 }
 
-$('#bake-btn').addEventListener('click', async () => {
-  const name = $('#bake-name').value.trim();
-  const base = $('#bake-base').value.trim();
-  const system = $('#bake-system').value.trim();
-  const status = $('#bake-status');
-  if (!name || !base || !system) {
-    status.textContent = 'Add a name, base model, and personality first.';
-    return;
-  }
-  const button = $('#bake-btn');
-  button.disabled = true;
-  status.textContent = 'Creating the model on your configured Ollama endpoint. This can take a moment…';
-  try {
-    const result = await api.send('POST', '/api/create-model', { name, base, system });
-    status.textContent = `Created “${result.model}”. You can now select it in a persona.`;
-    toast(`Ollama model ${result.model} is ready.`, { type: 'success' });
-  } catch (error) { status.textContent = error.message; }
-  finally { button.disabled = false; }
-});
-
 function scrollToSettings(id) {
   const section = document.getElementById(id);
   if (!section) return;
@@ -1533,6 +2088,11 @@ async function refreshCounts() {
   renderDashboard();
 }
 
+window.SOVEREIGN_APP = {
+  $, $$, api, escapeHtml, formatDate, toast, confirmAction, icon, state, showView,
+  loadPersonas, updateRuntimeUI, renderDashboard, refreshCounts,
+};
+
 /* Boot */
 (async function boot() {
   try {
@@ -1555,6 +2115,7 @@ async function refreshCounts() {
     $('#conversation-count').textContent = conversations.length;
     $('#nav-doc-count').textContent = documents.length;
     $('#nav-memory-count').textContent = memories.length;
+    $('#nav-training-count').textContent = status.counts?.training_projects ?? 0;
     await loadPersonas();
     renderConversationList();
     renderDocuments();

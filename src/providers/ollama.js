@@ -20,7 +20,11 @@ export const ollama = {
     const res = await fetch(`${cfg.baseUrl}/api/tags`, { signal: AbortSignal.timeout(5000) });
     await ensureOk(res, 'Ollama');
     const { models = [] } = await res.json();
-    return models.map((m) => ({ id: m.name, label: m.name }));
+    return models.map((m) => ({
+      id: m.name,
+      label: m.name,
+      ...(typeof m.digest === 'string' ? { digest: m.digest.toLowerCase().replace(/^sha256:/, '') } : {}),
+    }));
   },
 
   /** Yields { type: 'delta', text } then { type: 'done', usage, stopReason }. */
@@ -55,15 +59,32 @@ export const ollama = {
    * Bake a named model from a base model + system prompt on the configured
    * Ollama endpoint (Ollama Modelfile), e.g. `mia:latest`.
    */
-  async createModel(cfg, { name, base, system }) {
+  async createModel(cfg, { name, base, system = '', parameters = {}, template = '', license = '', messages = [], quantize = null }) {
+    const body = { model: name, from: base, stream: false };
+    if (system) body.system = system;
+    if (Object.keys(parameters).length) body.parameters = parameters;
+    if (template) body.template = template;
+    if (license) body.license = license;
+    if (messages.length) body.messages = messages;
+    if (quantize) body.quantize = quantize;
     const res = await fetch(`${cfg.baseUrl}/api/create`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ model: name, from: base, system, stream: false }),
-      signal: AbortSignal.timeout(300000),
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30 * 60 * 1000),
     });
     await ensureOk(res, 'Ollama create');
-    return { model: name };
+    let result;
+    try {
+      result = await res.json();
+    } catch {
+      throw new Error('Ollama create returned an invalid JSON response');
+    }
+    if (!result || typeof result !== 'object' || result.status !== 'success') {
+      const status = typeof result?.status === 'string' ? `: ${result.status.slice(0, 200)}` : '';
+      throw new Error(`Ollama create did not report terminal success${status}`);
+    }
+    return { model: name, status: 'success' };
   },
 
   /** Batch-embed texts. Returns array of vectors. */

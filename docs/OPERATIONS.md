@@ -26,11 +26,113 @@ The command exits non-zero when it finds a failure, making it suitable for
 smoke checks.
 
 JSON exports restore personas, conversations, messages, memories, documents,
-and chunks. Provider URLs, model defaults, bearer tokens, and API keys must be
-reconfigured separately. Export files contain private workspace content and
-are created with owner-only permissions on POSIX systems when written by the
-`sovereign export` CLI. Browser downloads follow the browser and operating
-system's download permissions.
+chunks, Model Studio recipes, and Fine-Tuning Studio projects, reviewed
+examples, immutable JSONL snapshots, run records, metrics, evaluation
+decisions, and deployment lineage. Provider/trainer URLs, model defaults,
+bearer tokens, and API keys are omitted entirely and must be reconfigured separately. This is
+deliberate: moving a data backup must not silently copy credentials or send a
+restored workspace to an old endpoint. Export files contain private workspace
+content and are created with owner-only permissions on POSIX systems when
+written by the `sovereign export` CLI. Browser downloads follow the browser and
+operating system's download permissions.
+
+## Ownership, backup, and restore
+
+There are four distinct things to own and back up:
+
+1. **Workspace state** — `data/sovereign.db` contains personas, conversations,
+   messages, memory, documents, retrieved chunks, embeddings, and model
+   recipes, and fine-tuning control-plane history. Prefer `sovereign export` for a consistent, inspectable transfer
+   while the app is running.
+2. **Runtime configuration** — `sovereign.config.json` contains endpoint URLs
+   and may contain credentials. It is outside the portable data export by
+   design. Back it up only through your normal secret-management process.
+3. **Ollama artifacts** — named models built by Model Studio live at the
+   configured Ollama endpoint, not inside the SovereignAI database or JSON
+   export. The export contains the portable recipe and Modelfile ingredients,
+   not Ollama weight blobs. Back up, copy, or remove artifacts using the
+   controls for that Ollama installation.
+4. **Trainer artifacts** — adapters, checkpoints, optimizer state, merged
+   weights, GGUF files, and trainer logs live in the trainer's configured
+   artifact store. SovereignAI keeps attestations and lineage, not those large
+   files. Back them up or delete them through the trainer. Deleting a local
+   Fine-Tuning Studio project removes local metadata only.
+
+This separation keeps the portable recipe available even when the original
+artifact or endpoint is gone: restore the JSON export, configure an Ollama
+endpoint you control, inspect the generated Modelfile, and build again. A full
+restore does not reconnect providers or recreate model artifacts automatically.
+
+Treat exports as sensitive. They intentionally exclude secrets, but they can
+contain complete conversation history, long-term memory, source documents,
+embeddings, system prompts, seed messages, reviewed training examples,
+consent records, JSONL snapshots, and model-building metadata.
+
+## Fine-Tuning Studio and trainer ownership
+
+Training is disabled by default. Configure it in Fine-Tuning Studio or with
+`SOVEREIGN_TRAINER_URL` and `SOVEREIGN_TRAINER_TOKEN`. Loopback is the safe
+default. A non-loopback URL requires the explicit remote-endpoint setting and
+HTTPS, unless the operator separately acknowledges insecure HTTP. The complete
+approved train/eval snapshot crosses that boundary; this is materially more
+data than retrieval usually sends.
+
+The application does not install a trainer or call a hosted/OpenAI fine-tuning
+service. Operate a compatible trainer using the
+[`sovereignai.trainer/v1` contract](../integrations/trainer/README.md). Cache
+base models before offline training, disable framework telemetry and remote
+loggers, mount approved datasets read-only where practical, and isolate the
+artifact directory. Check accelerator memory, host memory, free disk, base
+model license, and exact model revision before starting.
+
+Source consent records the canonical trainer endpoint disclosed during
+curation; run consent records the current endpoint, immutable dataset hash,
+method, and normalized hyperparameters. If the endpoint changes, a fresh run
+confirmation is required and recorded. An unreachable job is indeterminate,
+not failed: it blocks duplicate runs and **Refresh** retries the same
+idempotency key. Confirm terminal state with the trainer before cleaning up.
+
+For one-click persona assignment, the trainer must already have registered a
+merged GGUF model at the same Ollama endpoint configured in SovereignAI and
+must attest to that tag's digest. SovereignAI compares the live Ollama digest
+before changing the persona. It does not upload GGUF bytes itself. See the
+[guided workflow and retention details](FINE_TUNING.md).
+
+## Model Studio builds and endpoint ownership
+
+A Model Studio recipe is a local SQLite record containing the artifact name,
+base model, system prompt, parameters, template, license, quantization, and
+optional seed messages. Saving a recipe does not contact a provider. Building
+it sends the required specification to `/api/create` at the Ollama URL in the
+active SovereignAI configuration.
+
+The recipe's license field records terms to carry into the artifact; it does
+not grant rights to the base model or replace its third-party license. Check
+the source model's use and redistribution terms. Quantization is supported only
+for eligible FP16/FP32 source models; if the source or requested format is not
+eligible, correct the recipe or source rather than assuming the build changed
+the weights successfully. A quantized build leaves the source model unchanged
+but creates a derived artifact whose weights use the requested lower-precision
+representation.
+
+Before a build, verify the endpoint shown by Model Studio:
+
+- A local endpoint keeps the build request and resulting artifact on the
+  machine or container environment you operate.
+- A remote endpoint receives the recipe inputs and stores the artifact on that
+  remote system. Use an authenticated, encrypted connection and an endpoint
+  whose retention and access controls you trust.
+
+The build response includes the generated Modelfile and ownership metadata so
+the UI can state this boundary accurately. SovereignAI does not upload the
+artifact to a project-owned service, mirror its weights, or retain a second
+hidden copy.
+
+“Build model” means package a base model with configurable inference behavior
+and metadata. It does **not** change the base model's weights, train on workspace
+content, or perform fine-tuning. The only workspace content sent during this
+operation is content explicitly placed in the recipe, such as the system prompt
+or seed messages.
 
 ## Upgrading from v0.2
 

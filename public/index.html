@@ -32,6 +32,7 @@
     <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m0 0 5-5m-5 5-5-5M5 21h14"/></symbol>
     <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-5"/></symbol>
     <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 1.7 5.3L19 9l-5.3 1.7L12 16l-1.7-5.3L5 9l5.3-1.7ZM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8Z"/></symbol>
+    <symbol id="i-train" viewBox="0 0 24 24"><path d="M9 3h6m-5 0v5l-5.7 9.6A2.3 2.3 0 0 0 6.3 21h11.4a2.3 2.3 0 0 0 2-3.4L14 8V3M7 15h10"/></symbol>
     <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6m0-6-9 9M20 14v6H4V4h6"/></symbol>
   </svg>
 
@@ -78,6 +79,9 @@
       </button>
       <button class="nav-item" type="button" data-view="memory">
         <svg class="icon"><use href="#i-brain"/></svg><span>Memory</span><span id="nav-memory-count" class="nav-count">0</span>
+      </button>
+      <button class="nav-item" type="button" data-view="finetune">
+        <svg class="icon"><use href="#i-train"/></svg><span>Fine-tune</span><span id="nav-training-count" class="nav-count">0</span>
       </button>
       <button class="nav-item" type="button" data-view="settings">
         <svg class="icon"><use href="#i-settings"/></svg><span>Settings</span>
@@ -185,6 +189,11 @@
               <button class="workflow-card" type="button" data-prompt="Help me make a concrete plan for my highest-priority goal. Use relevant context you have, ask for what is missing, and give me the next three actions.">
                 <span class="workflow-icon blue"><svg class="icon"><use href="#i-spark"/></svg></span>
                 <span><strong>Plan with context</strong><small>Turn what your AI knows into an executable next step.</small></span>
+                <svg class="icon arrow"><use href="#i-chevron"/></svg>
+              </button>
+              <button class="workflow-card" type="button" data-view-target="finetune">
+                <span class="workflow-icon blue"><svg class="icon"><use href="#i-train"/></svg></span>
+                <span><strong>Train from reviewed examples</strong><small>Create a private LoRA training snapshot from conversations you select.</small></span>
                 <svg class="icon arrow"><use href="#i-chevron"/></svg>
               </button>
             </div>
@@ -333,6 +342,160 @@
       </div>
     </section>
 
+    <!-- Fine-Tuning Studio -->
+    <section id="view-finetune" class="view" aria-labelledby="finetune-title">
+      <header class="page-header">
+        <div><p class="eyebrow">Learned behavior · local control plane</p><h1 id="finetune-title">Fine-Tuning Studio</h1><p class="page-subtitle">Turn conversations you explicitly choose into reviewed training examples, then run real LoRA training on your own trainer.</p></div>
+        <div class="header-actions"><span id="ft-runtime-badge" class="runtime-badge neutral">Trainer not checked</span><button class="btn primary" id="ft-new-btn" type="button"><svg class="icon"><use href="#i-plus"/></svg>New project</button></div>
+      </header>
+
+      <div class="page-body ft-page-body">
+        <section class="ft-boundary" aria-label="Fine-tuning privacy boundary">
+          <svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg>
+          <div><strong>Nothing is selected or sent automatically.</strong><p>SovereignAI snapshots only the conversations you choose. Starting training sends that immutable snapshot to the configured self-hosted trainer—not to OpenAI. Learned adapters can memorize private content, so review every example.</p></div>
+        </section>
+
+        <div class="ft-workspace">
+          <aside class="ft-projects" aria-labelledby="ft-projects-heading">
+            <div class="ft-projects-head"><strong id="ft-projects-heading">Training projects</strong><span id="ft-project-count">0</span></div>
+            <div id="ft-project-list" class="ft-project-list" role="list"><div class="ft-empty-list">No training projects yet.</div></div>
+          </aside>
+
+          <section id="ft-welcome" class="ft-welcome" aria-labelledby="ft-welcome-title">
+            <span class="ft-welcome-icon"><svg class="icon"><use href="#i-train"/></svg></span>
+            <h2 id="ft-welcome-title">Specialize behavior without surrendering your data</h2>
+            <p>Fine-tuning is best for stable behavior, response formats, and domain language. Use Knowledge instead when the goal is to teach changing facts.</p>
+            <button class="btn primary" type="button" data-ft-new><svg class="icon"><use href="#i-plus"/></svg>Create a guided project</button>
+          </section>
+
+          <section id="ft-flow" class="ft-flow" hidden aria-labelledby="ft-project-heading">
+            <header class="ft-flow-head">
+              <div><span class="eyebrow">Resumable local workflow</span><h2 id="ft-project-heading">Fine-tuning project</h2></div>
+              <button class="btn small danger" id="ft-delete-btn" type="button"><svg class="icon"><use href="#i-trash"/></svg>Delete project</button>
+            </header>
+
+            <ol id="ft-step-nav" class="ft-step-nav" aria-label="Fine-tuning steps">
+              <li><button type="button" data-ft-step="goal" aria-current="step"><span>1</span>Goal</button></li>
+              <li><button type="button" data-ft-step="data"><span>2</span>Data & consent</button></li>
+              <li><button type="button" data-ft-step="review"><span>3</span>Review</button></li>
+              <li><button type="button" data-ft-step="train"><span>4</span>Train</button></li>
+              <li><button type="button" data-ft-step="evaluate"><span>5</span>Evaluate</button></li>
+              <li><button type="button" data-ft-step="deploy"><span>6</span>Deploy</button></li>
+            </ol>
+
+            <div class="ft-panels">
+              <section id="ft-step-goal" class="ft-step-panel" data-ft-panel="goal" aria-labelledby="ft-goal-title">
+                <div class="ft-step-heading"><span>Step 1</span><h2 id="ft-goal-title">Define what should change</h2><p>Describe one stable behavior that examples can teach. Keep changing facts in the Knowledge base.</p></div>
+                <form id="ft-project-form" class="settings-card form-grid" novalidate>
+                  <label>Project name<input id="ft-project-title" maxlength="200" placeholder="e.g. Concise incident analyst" required /></label>
+                  <label>Target persona<select id="ft-target-persona"><option value="">Choose later</option></select></label>
+                  <label class="span-2">Training goal<textarea id="ft-project-goal" rows="4" maxlength="20000" placeholder="Teach short, evidence-first incident summaries with a fixed risks / actions format." required></textarea></label>
+                  <label>Base model<input id="ft-base-model" list="ollama-model-options" maxlength="2048" placeholder="e.g. llama3.2:3b" required /></label>
+                  <label>Method<select id="ft-method"><option value="sft-qlora">SFT + QLoRA · recommended</option><option value="sft-lora">SFT + LoRA</option></select></label>
+                  <div class="span-2 ft-rag-note"><svg class="icon"><use href="#i-book"/></svg><p><strong>Need to teach documents or current facts?</strong> Add them to Knowledge. Fine-tuning changes learned behavior and may memorize its examples.</p></div>
+                  <div class="span-2 ft-inline-actions"><span id="ft-goal-status" class="field-note"></span><button class="btn primary" id="ft-save-project" type="submit">Save goal</button></div>
+                </form>
+              </section>
+
+              <section id="ft-step-data" class="ft-step-panel" data-ft-panel="data" aria-labelledby="ft-data-title" hidden>
+                <div class="ft-step-heading"><span>Step 2</span><h2 id="ft-data-title">Choose data and record consent</h2><p>Sources are opt-in. Choose at least two independent conversations so one group can remain an untouched holdout. A review copy is created; edits never change the originals.</p></div>
+                <div class="settings-card">
+                  <div class="ft-section-head"><div><strong>Conversation sources</strong><small id="ft-source-summary">Nothing selected</small></div><button class="btn small" id="ft-refresh-sources" type="button">Refresh</button></div>
+                  <div id="ft-source-list" class="ft-source-list"><div class="ft-panel-empty">Save the goal to load eligible conversations.</div></div>
+                </div>
+                <div class="settings-card ft-consent-card">
+                  <h3>Required confirmations</h3>
+                  <label class="check-row"><input id="ft-consent-rights" type="checkbox" /><span><strong>I have the right to train on the selected content</strong><small>This includes other people's words, licensed content, and workplace data.</small></span></label>
+                  <label class="check-row"><input id="ft-consent-sensitive" type="checkbox" /><span><strong>I will review secrets and personal data before training</strong><small>A trained adapter can retain information after the source conversation is deleted.</small></span></label>
+                  <label class="check-row"><input id="ft-consent-local" type="checkbox" /><span><strong>I understand the selected snapshot goes to my configured trainer</strong><small id="ft-data-destination">No trainer endpoint configured.</small></span></label>
+                  <div class="ft-inline-actions"><span id="ft-prepare-status" class="field-note"></span><button class="btn primary" id="ft-prepare-btn" type="button">Create review snapshot</button></div>
+                </div>
+              </section>
+
+              <section id="ft-step-review" class="ft-step-panel" data-ft-panel="review" aria-labelledby="ft-review-title" hidden>
+                <div class="ft-step-heading"><span>Step 3</span><h2 id="ft-review-title">Review and redact every example</h2><p>Exclude poor pairs, remove sensitive details, and verify the ideal assistant answer. High-risk flags must be acknowledged when the dataset is locked.</p></div>
+                <div class="ft-review-stats" id="ft-review-stats"></div>
+                <div class="ft-review-grid">
+                  <div id="ft-example-list" class="ft-example-list"><div class="ft-panel-empty">Prepare a snapshot first.</div></div>
+                  <form id="ft-example-editor" class="settings-card ft-example-editor" novalidate>
+                    <input id="ft-example-id" type="hidden" />
+                    <div id="ft-example-flags" class="ft-risk-flags"></div>
+                    <label class="check-row"><input id="ft-example-included" type="checkbox" /><span><strong>Include in the next dataset snapshot</strong></span></label>
+                    <label>System context<textarea id="ft-example-system" rows="4" maxlength="131072"></textarea></label>
+                    <label>User prompt<textarea id="ft-example-user" rows="5" maxlength="262144" required></textarea></label>
+                    <label>Ideal assistant answer<textarea id="ft-example-assistant" rows="7" maxlength="262144" required></textarea></label>
+                    <div class="ft-inline-actions"><span id="ft-example-status" class="field-note"></span><button class="btn" id="ft-example-save" type="submit">Save reviewed example</button></div>
+                  </form>
+                </div>
+                <div class="settings-card ft-lock-card">
+                  <div><strong>Lock an immutable dataset snapshot</strong><p>Splits are grouped by conversation so near-identical turns cannot leak into evaluation. Training requires at least two independent groups; smaller snapshots remain exportable.</p></div>
+                  <label class="check-row"><input id="ft-consent-risk" type="checkbox" /><span><strong>I reviewed every included example and accept any remaining flags</strong></span></label>
+                  <div class="ft-inline-actions"><button class="btn" id="ft-download-btn" type="button" disabled><svg class="icon"><use href="#i-download"/></svg>Download latest bundle</button><button class="btn primary" id="ft-lock-btn" type="button">Approve and lock dataset</button></div>
+                </div>
+              </section>
+
+              <section id="ft-step-train" class="ft-step-panel" data-ft-panel="train" aria-labelledby="ft-train-title" hidden>
+                <div class="ft-step-heading"><span>Step 4</span><h2 id="ft-train-title">Run actual training on your trainer</h2><p>SovereignAI uploads only the approved train and evaluation JSONL blobs. The optimizer and GPU dependencies live outside this Node process.</p></div>
+                <div class="settings-card ft-trainer-card">
+                  <div class="ft-section-head"><div><strong>Self-hosted trainer</strong><small id="ft-trainer-disclosure">Loopback is recommended.</small></div><span id="ft-trainer-health" class="runtime-badge neutral">Not checked</span></div>
+                  <div class="form-grid">
+                    <label>Trainer URL<input id="ft-trainer-url" type="url" maxlength="2048" placeholder="http://127.0.0.1:7331" /></label>
+                    <label>Bearer token<input id="ft-trainer-token" type="password" autocomplete="new-password" placeholder="Saved securely · leave blank to keep" /></label>
+                    <label class="check-row"><input id="ft-trainer-enabled" type="checkbox" /><span><strong>Enable local trainer</strong></span></label>
+                    <label class="check-row"><input id="ft-trainer-remote" type="checkbox" /><span><strong>Allow a non-loopback self-hosted endpoint</strong></span></label>
+                    <label class="check-row span-2"><input id="ft-trainer-insecure" type="checkbox" /><span><strong>Allow insecure HTTP off-device</strong><small>Selected training data crosses the network unencrypted. Prefer HTTPS.</small></span></label>
+                  </div>
+                  <div class="ft-inline-actions"><button class="btn" id="ft-trainer-save" type="button">Save trainer</button><button class="btn" id="ft-trainer-check" type="button">Check capabilities</button></div>
+                  <div id="ft-capabilities" class="ft-capabilities"></div>
+                </div>
+                <details class="settings-card ft-hyperparameters"><summary><strong>Training controls</strong><span>Guided defaults</span></summary>
+                  <div class="parameter-grid">
+                    <label>Epochs<input id="ft-epochs" type="number" min="1" max="20" step="1" value="3" /></label>
+                    <label>Learning rate<input id="ft-learning-rate" type="number" min="0.000001" max="0.1" step="any" value="0.0002" /></label>
+                    <label>Sequence length<input id="ft-sequence-length" type="number" min="128" max="32768" step="1" value="2048" /></label>
+                    <label>LoRA rank<input id="ft-lora-rank" type="number" min="1" max="256" step="1" value="16" /></label>
+                    <label>LoRA alpha<input id="ft-lora-alpha" type="number" min="1" max="512" step="1" value="32" /></label>
+                    <label>Seed<input id="ft-seed" type="number" min="0" max="2147483647" step="1" value="42" /></label>
+                  </div>
+                </details>
+                <div class="settings-card ft-run-card">
+                  <div id="ft-run-summary"><strong>No training run yet.</strong><p>Approve a dataset and verify the trainer before starting.</p></div>
+                  <div class="ft-progress" aria-hidden="true"><span id="ft-progress-bar"></span></div>
+                  <div class="ft-inline-actions"><button class="btn danger" id="ft-cancel-btn" type="button" disabled>Cancel run</button><button class="btn" id="ft-refresh-run" type="button" disabled>Refresh status</button><button class="btn primary" id="ft-start-btn" type="button">Start local training</button></div>
+                </div>
+              </section>
+
+              <section id="ft-step-evaluate" class="ft-step-panel" data-ft-panel="evaluate" aria-labelledby="ft-evaluate-title" hidden>
+                <div class="ft-step-heading"><span>Step 5</span><h2 id="ft-evaluate-title">Evaluate before deployment</h2><p>Trainer metrics and the untouched holdout are evidence, not a guarantee. Record an explicit decision before assigning the model to a persona.</p></div>
+                <div id="ft-metrics" class="settings-card ft-metrics"><div class="ft-panel-empty">Metrics appear after a successful run.</div></div>
+                <div class="settings-card">
+                  <fieldset class="ft-decision"><legend>Evaluation decision</legend>
+                    <label><input type="radio" name="ft-eval-decision" value="approved" />Approve tuned model</label>
+                    <label><input type="radio" name="ft-eval-decision" value="rejected" />Reject and revise</label>
+                    <label><input type="radio" name="ft-eval-decision" value="skipped" />Skip behavioral evaluation with acknowledgement</label>
+                  </fieldset>
+                  <label>Evaluation notes<textarea id="ft-eval-notes" rows="5" maxlength="64000" placeholder="What improved? What regressed? What should be tested in chat?"></textarea></label>
+                  <div class="ft-inline-actions"><span id="ft-eval-status" class="field-note"></span><button class="btn primary" id="ft-eval-save" type="button">Record decision</button></div>
+                </div>
+              </section>
+
+              <section id="ft-step-deploy" class="ft-step-panel" data-ft-panel="deploy" aria-labelledby="ft-deploy-title" hidden>
+                <div class="ft-step-heading"><span>Step 6</span><h2 id="ft-deploy-title">Deploy with lineage intact</h2><p>The trainer must attest to an already-registered Ollama model and its digest. SovereignAI verifies that digest before assigning the model to a persona; it never sends the training dataset to Ollama.</p></div>
+                <div id="ft-artifact" class="settings-card ft-artifact"><div class="ft-panel-empty">A trainer-attested artifact appears after training succeeds.</div></div>
+                <div class="settings-card form-grid">
+                  <label>Persona<select id="ft-deploy-persona"><option value="">Choose a persona</option></select></label>
+                  <label>Ollama model<input id="ft-deploy-model" maxlength="593" placeholder="Returned by the trainer" readonly /></label>
+                  <div class="span-2 ft-inline-actions"><span id="ft-deploy-status" class="field-note"></span><button class="btn primary" id="ft-deploy-btn" type="button">Assign model to persona</button></div>
+                </div>
+              </section>
+            </div>
+
+            <footer class="ft-navigation"><button class="btn ghost" id="ft-back" type="button">Back</button><p id="ft-status" role="status" aria-live="polite">Create or select a project to begin.</p><button class="btn" id="ft-next" type="button">Continue</button></footer>
+          </section>
+        </div>
+      </div>
+    </section>
+
     <!-- Settings -->
     <section id="view-settings" class="view" aria-labelledby="settings-title">
       <header class="page-header">
@@ -344,7 +507,7 @@
           <button class="active" type="button" data-settings-target="general-settings">General</button>
           <button type="button" data-settings-target="provider-settings">Providers</button>
           <button type="button" data-settings-target="persona-settings">Personas</button>
-          <button type="button" data-settings-target="model-settings">Ollama models</button>
+          <button type="button" data-settings-target="model-settings">Model Studio</button>
           <button type="button" data-settings-target="memory-settings">Memory</button>
           <button type="button" data-settings-target="data-settings">Data & privacy</button>
         </nav>
@@ -393,15 +556,107 @@
             <div id="persona-editor" class="persona-editor"></div>
           </section>
 
-          <section id="model-settings" class="settings-section" aria-labelledby="models-heading">
-            <div class="settings-heading"><h2 id="models-heading">Ollama models</h2><p>Create a named model from a base model and system prompt on the configured Ollama endpoint.</p></div>
-            <div class="settings-card bake-card">
-              <div class="form-grid">
-                <label>New model name<input id="bake-name" placeholder="e.g. atlas" /></label>
-                <label>Base model<input id="bake-base" list="model-options" placeholder="e.g. llama3.1:latest" /></label>
-                <label class="span-2">Personality / system prompt<textarea id="bake-system" rows="5" placeholder="Describe the model's role, behavior, and boundaries."></textarea></label>
+          <section id="model-settings" class="settings-section model-settings" aria-labelledby="models-heading">
+            <div class="settings-heading inline model-studio-heading">
+              <div><h2 id="models-heading">Model Studio</h2><p>Design, save, export, and build model recipes you control on your configured Ollama endpoint.</p></div>
+              <div class="model-heading-actions">
+                <button class="btn small" type="button" data-view-target="finetune"><svg class="icon"><use href="#i-train"/></svg>Fine-tune weights</button>
+                <button class="btn small" id="model-import-btn" type="button"><svg class="icon"><use href="#i-upload"/></svg>Import recipe</button>
+                <button class="btn small" id="model-new-btn" type="button"><svg class="icon"><use href="#i-plus"/></svg>New recipe</button>
+                <input id="model-import-file" type="file" accept=".json,application/json" hidden />
               </div>
-              <div class="card-footer"><span id="bake-status" class="field-note" role="status"></span><button class="btn primary" id="bake-btn" type="button"><svg class="icon"><use href="#i-spark"/></svg>Bake model</button></div>
+            </div>
+
+            <div class="model-ownership" id="model-ownership" data-mode="remote">
+              <svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg>
+              <div>
+                <strong><span id="model-endpoint-kind">Configured Ollama endpoint</span> · you control the recipe and artifact</strong>
+                <p id="model-endpoint-note">Recipes stay in this workspace. Build artifacts are stored by the Ollama endpoint in your saved provider settings.</p>
+                <small>Building does not train or fine-tune model weights. If selected, quantization creates a derived lower-precision artifact. The base model's license still applies.</small>
+              </div>
+            </div>
+
+            <div class="model-studio">
+              <aside class="model-library" aria-labelledby="model-library-heading">
+                <div class="model-library-head"><strong id="model-library-heading">Saved recipes</strong><span id="model-recipe-count">0</span></div>
+                <div id="model-recipe-list" class="model-recipe-list" role="list" aria-live="polite">
+                  <div class="model-library-empty">No saved recipes yet.</div>
+                </div>
+              </aside>
+
+              <form id="model-recipe-form" class="settings-card model-editor" data-independent-settings novalidate>
+                <input id="model-recipe-id" type="hidden" />
+                <div class="model-editor-title">
+                  <div><span class="eyebrow">Portable Ollama recipe</span><h3 id="model-editor-heading">New model recipe</h3></div>
+                  <span id="model-recipe-state" class="recipe-state">Not saved</span>
+                </div>
+
+                <div class="form-grid">
+                  <label>Recipe title<input id="model-recipe-name" maxlength="200" autocomplete="off" placeholder="e.g. Research copilot" required /></label>
+                  <label>Ollama artifact name<input id="model-artifact-name" maxlength="593" autocomplete="off" placeholder="e.g. atlas-research:latest" required /></label>
+                  <label class="span-2">Base model<input id="model-base" maxlength="2048" list="ollama-model-options" autocomplete="off" placeholder="e.g. llama3.1:latest" required /></label>
+                  <datalist id="ollama-model-options"></datalist>
+                  <label class="span-2">System prompt<textarea id="model-system" rows="7" maxlength="131072" placeholder="Define the model's role, behavior, knowledge boundaries, and response style."></textarea></label>
+                </div>
+
+                <details class="model-advanced">
+                  <summary><span><strong>Generation controls</strong><small>Optional · blank values inherit the base model or Ollama defaults</small></span><svg class="icon"><use href="#i-chevron"/></svg></summary>
+                  <div class="model-advanced-body">
+                    <div class="parameter-grid">
+                      <label>Temperature<input id="model-temperature" type="number" min="0" max="2" step="any" inputmode="decimal" placeholder="0.8" /><small>Creativity; lower is more predictable.</small></label>
+                      <label>Context window<input id="model-num-ctx" type="number" min="128" max="1048576" step="1" inputmode="numeric" placeholder="4096" /><small>Maximum tokens kept in context.</small></label>
+                      <label>Top K<input id="model-top-k" type="number" min="0" max="1000" step="1" inputmode="numeric" placeholder="40" /><small>Candidate token pool size.</small></label>
+                      <label>Top P<input id="model-top-p" type="number" min="0" max="1" step="any" inputmode="decimal" placeholder="0.9" /><small>Probability mass to sample from.</small></label>
+                      <label>Min P<input id="model-min-p" type="number" min="0" max="1" step="any" inputmode="decimal" placeholder="0" /><small>Filters very unlikely tokens.</small></label>
+                      <label>Repeat window<input id="model-repeat-last-n" type="number" min="-1" max="1048576" step="1" inputmode="numeric" placeholder="64" /><small>Tokens checked for repetition.</small></label>
+                      <label>Repeat penalty<input id="model-repeat-penalty" type="number" min="0" max="5" step="any" inputmode="decimal" placeholder="1.1" /><small>Discourages repeated text.</small></label>
+                      <label>Seed<input id="model-seed" type="number" min="-1" max="2147483647" step="1" inputmode="numeric" placeholder="Random" /><small>Set an integer for repeatable output.</small></label>
+                      <label>Maximum output<input id="model-num-predict" type="number" min="-1" max="1048576" step="1" inputmode="numeric" placeholder="Ollama default" /><small>Maximum generated tokens; -1 allows unlimited output.</small></label>
+                      <label>Quantization<select id="model-quantize"><option value="">Keep source precision</option><option value="q4_K_S">q4_K_S · smallest</option><option value="q4_K_M">q4_K_M · balanced</option><option value="q8_0">q8_0 · higher fidelity</option></select><small>Only applies when the Ollama source supports it.</small></label>
+                      <div class="span-2 model-stops-field">
+                        <div class="model-stops-heading">
+                          <span><strong>Stop sequences</strong><small>Generation stops when any complete sequence is produced. Whitespace and line breaks are preserved.</small></span>
+                          <button class="btn small" id="model-stop-add" type="button"><svg class="icon"><use href="#i-plus"/></svg>Add sequence</button>
+                        </div>
+                        <div id="model-stop-list" class="model-stop-list"></div>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+
+                <details class="model-advanced expert-settings">
+                  <summary><span><strong>Template & sharing terms</strong><small>Expert options for portable model behavior</small></span><svg class="icon"><use href="#i-chevron"/></svg></summary>
+                  <div class="model-advanced-body form-grid">
+                    <label class="span-2">Prompt template<textarea id="model-template" rows="6" maxlength="262144" placeholder="Optional Ollama template syntax"></textarea></label>
+                    <label class="span-2">Recipe license / sharing terms<textarea id="model-license" rows="4" maxlength="131072" placeholder="Optional terms for sharing this recipe"></textarea><small>This describes your recipe's terms and cannot override the base model's license.</small></label>
+                    <div class="span-2 model-messages-field">
+                      <div class="model-messages-heading">
+                        <span><strong>Seed messages</strong><small>Optional examples that demonstrate the conversation style the model should follow.</small></span>
+                        <button class="btn small" id="model-message-add" type="button"><svg class="icon"><use href="#i-plus"/></svg>Add message</button>
+                      </div>
+                      <div id="model-message-list" class="model-message-list"></div>
+                    </div>
+                  </div>
+                </details>
+
+                <div class="model-portability-note">
+                  <svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>
+                  <p>JSON export keeps the recipe portable outside SovereignAI. A standard Modelfile is available when generated by the server, reducing lock-in further.</p>
+                </div>
+
+                <div class="model-editor-actions">
+                  <div class="model-secondary-actions">
+                    <button class="btn small" id="model-download-btn" type="button" disabled><svg class="icon"><use href="#i-download"/></svg>Recipe JSON</button>
+                    <button class="btn small" id="model-modelfile-btn" type="button" disabled><svg class="icon"><use href="#i-file"/></svg>Modelfile</button>
+                    <button class="btn small danger" id="model-delete-btn" type="button" disabled><svg class="icon"><use href="#i-trash"/></svg>Delete</button>
+                  </div>
+                  <div class="model-primary-actions">
+                    <button class="btn" id="model-save-btn" type="submit">Save recipe</button>
+                    <button class="btn primary" id="model-build-btn" type="button"><svg class="icon"><use href="#i-spark"/></svg>Build on Ollama</button>
+                  </div>
+                </div>
+                <p id="model-studio-status" class="model-studio-status" role="status" aria-live="polite">Create a recipe or choose one from the library.</p>
+              </form>
             </div>
           </section>
 
@@ -549,6 +804,7 @@
   <div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
 
   <script src="/app.js"></script>
+  <script src="/finetune.js"></script>
   <script src="/wizard.js"></script>
 </body>
 </html>

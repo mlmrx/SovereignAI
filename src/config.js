@@ -14,6 +14,7 @@ const TOP_LEVEL_KEYS = new Set([
   'defaults',
   'embeddings',
   'memory',
+  'training',
   'limits',
   'setupComplete',
 ]);
@@ -35,6 +36,15 @@ export const DEFAULT_CONFIG = {
   embeddings: { provider: 'ollama', model: 'nomic-embed-text' },
   // Auto memory: distill durable facts from conversations into long-term memory (extra model call per exchange).
   memory: { autoExtract: false },
+  // Fine-tuning uses an optional user-operated HTTP trainer. Dataset content is
+  // never sent there until a project snapshot is explicitly approved.
+  training: {
+    enabled: false,
+    baseUrl: 'http://127.0.0.1:7331',
+    authToken: '',
+    allowRemote: false,
+    allowInsecurePrivateNetwork: false,
+  },
   limits: { historyChars: 24000, ragChunks: 6, maxTokens: 32000 },
   // Flipped by the first-run wizard; false shows the guided setup in the web UI.
   setupComplete: false,
@@ -100,6 +110,14 @@ function applyEnvOverrides(config, env) {
     config.providers.anthropic.apiKey = env.ANTHROPIC_API_KEY;
     config.providers.anthropic.enabled = true;
   }
+  if (env.SOVEREIGN_TRAINER_URL) {
+    config.training.baseUrl = env.SOVEREIGN_TRAINER_URL;
+    config.training.enabled = true;
+  }
+  if (env.SOVEREIGN_TRAINER_TOKEN) {
+    config.training.authToken = env.SOVEREIGN_TRAINER_TOKEN;
+    config.training.enabled = true;
+  }
 }
 
 /** Copy of the config safe to send to the browser — API keys are masked. */
@@ -108,6 +126,7 @@ export function redactConfig(config) {
   for (const provider of Object.values(clone.providers)) {
     if (provider.apiKey) provider.apiKey = maskKey(provider.apiKey);
   }
+  if (clone.training?.authToken) clone.training.authToken = maskKey(clone.training.authToken);
   if (clone.authToken) clone.authToken = maskKey(clone.authToken);
   return clone;
 }
@@ -140,6 +159,14 @@ export function withoutEnvironmentManagedFields(update, env = process.env) {
     delete provider('anthropic').apiKey;
     delete provider('anthropic').enabled;
   }
+  if (env.SOVEREIGN_TRAINER_URL && clean.training && typeof clean.training === 'object') {
+    delete clean.training.baseUrl;
+    delete clean.training.enabled;
+  }
+  if (env.SOVEREIGN_TRAINER_TOKEN && clean.training && typeof clean.training === 'object') {
+    delete clean.training.authToken;
+    delete clean.training.enabled;
+  }
   return clean;
 }
 
@@ -152,6 +179,9 @@ export function scrubPersistedEnvironmentSecrets(config, env = process.env) {
   }
   if (env.ANTHROPIC_API_KEY && clean.providers?.anthropic?.apiKey === env.ANTHROPIC_API_KEY) {
     clean.providers.anthropic.apiKey = '';
+  }
+  if (env.SOVEREIGN_TRAINER_TOKEN && clean.training?.authToken === env.SOVEREIGN_TRAINER_TOKEN) {
+    clean.training.authToken = '';
   }
   return clean;
 }
@@ -173,6 +203,12 @@ export function mergeConfigUpdate(current, update) {
   }
   if (typeof safeUpdate.authToken === 'string' && safeUpdate.authToken.includes('••')) {
     safeUpdate.authToken = current.authToken;
+  }
+  if (safeUpdate.training !== undefined) {
+    assertPlainObject(safeUpdate.training, 'training');
+    if (typeof safeUpdate.training.authToken === 'string' && safeUpdate.training.authToken.includes('••')) {
+      safeUpdate.training.authToken = current.training?.authToken ?? '';
+    }
   }
   try {
     return normalizeConfig(deepMerge(current, safeUpdate));
@@ -201,6 +237,7 @@ export function normalizeConfig(value) {
     defaults: normalizeDefaults(value.defaults),
     embeddings: normalizeEmbeddings(value.embeddings),
     memory: normalizeMemory(value.memory),
+    training: normalizeTraining(value.training),
     limits: normalizeLimits(value.limits),
     setupComplete: booleanValue(value.setupComplete, 'setupComplete'),
   };
@@ -252,6 +289,27 @@ function normalizeMemory(value) {
   assertPlainObject(value, 'memory');
   assertKnownKeys(value, new Set(['autoExtract']), 'memory');
   return { autoExtract: booleanValue(value.autoExtract, 'memory.autoExtract') };
+}
+
+function normalizeTraining(value) {
+  assertPlainObject(value, 'training');
+  assertKnownKeys(value, new Set(['enabled', 'baseUrl', 'authToken', 'allowRemote', 'allowInsecurePrivateNetwork']), 'training');
+  const training = {
+    enabled: booleanValue(value.enabled, 'training.enabled'),
+    baseUrl: urlValue(value.baseUrl, 'training.baseUrl'),
+    authToken: secretValue(value.authToken, 'training.authToken', true),
+    allowRemote: booleanValue(value.allowRemote, 'training.allowRemote'),
+    allowInsecurePrivateNetwork: booleanValue(value.allowInsecurePrivateNetwork, 'training.allowInsecurePrivateNetwork'),
+  };
+  let url;
+  try { url = new URL(training.baseUrl); } catch { return training; }
+  const host = url.hostname.toLowerCase().replace(/\.$/, '');
+  const loopback = host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '[::1]';
+  if (!loopback && !training.allowRemote) fail('training.allowRemote must be enabled for a non-loopback trainer');
+  if (!loopback && url.protocol !== 'https:' && !training.allowInsecurePrivateNetwork) {
+    fail('training.allowInsecurePrivateNetwork must be enabled for a non-loopback HTTP trainer');
+  }
+  return training;
 }
 
 function normalizeLimits(value) {
