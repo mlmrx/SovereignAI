@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>XBrain — SovereignAI</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d9a441' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%230b0d0c' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<style>
+/* XBrain — the cognition is the interface.
+   Registers: the Voice (serif) speaks, the Command (mono) instructs,
+   the Machinery (small mono) reports. One accent family: gold. */
+:root {
+  --ground: #f3eede;
+  --panel: #faf7ec;
+  --panel-2: #ece5d0;
+  --ink: #211e12;
+  --dim: #71694f;
+  --gold: #9c6f16;
+  --gold-hot: #7d570c;
+  --gold-glow: rgba(156, 111, 22, 0.24);
+  --line: rgba(125, 95, 25, 0.26);
+  --ok: #4d7c33;
+  --err: #a84a28;
+  --cell: #e2d8bc;
+  --cell-lit: #d9a441;
+  --cell-ink: #211e12;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground: #0d0f0b;
+    --panel: #14170f;
+    --panel-2: #1b1f14;
+    --ink: #eae4d1;
+    --dim: #948d78;
+    --gold: #d9a441;
+    --gold-hot: #f2c66a;
+    --gold-glow: rgba(217, 164, 65, 0.30);
+    --line: rgba(217, 164, 65, 0.22);
+    --ok: #8fbf6f;
+    --err: #d06b4a;
+    --cell: #232719;
+    --cell-lit: #d9a441;
+    --cell-ink: #0d0f0b;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0d0f0b; --panel: #14170f; --panel-2: #1b1f14;
+  --ink: #eae4d1; --dim: #948d78;
+  --gold: #d9a441; --gold-hot: #f2c66a; --gold-glow: rgba(217, 164, 65, 0.30);
+  --line: rgba(217, 164, 65, 0.22); --ok: #8fbf6f; --err: #d06b4a;
+  --cell: #232719; --cell-lit: #d9a441; --cell-ink: #0d0f0b;
+}
+:root[data-theme="light"] {
+  --ground: #f3eede; --panel: #faf7ec; --panel-2: #ece5d0;
+  --ink: #211e12; --dim: #71694f;
+  --gold: #9c6f16; --gold-hot: #7d570c; --gold-glow: rgba(156, 111, 22, 0.24);
+  --line: rgba(125, 95, 25, 0.26); --ok: #4d7c33; --err: #a84a28;
+  --cell: #e2d8bc; --cell-lit: #d9a441; --cell-ink: #211e12;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: ui-monospace, "Cascadia Code", Consolas, "SF Mono", monospace;
+  font-size: 15px;
+  display: flex;
+  flex-direction: column;
+}
+button { font: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* ---------- crown: identity + cortex ---------- */
+header.crown {
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+  padding: 14px clamp(16px, 4vw, 40px) 0;
+}
+.crown-row { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.brainname {
+  font-size: 1.05rem; font-weight: 700; letter-spacing: 0.04em;
+  display: flex; align-items: center; gap: 9px; margin: 0;
+}
+.brainname .hex { color: var(--gold); font-size: 1.15rem; }
+.crown .sub { color: var(--dim); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; }
+.crown .mode-badge {
+  margin-left: auto;
+  font-size: 0.66rem; letter-spacing: 0.14em;
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 2px 10px; color: var(--dim);
+}
+.crown .mode-badge.demo { color: var(--err); border-color: var(--err); }
+button.theme-btn {
+  background: none; border: 1px solid var(--line); border-radius: 999px;
+  color: var(--dim); font-size: 0.66rem; letter-spacing: 0.12em;
+  padding: 2px 10px;
+}
+button.theme-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+/* the cortex: every cell is a real memory or document */
+.cortex {
+  display: flex; flex-wrap: wrap; gap: 5px;
+  padding: 14px 0 16px;
+  min-height: 44px;
+  align-content: flex-start;
+}
+.cell {
+  width: 26px; height: 30px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: var(--cell);
+  border: none; padding: 0;
+  position: relative;
+  transition: background 400ms ease, transform 400ms ease;
+}
+.cell:hover, .cell:focus-visible { background: var(--gold); transform: translateY(-2px); }
+.cell.lit { background: var(--cell-lit); box-shadow: 0 0 14px var(--gold-glow); }
+.cell.born { animation: born 700ms ease; }
+@keyframes born { 0% { transform: scale(0); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: no-preference) {
+  .cell.breathing { animation: breathe 4s ease-in-out infinite; }
+  @keyframes breathe { 0%, 100% { background: var(--cell); } 50% { background: var(--gold-glow); } }
+}
+.cortex-legend { font-size: 0.68rem; color: var(--dim); padding-bottom: 12px; letter-spacing: 0.06em; }
+.cortex-legend b { color: var(--gold); font-weight: 600; }
+
+/* cell inspector */
+.inspector {
+  position: fixed; z-index: 30;
+  max-width: 340px;
+  background: var(--panel-2); border: 1px solid var(--gold);
+  border-radius: 6px; padding: 12px 14px;
+  font-size: 0.78rem; line-height: 1.5;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+.inspector .kind { color: var(--gold); font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; display: block; margin-bottom: 5px; }
+.inspector .body { color: var(--ink); font-family: Charter, Georgia, Cambria, serif; }
+.inspector[hidden] { display: none; }
+
+/* ---------- the manuscript ---------- */
+main.manuscript {
+  flex: 1; overflow-y: auto;
+  padding: 34px clamp(16px, 4vw, 40px) 140px;
+}
+.thread { max-width: 700px; margin: 0 auto; }
+.empty-mind { color: var(--dim); font-size: 0.85rem; line-height: 1.8; max-width: 54ch; }
+.empty-mind .hex { color: var(--gold); }
+
+.exchange { margin-bottom: 44px; }
+.command {
+  color: var(--gold);
+  font-size: 0.78rem; letter-spacing: 0.1em;
+  border-left: 2px solid var(--gold);
+  padding-left: 12px;
+  margin-bottom: 14px;
+  word-break: break-word;
+}
+.command::before { content: "you ⟶ "; color: var(--dim); letter-spacing: 0.06em; }
+
+.voice {
+  font-family: Charter, Georgia, Cambria, "Times New Roman", serif;
+  font-size: 1.04rem; line-height: 1.75;
+  max-width: 66ch;
+  word-break: break-word;
+}
+.voice p { margin: 0 0 12px; }
+.voice code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.85em;
+  background: var(--panel-2);
+  padding: 1px 5px; border-radius: 3px;
+}
+.voice pre {
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px;
+  padding: 12px 14px; overflow-x: auto;
+  font-size: 0.8rem; line-height: 1.55;
+}
+.voice pre code { background: none; padding: 0; }
+.voice a { color: var(--gold-hot); }
+.voice .caret { color: var(--gold); animation: caret 1s steps(2) infinite; }
+@media (prefers-reduced-motion: reduce) { .voice .caret { animation: none; } }
+@keyframes caret { 50% { opacity: 0; } }
+
+/* the three faces */
+.faces { display: flex; gap: 2px; margin-top: 14px; }
+.face-tab {
+  background: none; border: 1px solid var(--line); border-bottom: none;
+  border-radius: 5px 5px 0 0;
+  color: var(--dim); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 4px 12px;
+}
+.face-tab[aria-selected="true"] { color: var(--gold); border-color: var(--gold); background: var(--panel); }
+.face-pane {
+  border-top: 1px solid var(--line);
+  padding: 12px 2px 0;
+  font-size: 0.78rem; line-height: 1.6;
+}
+.face-pane[hidden] { display: none; }
+.recall-item { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.recall-item:last-child { border-bottom: none; }
+.recall-score {
+  flex: 0 0 46px; align-self: flex-start;
+  color: var(--gold); font-variant-numeric: tabular-nums; font-size: 0.72rem;
+  padding-top: 2px;
+}
+.recall-bar { height: 3px; background: var(--panel-2); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+.recall-bar i { display: block; height: 100%; background: var(--gold); }
+.recall-doc { color: var(--ink); font-weight: 600; display: block; margin-bottom: 2px; }
+.recall-excerpt { color: var(--dim); font-family: Charter, Georgia, serif; font-size: 0.82rem; }
+.recall-none, .trace-grid { color: var(--dim); }
+.trace-grid { display: grid; grid-template-columns: auto 1fr; gap: 3px 18px; font-variant-numeric: tabular-nums; }
+.trace-grid dt { color: var(--dim); }
+.trace-grid dd { margin: 0; color: var(--ink); }
+
+/* keep chip (consented memory) */
+.keep-chip {
+  position: fixed; z-index: 40;
+  background: var(--gold); color: var(--cell-ink);
+  border: none; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+  padding: 4px 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+}
+.keep-chip[hidden] { display: none; }
+
+/* ---------- the stem ---------- */
+.stem {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  padding: 12px clamp(16px, 4vw, 40px) 14px;
+}
+.stem-inner { max-width: 700px; margin: 0 auto; }
+.stem-row { display: flex; gap: 10px; align-items: flex-end; }
+.stem .hexmark { color: var(--gold); font-size: 1.1rem; padding-bottom: 9px; }
+.stem textarea {
+  flex: 1; resize: none;
+  background: none; border: none; outline: none;
+  color: var(--ink);
+  font: inherit; font-size: 0.92rem; line-height: 1.5;
+  max-height: 130px;
+  padding: 8px 0;
+}
+.stem textarea::placeholder { color: var(--dim); }
+button.send, button.stop {
+  border: 1px solid var(--gold); border-radius: 6px;
+  background: var(--gold); color: var(--cell-ink);
+  font-size: 0.74rem; font-weight: 700; letter-spacing: 0.1em;
+  padding: 8px 16px;
+}
+button.stop { background: none; color: var(--err); border-color: var(--err); }
+button.send:disabled { opacity: 0.45; cursor: default; }
+.stem-meta {
+  display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  font-size: 0.66rem; color: var(--dim); letter-spacing: 0.08em;
+  padding-top: 6px;
+}
+.persona-chip {
+  background: none; border: 1px solid var(--line); border-radius: 999px;
+  color: var(--dim); font-size: 0.66rem; letter-spacing: 0.1em;
+  padding: 2px 10px;
+}
+.persona-chip[aria-pressed="true"] { color: var(--gold); border-color: var(--gold); }
+.fresh { background: none; border: none; color: var(--dim); font-size: 0.66rem; letter-spacing: 0.1em; text-decoration: underline; padding: 0; }
+.fresh:hover { color: var(--gold); }
+.stem-status { margin-left: auto; }
+.stem-status.err { color: var(--err); }
+
+.toast {
+  position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%); z-index: 50;
+  background: var(--panel-2); border: 1px solid var(--gold);
+  color: var(--ink); font-size: 0.76rem;
+  border-radius: 6px; padding: 8px 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.toast[hidden] { display: none; }
+
+@media (max-width: 640px) {
+  .cortex .cell { width: 20px; height: 23px; }
+  main.manuscript { padding-bottom: 170px; }
+}
+</style>
+</head>
+<body>
+
+<header class="crown">
+  <div class="crown-row">
+    <h1 class="brainname"><span class="hex" aria-hidden="true">⬡</span> <span id="brain-name">…</span></h1>
+    <span class="sub">xbrain · experimental interface</span>
+    <span class="mode-badge" id="mode-badge">connecting</span>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="Cycle color theme">theme: auto</button>
+  </div>
+  <div class="cortex" id="cortex" role="list" aria-label="Cortex: every cell is one memory or document in this workspace"></div>
+  <div class="cortex-legend" id="cortex-legend">cortex — <b>0</b> cells · cells ignite when your AI recalls them</div>
+</header>
+
+<div class="inspector" id="inspector" hidden role="dialog" aria-label="Cell contents"></div>
+
+<main class="manuscript" id="manuscript">
+  <div class="thread" id="thread">
+    <div class="empty-mind" id="empty-mind">
+      <p><span class="hex">⬡</span> This is your mind's instrument panel, not a chat app.</p>
+      <p>Above: the cortex — one hexagonal cell for every memory and document your AI
+      actually holds. Ask something below and watch the cells it recalls ignite.
+      Every answer carries three faces: <b>voice</b>, <b>recall</b>, and <b>trace</b> —
+      what it said, what it used, what it cost.</p>
+      <p>Select any phrase in an answer to <b>⬡ keep</b> it — memory here is an act
+      you perform, never something done to you.</p>
+    </div>
+  </div>
+</main>
+
+<button class="keep-chip" id="keep-chip" type="button" hidden>⬡ keep</button>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<footer class="stem">
+  <div class="stem-inner">
+    <div class="stem-row">
+      <span class="hexmark" aria-hidden="true">⬡</span>
+      <textarea id="stem-input" rows="1" placeholder="speak to your mind — / to focus, Esc to stop" aria-label="Message your AI"></textarea>
+      <button class="send" id="send-btn" type="button">ASK</button>
+      <button class="stop" id="stop-btn" type="button" hidden>STOP</button>
+    </div>
+    <div class="stem-meta">
+      <span id="persona-chips"></span>
+      <button class="fresh" id="fresh-btn" type="button">fresh session</button>
+      <span class="stem-status" id="stem-status" role="status" aria-live="polite"></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+'use strict';
+/* ================= token bootstrap (same contract as the classic UI) ============ */
+const HEADERS = (() => {
+  let token = '';
+  try {
+    const url = new URL(location.href);
+    if (url.hash.startsWith('#token=')) {
+      try { token = decodeURIComponent(url.hash.slice(7)); } catch { token = url.hash.slice(7); }
+      try { localStorage.setItem('sovereign-token', token); } catch { /* private session */ }
+      try { url.hash = ''; history.replaceState(null, '', url); } catch { /* fine */ }
+    }
+  } catch { /* fine */ }
+  return () => {
+    try { token = token || localStorage.getItem('sovereign-token') || ''; } catch { /* fine */ }
+    return token ? { authorization: `Bearer ${token}` } : {};
+  };
+})();
+
+const $ = (sel) => document.querySelector(sel);
+const state = {
+  demo: false,
+  personas: [],
+  personaId: null,
+  conversationId: null,
+  cells: [],            // { id, kind: 'memory'|'document', label, body, el }
+  streaming: false,
+  abort: null,
+};
+
+/* ================= tiny helpers ================= */
+function esc(text) {
+  return String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+/* escape-first markdown subset: fences, inline code, bold, links */
+function renderVoice(text) {
+  const safe = esc(text);
+  const withFences = safe.replace(/```([^`]*)```/g, (_, code) => `<pre><code>${code.replace(/^\n/, '')}</code></pre>`);
+  return withFences
+    .split(/\n{2,}/)
+    .map((block) => block.startsWith('<pre>') ? block : `<p>${block
+      .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>')
+      .replace(/\[([^\]\n]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" rel="noopener noreferrer" target="_blank">$1</a>')
+      .replace(/\n/g, '<br>')}</p>`)
+    .join('');
+}
+async function api(method, path, body, signal) {
+  const headers = { ...HEADERS() };
+  if (body !== undefined) headers['content-type'] = 'application/json';
+  const response = await fetch(path, { method, headers, signal, body: body === undefined ? undefined : JSON.stringify(body) });
+  const payload = (response.headers.get('content-type') || '').includes('application/json')
+    ? await response.json().catch(() => ({}))
+    : await response.text();
+  if (!response.ok) throw new Error((payload && payload.error) || response.statusText || `HTTP ${response.status}`);
+  return payload;
+}
+async function* sseIterate(stream) {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let cut;
+    while ((cut = buffer.indexOf('\n\n')) !== -1) {
+      const frame = buffer.slice(0, cut);
+      buffer = buffer.slice(cut + 2);
+      let event = 'message';
+      const dataLines = [];
+      for (const line of frame.split('\n')) {
+        if (line.startsWith('event:')) event = line.slice(6).trim();
+        else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
+      }
+      if (dataLines.length) {
+        try { yield { event, data: JSON.parse(dataLines.join('\n')) }; } catch { /* skip malformed frame */ }
+      }
+    }
+  }
+}
+let toastTimer = null;
+function toast(message) {
+  const el = $('#toast');
+  el.textContent = message;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
+}
+function status(message, isError) {
+  const el = $('#stem-status');
+  el.textContent = message || '';
+  el.classList.toggle('err', Boolean(isError));
+}
+
+/* ================= theme ================= */
+(() => {
+  const order = ['auto', 'dark', 'light'];
+  let current = 'auto';
+  try { current = localStorage.getItem('xbrain-theme') || 'auto'; } catch { /* fine */ }
+  const apply = () => {
+    if (current === 'auto') delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = current;
+    $('#theme-btn').textContent = `theme: ${current}`;
+  };
+  $('#theme-btn').addEventListener('click', () => {
+    current = order[(order.indexOf(current) + 1) % order.length];
+    try { localStorage.setItem('xbrain-theme', current); } catch { /* fine */ }
+    apply();
+  });
+  apply();
+})();
+
+/* ================= cortex ================= */
+const CORTEX_LIMIT = 96;
+function addCell(kind, label, body, { lit = false, born = false, id = null } = {}) {
+  const cortex = $('#cortex');
+  const el = document.createElement('button');
+  el.type = 'button';
+  el.className = 'cell';
+  el.setAttribute('role', 'listitem');
+  el.setAttribute('aria-label', `${kind}: ${label.slice(0, 80)}`);
+  if (lit) el.classList.add('lit');
+  if (born) el.classList.add('born');
+  const cell = { id, kind, label, body, el };
+  el.addEventListener('click', (event) => inspect(cell, event));
+  cortex.appendChild(el);
+  state.cells.push(cell);
+  updateLegend();
+  return cell;
+}
+function updateLegend() {
+  const memories = state.cells.filter((c) => c.kind === 'memory').length;
+  const documents = state.cells.length - memories;
+  $('#cortex-legend').innerHTML =
+    `cortex — <b>${state.cells.length}</b> cells (${memories} memories · ${documents} knowledge) · cells ignite when your AI recalls them`;
+}
+function breathe() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  setInterval(() => {
+    for (const cell of state.cells) cell.el.classList.remove('breathing');
+    const idle = state.cells.filter((c) => !c.el.classList.contains('lit'));
+    for (let i = 0; i < Math.min(3, idle.length); i++) {
+      idle[Math.floor(Math.random() * idle.length)].el.classList.add('breathing');
+    }
+  }, 4200);
+}
+function ignite(predicate) {
+  let hits = 0;
+  for (const cell of state.cells) {
+    if (predicate(cell)) { cell.el.classList.add('lit'); hits++; }
+  }
+  return hits;
+}
+function inspect(cell, event) {
+  const panel = $('#inspector');
+  panel.innerHTML = `<span class="kind">${esc(cell.kind)}</span><span class="body">${esc(cell.body.slice(0, 420))}${cell.body.length > 420 ? '…' : ''}</span>`;
+  panel.hidden = false;
+  const x = Math.min(event.clientX, innerWidth - 360);
+  const y = Math.min(event.clientY + 14, innerHeight - 180);
+  panel.style.left = `${Math.max(8, x)}px`;
+  panel.style.top = `${y}px`;
+}
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('.cell') && !event.target.closest('#inspector')) $('#inspector').hidden = true;
+});
+
+/* ================= exchanges ================= */
+function addExchange(question) {
+  $('#empty-mind')?.remove();
+  const exchange = document.createElement('article');
+  exchange.className = 'exchange';
+  exchange.innerHTML = `
+    <div class="command"></div>
+    <div class="voice"><span class="caret">▌</span></div>
+    <div class="faces" role="tablist" aria-label="Answer faces" hidden>
+      <button class="face-tab" role="tab" data-face="voice" aria-selected="true" type="button">voice</button>
+      <button class="face-tab" role="tab" data-face="recall" aria-selected="false" type="button">recall</button>
+      <button class="face-tab" role="tab" data-face="trace" aria-selected="false" type="button">trace</button>
+    </div>
+    <div class="face-pane" data-pane="recall" hidden></div>
+    <div class="face-pane" data-pane="trace" hidden></div>`;
+  exchange.querySelector('.command').textContent = question;
+  $('#thread').appendChild(exchange);
+  exchange.querySelectorAll('.face-tab').forEach((tab) => tab.addEventListener('click', () => {
+    exchange.querySelectorAll('.face-tab').forEach((t) => t.setAttribute('aria-selected', String(t === tab)));
+    const face = tab.dataset.face;
+    exchange.querySelector('.voice').style.display = face === 'voice' ? '' : 'none';
+    exchange.querySelectorAll('.face-pane').forEach((pane) => { pane.hidden = pane.dataset.pane !== face; });
+  }));
+  $('#manuscript').scrollTop = $('#manuscript').scrollHeight;
+  return exchange;
+}
+function finishExchange(exchange, { text, sources, trace }) {
+  exchange.querySelector('.voice').innerHTML = renderVoice(text);
+  exchange.querySelector('.faces').hidden = false;
+  const recall = exchange.querySelector('[data-pane="recall"]');
+  if (sources.length) {
+    const top = Math.max(...sources.map((s) => s.score ?? 0), 0.0001);
+    recall.innerHTML = sources.map((s) => `
+      <div class="recall-item">
+        <span class="recall-score">${(s.score ?? 0).toFixed(2)}<span class="recall-bar"><i style="width:${Math.round(((s.score ?? 0) / top) * 100)}%"></i></span></span>
+        <span><span class="recall-doc">${esc(s.document || s.kind || 'memory')}</span>
+        <span class="recall-excerpt">${esc((s.excerpt || '').slice(0, 300))}</span></span>
+      </div>`).join('');
+  } else {
+    recall.innerHTML = '<span class="recall-none">Nothing was retrieved — this answer came from the model and persona alone. That is worth knowing too.</span>';
+  }
+  const tracePane = exchange.querySelector('[data-pane="trace"]');
+  tracePane.innerHTML = `<dl class="trace-grid">${Object.entries(trace)
+    .map(([key, value]) => `<dt>${esc(key)}</dt><dd>${esc(String(value))}</dd>`).join('')}</dl>`;
+}
+
+/* ================= consented memory: select → keep ================= */
+(() => {
+  const chip = $('#keep-chip');
+  let pendingText = '';
+  document.addEventListener('selectionchange', () => {
+    const selection = document.getSelection();
+    const text = selection ? selection.toString().trim() : '';
+    if (!text || text.length > 2000 || selection.rangeCount === 0 ||
+        !selection.anchorNode?.parentElement?.closest('.voice')) {
+      chip.hidden = true;
+      return;
+    }
+    pendingText = text;
+    const rect = selection.getRangeAt(0).getBoundingClientRect();
+    chip.style.left = `${Math.min(Math.max(rect.left + rect.width / 2 - 34, 8), innerWidth - 90)}px`;
+    chip.style.top = `${Math.max(rect.top - 36, 8)}px`;
+    chip.hidden = false;
+  });
+  chip.addEventListener('click', async () => {
+    chip.hidden = true;
+    const content = pendingText;
+    if (!content) return;
+    try {
+      if (!state.demo) await api('POST', '/api/memories', { content });
+      addCell('memory', content, content, { lit: true, born: true });
+      toast('⬡ kept — a new cell joined your cortex');
+      document.getSelection()?.removeAllRanges();
+    } catch (error) {
+      toast(`could not keep: ${error.message}`);
+    }
+  });
+})();
+
+/* ================= live brain ================= */
+async function bootLive() {
+  const statusPayload = await api('GET', '/api/status');
+  $('#brain-name').textContent = statusPayload.name || 'Sovereign AI';
+  $('#mode-badge').textContent = `live · v${statusPayload.version}`;
+  document.title = `XBrain — ${statusPayload.name || 'SovereignAI'}`;
+
+  state.personas = await api('GET', '/api/personas').catch(() => []);
+  renderPersonas();
+
+  const memories = await api('GET', '/api/memories').catch(() => []);
+  const documents = await api('GET', '/api/documents').catch(() => []);
+  for (const memory of memories.slice(0, CORTEX_LIMIT / 2)) {
+    addCell('memory', memory.content, memory.content, { id: memory.id });
+  }
+  for (const doc of documents.slice(0, CORTEX_LIMIT / 2)) {
+    const docName = doc.name || doc.title || 'document';
+    addCell('document', docName, `${docName} — knowledge base document`, { id: doc.id });
+  }
+}
+function renderPersonas() {
+  const holder = $('#persona-chips');
+  holder.innerHTML = '';
+  for (const persona of state.personas.slice(0, 4)) {
+    const chip = document.createElement('button');
+    chip.className = 'persona-chip';
+    chip.type = 'button';
+    chip.textContent = persona.name;
+    chip.setAttribute('aria-pressed', String(persona.id === state.personaId));
+    chip.addEventListener('click', () => {
+      state.personaId = persona.id === state.personaId ? null : persona.id;
+      state.conversationId = null; // persona switch starts a fresh thread
+      renderPersonas();
+    });
+    holder.appendChild(chip);
+  }
+}
+
+async function askLive(question, exchange) {
+  const started = performance.now();
+  let firstToken = null;
+  let text = '';
+  let meta = null;
+  let usage = null;
+  let streamError = null;
+  state.abort = new AbortController();
+
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...HEADERS() },
+    signal: state.abort.signal,
+    body: JSON.stringify({ message: question, conversationId: state.conversationId, personaId: state.personaId }),
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.error || response.statusText);
+  }
+  const voice = exchange.querySelector('.voice');
+  for await (const packet of sseIterate(response.body)) {
+    if (packet.event === 'meta') {
+      meta = packet.data;
+      state.conversationId = meta.conversationId;
+      const byId = new Set((meta.sources || []).map((s) => s.documentId));
+      ignite((cell) => cell.kind === 'document' && byId.has(cell.id));
+    } else if (packet.event === 'delta') {
+      if (firstToken === null) firstToken = performance.now() - started;
+      text += packet.data.text || '';
+      voice.innerHTML = renderVoice(text) + '<span class="caret">▌</span>';
+      $('#manuscript').scrollTop = $('#manuscript').scrollHeight;
+    } else if (packet.event === 'done') {
+      usage = packet.data.usage || null;
+    } else if (packet.event === 'error') {
+      streamError = packet.data.message || 'the model request failed';
+    }
+  }
+  if (!text) throw new Error(streamError || 'the model returned an empty response');
+  finishExchange(exchange, {
+    text,
+    sources: meta?.sources || [],
+    trace: {
+      persona: meta?.persona || 'default',
+      model: meta ? `${meta.provider}/${meta.model || 'default'}` : 'unknown',
+      'first token': firstToken === null ? '—' : `${Math.round(firstToken)} ms`,
+      'total time': `${((performance.now() - started) / 1000).toFixed(1)} s`,
+      tokens: usage && usage.input_tokens != null ? `${usage.input_tokens} in · ${usage.output_tokens ?? '?'} out` : 'not reported',
+      ...(streamError ? { interrupted: streamError } : {}),
+    },
+  });
+}
+
+/* ================= demo brain (artifact / no server) ================= */
+const DEMO_CELLS = [
+  ['memory', 'The founder prefers autonomous execution; flag only strategic business calls.'],
+  ['memory', 'Zero runtime dependencies is a product principle — sovereignty means an auditable supply chain.'],
+  ['memory', 'Anthropic models are spoken to natively; never through an OpenAI-compat shim.'],
+  ['memory', 'Memory writes must always be consented — nothing is learned about the user silently.'],
+  ['memory', 'The gold hexagon is the brand mark; it appears wherever the product does.'],
+  ['document', 'ARCHITECTURE.md — thirteen decision records, from zero-dep runtime to single binaries.'],
+  ['document', 'FINE_TUNING.md — consent, holdout, lineage, and deployment gates for actual training.'],
+  ['document', 'STORE_SUBMISSION.md — the last mile to every marketplace, accounts excluded.'],
+  ['document', 'trainer protocol v1 — content-addressed blobs, idempotent jobs, attested artifacts.'],
+  ['document', 'OPERATIONS.md — one stable home, portable exports, binaries that behave like installs.'],
+];
+const DEMO_ANSWERS = [
+  {
+    match: /xbrain|interface|design|ux|this/i,
+    text: 'XBrain is built on one refusal: the refusal to hide the machine.\n\nEvery cell above me is a **real thing I hold** — a memory you let me keep, a document you gave me. When you ask, the cells I actually reach for ignite. The *recall* face shows you the exact excerpts I used; *trace* shows what the answer cost. And when you select a phrase and press **⬡ keep**, you watch the memory being born — because remembering you is a privilege you grant, not a default I exploit.',
+  },
+  {
+    match: /memory|remember|keep/i,
+    text: 'My memory is not a log — it is a ledger of things you chose.\n\nSelect any phrase in this answer and a **⬡ keep** chip will appear. Press it, and a new cell joins the cortex above, lit gold. In the live product that cell is a row in *your* SQLite file, on *your* disk, exportable and deletable. Nothing about you is learned silently.',
+  },
+  {
+    match: /.*/,
+    text: 'I am running in **demo mode** — no SovereignAI server is reachable from this page, so my cortex is a plausible fiction and this voice is scripted.\n\nServe me from your own machine (`sovereign start`, then open `/xbrain.html`) and everything here becomes real: the cells become your actual memories and documents, ignition follows genuine retrieval scores, and the trace face reports your model, your latency, your tokens.',
+  },
+];
+function bootDemo() {
+  state.demo = true;
+  $('#brain-name').textContent = 'Atlas';
+  const badge = $('#mode-badge');
+  badge.textContent = 'demo — no server reachable';
+  badge.classList.add('demo');
+  state.personas = [{ id: 'demo-atlas', name: 'Atlas' }, { id: 'demo-scribe', name: 'Scribe' }];
+  renderPersonas();
+  for (const [kind, body] of DEMO_CELLS) addCell(kind, body, body);
+}
+async function askDemo(question, exchange) {
+  const started = performance.now();
+  const voice = exchange.querySelector('.voice');
+  const answer = DEMO_ANSWERS.find((a) => a.match.test(question));
+  const words = question.toLowerCase().split(/\W+/).filter((w) => w.length > 3);
+  const relevant = state.cells.filter((cell) => words.some((w) => cell.body.toLowerCase().includes(w)));
+  const chosen = (relevant.length ? relevant : [...state.cells].sort(() => Math.random() - 0.5)).slice(0, 3);
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  ignite((cell) => chosen.includes(cell));
+  let text = '';
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  for (const token of answer.text.split(/(?<=\s)/)) {
+    if (state.abort?.signal.aborted) break;
+    text += token;
+    voice.innerHTML = renderVoice(text) + '<span class="caret">▌</span>';
+    $('#manuscript').scrollTop = $('#manuscript').scrollHeight;
+    if (!reduced) await new Promise((resolve) => setTimeout(resolve, 14));
+  }
+  finishExchange(exchange, {
+    text,
+    sources: chosen.map((cell, index) => ({ document: cell.kind === 'memory' ? 'memory' : cell.label.split(' — ')[0], excerpt: cell.body, score: 0.91 - index * 0.17 })),
+    trace: {
+      persona: state.personas.find((p) => p.id === state.personaId)?.name || 'Atlas',
+      model: 'demo/scripted',
+      'first token': '400 ms',
+      'total time': `${((performance.now() - started) / 1000).toFixed(1)} s`,
+      tokens: 'not a real model',
+    },
+  });
+}
+
+/* ================= stem wiring ================= */
+async function ask() {
+  const input = $('#stem-input');
+  const question = input.value.trim();
+  if (!question || state.streaming) return;
+  input.value = '';
+  autosize();
+  state.streaming = true;
+  state.abort = new AbortController();
+  $('#send-btn').hidden = true;
+  $('#stop-btn').hidden = false;
+  status('thinking…');
+  const exchange = addExchange(question);
+  try {
+    await (state.demo ? askDemo(question, exchange) : askLive(question, exchange));
+    status('');
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      finishExchange(exchange, { text: '*generation stopped by you*', sources: [], trace: { stopped: 'by you' } });
+      status('stopped');
+    } else {
+      finishExchange(exchange, { text: `I could not complete that: ${error.message}`, sources: [], trace: { failed: error.message } });
+      status(error.message, true);
+    }
+  } finally {
+    state.streaming = false;
+    state.abort = null;
+    $('#send-btn').hidden = false;
+    $('#stop-btn').hidden = true;
+  }
+}
+function autosize() {
+  const input = $('#stem-input');
+  input.style.height = 'auto';
+  input.style.height = `${Math.min(input.scrollHeight, 130)}px`;
+}
+$('#stem-input').addEventListener('input', autosize);
+$('#stem-input').addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); ask(); }
+});
+$('#send-btn').addEventListener('click', ask);
+$('#stop-btn').addEventListener('click', () => state.abort?.abort());
+$('#fresh-btn').addEventListener('click', () => {
+  state.conversationId = null;
+  for (const cell of state.cells) cell.el.classList.remove('lit');
+  toast('fresh session — the cortex remembers, the thread does not');
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === '/' && document.activeElement !== $('#stem-input')) { event.preventDefault(); $('#stem-input').focus(); }
+  if (event.key === 'Escape' && state.streaming) state.abort?.abort();
+});
+
+/* ================= boot ================= */
+(async () => {
+  try {
+    await bootLive();
+  } catch {
+    bootDemo();
+  }
+  breathe();
+  $('#stem-input').focus();
+})();
+</script>
+</body>
+</html>

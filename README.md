@@ -46,6 +46,7 @@ Training is disabled by default and has no hosted fallback. The workflow never c
 - **Memory you control** — add, search, edit, or forget durable context; automatic extraction is an explicit opt-in.
 - **Weights you control** — curate immutable datasets and run actual LoRA/QLoRA training through a trainer you operate, with consent, holdout, lineage, and deployment gates.
 - **Responsive and accessible** — full mobile navigation, keyboard-visible actions, labeled controls, live generation status, and reduced-motion support.
+- **XBrain (experimental)** — a reimagined interface at `/xbrain.html`: a cortex of hexagonal cells (one per real memory/document) that ignite when your AI recalls them, answers with flippable voice/recall/trace faces, and select-to-keep consented memory.
 - **Race-safe streaming** — stop generation, switch views safely, copy answers or code, and keep a persona consistent for each conversation.
 
 ## Why sovereign
@@ -132,7 +133,7 @@ src/
   training/             canonical dataset snapshots · self-hosted trainer protocol client
   ingest/               zero-dep file ingestion: ZIP reader → DOCX · PDF · text
   rag/                  chunker · BM25 · hybrid retriever
-public/                 responsive command center + wizard + guided Fine-Tuning Studio
+public/                 responsive command center + wizard + Fine-Tuning Studio + XBrain (experimental)
 integrations/           mcp · vscode · jetbrains · browser · chatgpt · trainer protocol
 scripts/                install.ps1 · install.sh · build-sea.mjs (single binary) · make-icons.mjs
 Dockerfile / compose    container distribution (ghcr.io image via CI)
