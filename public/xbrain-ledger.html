@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Memory Ledger — XBrain</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d9a441' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%230b0d0c' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<style>
+/* XBrain · Memory Ledger — a bound record of consented memory.
+   Registers: Voice (serif) for what is remembered, Machinery (mono) for
+   provenance. The spine rule and struck-through revocation are the point:
+   memory here is a ledger you audit, not a feed you scroll. */
+:root {
+  --ground: #f3eede; --panel: #faf7ec; --panel-2: #ece5d0;
+  --ink: #211e12; --dim: #71694f;
+  --gold: #9c6f16; --gold-hot: #7d570c; --gold-glow: rgba(156, 111, 22, 0.24);
+  --line: rgba(125, 95, 25, 0.26); --rule: rgba(125, 95, 25, 0.14);
+  --ok: #4d7c33; --err: #a84a28;
+  --seal-ink: #211e12;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground: #0d0f0b; --panel: #14170f; --panel-2: #1b1f14;
+    --ink: #eae4d1; --dim: #948d78;
+    --gold: #d9a441; --gold-hot: #f2c66a; --gold-glow: rgba(217, 164, 65, 0.30);
+    --line: rgba(217, 164, 65, 0.22); --rule: rgba(217, 164, 65, 0.10);
+    --ok: #8fbf6f; --err: #d06b4a;
+    --seal-ink: #0d0f0b;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0d0f0b; --panel: #14170f; --panel-2: #1b1f14;
+  --ink: #eae4d1; --dim: #948d78;
+  --gold: #d9a441; --gold-hot: #f2c66a; --gold-glow: rgba(217, 164, 65, 0.30);
+  --line: rgba(217, 164, 65, 0.22); --rule: rgba(217, 164, 65, 0.10);
+  --ok: #8fbf6f; --err: #d06b4a; --seal-ink: #0d0f0b;
+}
+:root[data-theme="light"] {
+  --ground: #f3eede; --panel: #faf7ec; --panel-2: #ece5d0;
+  --ink: #211e12; --dim: #71694f;
+  --gold: #9c6f16; --gold-hot: #7d570c; --gold-glow: rgba(156, 111, 22, 0.24);
+  --line: rgba(125, 95, 25, 0.26); --rule: rgba(125, 95, 25, 0.14);
+  --ok: #4d7c33; --err: #a84a28; --seal-ink: #211e12;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: var(--ground); color: var(--ink);
+  font-family: ui-monospace, "Cascadia Code", Consolas, "SF Mono", monospace;
+  font-size: 15px;
+}
+button { font: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+a { color: var(--gold-hot); }
+
+.book { max-width: 760px; margin: 0 auto; padding: 30px clamp(16px, 4vw, 40px) 120px; }
+
+/* triptych: quiet passage between the three surfaces */
+.triptych {
+  display: flex; gap: 18px; align-items: baseline; flex-wrap: wrap;
+  font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 34px;
+}
+.triptych a { color: var(--dim); text-decoration: none; }
+.triptych a:hover { color: var(--gold); }
+.triptych .here { color: var(--gold); }
+.triptych .hex { color: var(--gold); margin-right: 4px; }
+.triptych .mode-badge { margin-left: auto; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; font-size: 0.62rem; }
+.triptych .mode-badge.demo { color: var(--err); border-color: var(--err); }
+button.theme-btn { background: none; border: 1px solid var(--line); border-radius: 999px; color: var(--dim); font-size: 0.62rem; letter-spacing: 0.12em; padding: 2px 10px; }
+button.theme-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+/* the oath */
+.oath {
+  font-family: Charter, Georgia, Cambria, serif;
+  font-size: 1.28rem; line-height: 1.5; max-width: 30ch;
+  text-wrap: balance; margin: 0 0 8px;
+}
+.oath .hex { color: var(--gold); }
+.oath-sub { color: var(--dim); font-size: 0.74rem; letter-spacing: 0.08em; margin: 0 0 36px; max-width: 58ch; line-height: 1.7; }
+
+/* inscription bar — memory is written at the top of the record, deliberately */
+.inscribe {
+  display: flex; gap: 10px; align-items: flex-end;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--panel);
+  padding: 10px 14px; margin-bottom: 12px;
+}
+.inscribe .hexmark { color: var(--gold); font-size: 1.05rem; padding-bottom: 7px; }
+.inscribe textarea {
+  flex: 1; resize: none; background: none; border: none; outline: none;
+  color: var(--ink); font-family: Charter, Georgia, serif;
+  font-size: 0.98rem; line-height: 1.5; max-height: 120px; padding: 6px 0;
+}
+.inscribe textarea::placeholder { color: var(--dim); font-family: ui-monospace, Consolas, monospace; font-size: 0.8rem; }
+button.inscribe-btn {
+  border: 1px solid var(--gold); border-radius: 6px;
+  background: var(--gold); color: var(--seal-ink);
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; padding: 7px 14px;
+}
+button.inscribe-btn:disabled { opacity: 0.45; cursor: default; }
+
+.ledger-tools {
+  display: flex; gap: 14px; align-items: baseline;
+  font-size: 0.68rem; color: var(--dim); letter-spacing: 0.08em;
+  margin-bottom: 26px;
+}
+.ledger-tools input {
+  background: none; border: none; border-bottom: 1px solid var(--line);
+  color: var(--ink); font: inherit; padding: 2px 0; width: 180px; outline: none;
+}
+.ledger-tools input:focus { border-bottom-color: var(--gold); }
+.count { margin-left: auto; font-variant-numeric: tabular-nums; }
+
+/* the spine and its entries */
+.spine { border-left: 2px solid var(--line); padding-left: 26px; position: relative; }
+.entry { position: relative; padding: 18px 0 20px; border-bottom: 1px solid var(--rule); }
+.entry:first-child { padding-top: 4px; }
+.entry .seal {
+  position: absolute; left: -37px; top: 22px;
+  width: 20px; height: 23px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: var(--gold);
+  border: none; padding: 0;
+}
+.entry:first-child .seal { top: 8px; }
+.entry .seal.born { animation: born 700ms ease; }
+@keyframes born { 0% { transform: scale(0); } 60% { transform: scale(1.4); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .entry .seal.born { animation: none; } }
+
+.entry .content {
+  font-family: Charter, Georgia, Cambria, serif;
+  font-size: 1.02rem; line-height: 1.7; max-width: 62ch;
+  word-break: break-word; margin: 0;
+}
+.entry.struck .content { text-decoration: line-through; text-decoration-color: var(--err); color: var(--dim); }
+.entry textarea.amend-input {
+  width: 100%; max-width: 62ch; resize: vertical;
+  background: var(--panel); border: 1px solid var(--gold); border-radius: 4px;
+  color: var(--ink); font-family: Charter, Georgia, serif;
+  font-size: 1.02rem; line-height: 1.6; padding: 8px 10px; outline: none;
+}
+.entry .provenance {
+  display: flex; gap: 16px; flex-wrap: wrap; align-items: baseline;
+  font-size: 0.66rem; color: var(--dim); letter-spacing: 0.08em;
+  margin-top: 8px; font-variant-numeric: tabular-nums;
+}
+.entry .act {
+  background: none; border: none; padding: 0;
+  color: var(--dim); font-size: 0.66rem; letter-spacing: 0.1em;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.entry .act:hover { color: var(--gold); }
+.entry .act.revoke:hover { color: var(--err); }
+.entry .confirm-strike { color: var(--err); }
+.entry .confirm-strike button { background: none; border: none; padding: 0 2px; color: var(--err); font-size: 0.66rem; text-decoration: underline; }
+
+.empty-ledger {
+  font-family: Charter, Georgia, serif;
+  color: var(--dim); font-size: 1rem; line-height: 1.8; max-width: 46ch;
+  padding: 12px 0 30px;
+}
+.empty-ledger .hex { color: var(--gold); }
+
+.toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 50;
+  background: var(--panel-2); border: 1px solid var(--gold);
+  color: var(--ink); font-size: 0.76rem; border-radius: 6px; padding: 8px 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.toast[hidden] { display: none; }
+</style>
+</head>
+<body>
+
+<div class="book">
+  <nav class="triptych" aria-label="XBrain surfaces">
+    <a href="/xbrain.html"><span class="hex" aria-hidden="true">⬡</span>dialogue</a>
+    <span class="here"><span class="hex" aria-hidden="true">⬡</span>ledger</span>
+    <a href="/xbrain-atlas.html"><span class="hex" aria-hidden="true">⬡</span>atlas</a>
+    <span class="mode-badge" id="mode-badge">connecting</span>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="Cycle color theme">theme: auto</button>
+  </nav>
+
+  <h1 class="oath"><span class="hex" aria-hidden="true">⬡</span> Nothing on this page was learned silently.</h1>
+  <p class="oath-sub">Every line below was placed here by a deliberate act — yours, or one you approved.
+  Each can be amended or struck from the record. This ledger is a file on your disk; export it, move it, burn it.</p>
+
+  <div class="inscribe">
+    <span class="hexmark" aria-hidden="true">⬡</span>
+    <textarea id="inscribe-input" rows="1" placeholder="inscribe a memory — something your AI should hold" aria-label="Inscribe a new memory"></textarea>
+    <button class="inscribe-btn" id="inscribe-btn" type="button">INSCRIBE</button>
+  </div>
+
+  <div class="ledger-tools">
+    <label>search the record <input id="filter-input" type="search" aria-label="Filter memories" /></label>
+    <span class="count" id="count">…</span>
+  </div>
+
+  <section class="spine" id="spine" aria-label="Memory ledger entries"></section>
+</div>
+
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+'use strict';
+const HEADERS = (() => {
+  let token = '';
+  try {
+    const url = new URL(location.href);
+    if (url.hash.startsWith('#token=')) {
+      try { token = decodeURIComponent(url.hash.slice(7)); } catch { token = url.hash.slice(7); }
+      try { localStorage.setItem('sovereign-token', token); } catch { /* private session */ }
+      try { url.hash = ''; history.replaceState(null, '', url); } catch { /* fine */ }
+    }
+  } catch { /* fine */ }
+  return () => {
+    try { token = token || localStorage.getItem('sovereign-token') || ''; } catch { /* fine */ }
+    return token ? { authorization: `Bearer ${token}` } : {};
+  };
+})();
+const $ = (sel) => document.querySelector(sel);
+const state = { demo: false, entries: [], filter: '' };
+
+function esc(text) {
+  return String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+async function api(method, path, body) {
+  const headers = { ...HEADERS() };
+  if (body !== undefined) headers['content-type'] = 'application/json';
+  const response = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+  const payload = (response.headers.get('content-type') || '').includes('application/json')
+    ? await response.json().catch(() => ({}))
+    : await response.text();
+  if (!response.ok) throw new Error((payload && payload.error) || response.statusText || `HTTP ${response.status}`);
+  return payload;
+}
+let toastTimer = null;
+function toast(message) {
+  const el = $('#toast');
+  el.textContent = message;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
+}
+
+/* theme */
+(() => {
+  const order = ['auto', 'dark', 'light'];
+  let current = 'auto';
+  try { current = localStorage.getItem('xbrain-theme') || 'auto'; } catch { /* fine */ }
+  const apply = () => {
+    if (current === 'auto') delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = current;
+    $('#theme-btn').textContent = `theme: ${current}`;
+  };
+  $('#theme-btn').addEventListener('click', () => {
+    current = order[(order.indexOf(current) + 1) % order.length];
+    try { localStorage.setItem('xbrain-theme', current); } catch { /* fine */ }
+    apply();
+  });
+  apply();
+})();
+
+/* ---------- render ---------- */
+function render() {
+  const spine = $('#spine');
+  const needle = state.filter.toLowerCase();
+  const visible = state.entries.filter((entry) => !needle || entry.content.toLowerCase().includes(needle));
+  $('#count').textContent = needle
+    ? `${visible.length} of ${state.entries.length} lines`
+    : `${state.entries.length} ${state.entries.length === 1 ? 'line' : 'lines'} held`;
+
+  if (!state.entries.length) {
+    spine.innerHTML = `<div class="empty-ledger"><span class="hex">⬡</span> The ledger is empty.
+      That is not a failure state — it is a promise kept. When you or your AI keep a memory,
+      it becomes a line here: visible, amendable, revocable.</div>`;
+    return;
+  }
+  if (!visible.length) {
+    spine.innerHTML = `<div class="empty-ledger">No line matches that search.</div>`;
+    return;
+  }
+  spine.innerHTML = '';
+  for (const entry of visible) spine.appendChild(renderEntry(entry));
+}
+function renderEntry(entry) {
+  const node = document.createElement('article');
+  node.className = 'entry';
+  node.dataset.id = entry.id;
+  const created = entry.created_at ? new Date(entry.created_at) : null;
+  node.innerHTML = `
+    <span class="seal${entry.born ? ' born' : ''}" aria-hidden="true"></span>
+    <p class="content"></p>
+    <div class="provenance">
+      <span>inscribed ${created ? created.toISOString().slice(0, 10) : 'unknown'}</span>
+      <span>№ ${esc(String(entry.id).slice(0, 8))}</span>
+      <button class="act amend" type="button">amend</button>
+      <button class="act revoke" type="button">strike from the record</button>
+    </div>`;
+  node.querySelector('.content').textContent = entry.content;
+  entry.born = false;
+  node.querySelector('.amend').addEventListener('click', () => beginAmend(node, entry));
+  node.querySelector('.revoke').addEventListener('click', () => confirmStrike(node, entry));
+  return node;
+}
+
+/* ---------- acts ---------- */
+async function inscribe() {
+  const input = $('#inscribe-input');
+  const content = input.value.trim();
+  if (!content) return;
+  if (content.length > 2000) { toast('a memory holds at most 2000 characters'); return; }
+  $('#inscribe-btn').disabled = true;
+  try {
+    const saved = state.demo
+      ? { id: `demo-${Date.now()}`, content, created_at: new Date().toISOString() }
+      : await api('POST', '/api/memories', { content });
+    state.entries.unshift({ ...saved, content: saved.content ?? content, born: true });
+    input.value = '';
+    autosize();
+    render();
+    toast('⬡ inscribed');
+  } catch (error) {
+    toast(`could not inscribe: ${error.message}`);
+  } finally {
+    $('#inscribe-btn').disabled = false;
+  }
+}
+function beginAmend(node, entry) {
+  const paragraph = node.querySelector('.content');
+  const editor = document.createElement('textarea');
+  editor.className = 'amend-input';
+  editor.value = entry.content;
+  editor.rows = Math.min(6, Math.max(2, Math.ceil(entry.content.length / 70)));
+  editor.setAttribute('aria-label', 'Amend this memory');
+  paragraph.replaceWith(editor);
+  editor.focus();
+  const finish = async (commit) => {
+    const next = editor.value.trim();
+    if (commit && next && next !== entry.content) {
+      try {
+        if (!state.demo) await api('PUT', `/api/memories/${encodeURIComponent(entry.id)}`, { content: next });
+        entry.content = next;
+        toast('⬡ amended');
+      } catch (error) {
+        toast(`could not amend: ${error.message}`);
+      }
+    }
+    render();
+  };
+  editor.addEventListener('blur', () => finish(true), { once: true });
+  editor.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); editor.blur(); }
+    if (event.key === 'Escape') { editor.removeEventListener('blur', finish); finish(false); }
+  });
+}
+function confirmStrike(node, entry) {
+  const provenance = node.querySelector('.provenance');
+  if (provenance.querySelector('.confirm-strike')) return;
+  const confirmEl = document.createElement('span');
+  confirmEl.className = 'confirm-strike';
+  confirmEl.innerHTML = `strike permanently? <button type="button" data-yes>yes, strike</button> · <button type="button" data-no>keep</button>`;
+  provenance.appendChild(confirmEl);
+  confirmEl.querySelector('[data-no]').addEventListener('click', () => confirmEl.remove());
+  confirmEl.querySelector('[data-yes]').addEventListener('click', async () => {
+    confirmEl.remove();
+    node.classList.add('struck');
+    try {
+      if (!state.demo) await api('DELETE', `/api/memories/${encodeURIComponent(entry.id)}`);
+      setTimeout(() => {
+        state.entries = state.entries.filter((candidate) => candidate.id !== entry.id);
+        render();
+      }, 650);
+      toast('struck from the record');
+    } catch (error) {
+      node.classList.remove('struck');
+      toast(`could not strike: ${error.message}`);
+    }
+  });
+}
+
+/* ---------- boot ---------- */
+const DEMO_ENTRIES = [
+  'The founder prefers autonomous execution; flag only strategic business calls.',
+  'Zero runtime dependencies is a product principle — sovereignty means an auditable supply chain.',
+  'Memory writes must always be consented — nothing is learned about the user silently.',
+  'The gold hexagon is the brand mark; it appears wherever the product does.',
+];
+async function boot() {
+  try {
+    const memories = await api('GET', '/api/memories');
+    const badgePayload = await api('GET', '/api/status').catch(() => null);
+    $('#mode-badge').textContent = badgePayload ? `live · ${badgePayload.name}` : 'live';
+    state.entries = memories
+      .map((memory) => ({ ...memory }))
+      .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+  } catch {
+    state.demo = true;
+    const badge = $('#mode-badge');
+    badge.textContent = 'demo — no server reachable';
+    badge.classList.add('demo');
+    state.entries = DEMO_ENTRIES.map((content, index) => ({
+      id: `demo-${index}`,
+      content,
+      created_at: new Date(Date.now() - index * 86_400_000).toISOString(),
+    }));
+  }
+  render();
+}
+function autosize() {
+  const input = $('#inscribe-input');
+  input.style.height = 'auto';
+  input.style.height = `${Math.min(input.scrollHeight, 120)}px`;
+}
+$('#inscribe-input').addEventListener('input', autosize);
+$('#inscribe-input').addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); inscribe(); }
+});
+$('#inscribe-btn').addEventListener('click', inscribe);
+$('#filter-input').addEventListener('input', (event) => {
+  state.filter = event.target.value.trim();
+  render();
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === '/' && document.activeElement !== $('#inscribe-input') && document.activeElement !== $('#filter-input')) {
+    event.preventDefault();
+    $('#inscribe-input').focus();
+  }
+});
+boot();
+</script>
+</body>
+</html>

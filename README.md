@@ -46,7 +46,7 @@ Training is disabled by default and has no hosted fallback. The workflow never c
 - **Memory you control** — add, search, edit, or forget durable context; automatic extraction is an explicit opt-in.
 - **Weights you control** — curate immutable datasets and run actual LoRA/QLoRA training through a trainer you operate, with consent, holdout, lineage, and deployment gates.
 - **Responsive and accessible** — full mobile navigation, keyboard-visible actions, labeled controls, live generation status, and reduced-motion support.
-- **XBrain (experimental)** — a reimagined interface at `/xbrain.html`: a cortex of hexagonal cells (one per real memory/document) that ignite when your AI recalls them, answers with flippable voice/recall/trace faces, and select-to-keep consented memory.
+- **XBrain (experimental)** — a reimagined three-surface interface: `/xbrain.html` (dialogue: a cortex of hexagonal cells that ignite when your AI truly recalls them, answers with voice/recall/trace faces, select-to-keep consented memory), `/xbrain-ledger.html` (the memory ledger: every kept memory as an auditable line you can amend or strike), and `/xbrain-atlas.html` (the knowledge atlas: probe your documents with real retrieval scores before asking anything). Design brief: [`docs/XBRAIN_DESIGN_BRIEF.md`](docs/XBRAIN_DESIGN_BRIEF.md).
 - **Race-safe streaming** — stop generation, switch views safely, copy answers or code, and keep a persona consistent for each conversation.
 
 ## Why sovereign

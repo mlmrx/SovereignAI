@@ -83,7 +83,15 @@ header.crown {
   display: flex; align-items: center; gap: 9px; margin: 0;
 }
 .brainname .hex { color: var(--gold); font-size: 1.15rem; }
-.crown .sub { color: var(--dim); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; }
+.crown .triptych {
+  display: flex; gap: 14px; align-items: baseline;
+  font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--dim);
+}
+.crown .triptych a { color: var(--dim); text-decoration: none; }
+.crown .triptych a:hover { color: var(--gold); }
+.crown .triptych .here { color: var(--gold); }
+.crown .triptych .hex { color: var(--gold); margin-right: 3px; }
 .crown .mode-badge {
   margin-left: auto;
   font-size: 0.66rem; letter-spacing: 0.14em;
@@ -134,6 +142,7 @@ button.theme-btn:hover { color: var(--gold); border-color: var(--gold); }
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
 }
 .inspector .kind { color: var(--gold); font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; display: block; margin-bottom: 5px; }
+.inspector .kind a { color: var(--gold); }
 .inspector .body { color: var(--ink); font-family: Charter, Georgia, Cambria, serif; }
 .inspector[hidden] { display: none; }
 
@@ -206,6 +215,8 @@ main.manuscript {
 .recall-bar { height: 3px; background: var(--panel-2); border-radius: 2px; margin-top: 4px; overflow: hidden; }
 .recall-bar i { display: block; height: 100%; background: var(--gold); }
 .recall-doc { color: var(--ink); font-weight: 600; display: block; margin-bottom: 2px; }
+.recall-jump { color: var(--dim); font-weight: 400; font-size: 0.64rem; letter-spacing: 0.08em; text-decoration: none; }
+.recall-jump:hover { color: var(--gold); }
 .recall-excerpt { color: var(--dim); font-family: Charter, Georgia, serif; font-size: 0.82rem; }
 .recall-none, .trace-grid { color: var(--dim); }
 .trace-grid { display: grid; grid-template-columns: auto 1fr; gap: 3px 18px; font-variant-numeric: tabular-nums; }
@@ -286,7 +297,11 @@ button.send:disabled { opacity: 0.45; cursor: default; }
 <header class="crown">
   <div class="crown-row">
     <h1 class="brainname"><span class="hex" aria-hidden="true">⬡</span> <span id="brain-name">…</span></h1>
-    <span class="sub">xbrain · experimental interface</span>
+    <nav class="triptych" aria-label="XBrain surfaces">
+      <span class="here"><span class="hex" aria-hidden="true">⬡</span>dialogue</span>
+      <a href="/xbrain-ledger.html"><span class="hex" aria-hidden="true">⬡</span>ledger</a>
+      <a href="/xbrain-atlas.html"><span class="hex" aria-hidden="true">⬡</span>atlas</a>
+    </nav>
     <span class="mode-badge" id="mode-badge">connecting</span>
     <button class="theme-btn" id="theme-btn" type="button" aria-label="Cycle color theme">theme: auto</button>
   </div>
@@ -485,7 +500,10 @@ function ignite(predicate) {
 }
 function inspect(cell, event) {
   const panel = $('#inspector');
-  panel.innerHTML = `<span class="kind">${esc(cell.kind)}</span><span class="body">${esc(cell.body.slice(0, 420))}${cell.body.length > 420 ? '…' : ''}</span>`;
+  const jump = cell.kind === 'memory'
+    ? '<a href="/xbrain-ledger.html">open the ledger ↗</a>'
+    : '<a href="/xbrain-atlas.html">view in atlas ↗</a>';
+  panel.innerHTML = `<span class="kind">${esc(cell.kind)} · ${jump}</span><span class="body">${esc(cell.body.slice(0, 420))}${cell.body.length > 420 ? '…' : ''}</span>`;
   panel.hidden = false;
   const x = Math.min(event.clientX, innerWidth - 360);
   const y = Math.min(event.clientY + 14, innerHeight - 180);
@@ -522,21 +540,31 @@ function addExchange(question) {
   $('#manuscript').scrollTop = $('#manuscript').scrollHeight;
   return exchange;
 }
-function finishExchange(exchange, { text, sources, trace }) {
+function finishExchange(exchange, { text, sources, memories = [], trace }) {
   exchange.querySelector('.voice').innerHTML = renderVoice(text);
   exchange.querySelector('.faces').hidden = false;
   const recall = exchange.querySelector('[data-pane="recall"]');
+  const parts = [];
   if (sources.length) {
     const top = Math.max(...sources.map((s) => s.score ?? 0), 0.0001);
-    recall.innerHTML = sources.map((s) => `
+    parts.push(sources.map((s) => `
       <div class="recall-item">
         <span class="recall-score">${(s.score ?? 0).toFixed(2)}<span class="recall-bar"><i style="width:${Math.round(((s.score ?? 0) / top) * 100)}%"></i></span></span>
-        <span><span class="recall-doc">${esc(s.document || s.kind || 'memory')}</span>
+        <span><span class="recall-doc">${esc(s.document || s.kind || 'memory')} <a class="recall-jump" href="/xbrain-atlas.html">atlas ↗</a></span>
         <span class="recall-excerpt">${esc((s.excerpt || '').slice(0, 300))}</span></span>
-      </div>`).join('');
-  } else {
-    recall.innerHTML = '<span class="recall-none">Nothing was retrieved — this answer came from the model and persona alone. That is worth knowing too.</span>';
+      </div>`).join(''));
   }
+  if (memories.length) {
+    parts.push(memories.map((m) => `
+      <div class="recall-item">
+        <span class="recall-score" aria-hidden="true">⬡</span>
+        <span><span class="recall-doc">note recalled <a class="recall-jump" href="/xbrain-ledger.html">ledger ↗</a></span>
+        <span class="recall-excerpt">${esc((m.excerpt || '').slice(0, 300))}</span></span>
+      </div>`).join(''));
+  }
+  recall.innerHTML = parts.length
+    ? parts.join('')
+    : '<span class="recall-none">Nothing was retrieved — this answer came from the model and persona alone. That is worth knowing too.</span>';
   const tracePane = exchange.querySelector('[data-pane="trace"]');
   tracePane.innerHTML = `<dl class="trace-grid">${Object.entries(trace)
     .map(([key, value]) => `<dt>${esc(key)}</dt><dd>${esc(String(value))}</dd>`).join('')}</dl>`;
@@ -637,8 +665,11 @@ async function askLive(question, exchange) {
     if (packet.event === 'meta') {
       meta = packet.data;
       state.conversationId = meta.conversationId;
-      const byId = new Set((meta.sources || []).map((s) => s.documentId));
-      ignite((cell) => cell.kind === 'document' && byId.has(cell.id));
+      const docIds = new Set((meta.sources || []).map((s) => s.documentId));
+      const memoryIds = new Set((meta.memories || []).map((m) => m.id));
+      ignite((cell) =>
+        (cell.kind === 'document' && docIds.has(cell.id)) ||
+        (cell.kind === 'memory' && memoryIds.has(cell.id)));
     } else if (packet.event === 'delta') {
       if (firstToken === null) firstToken = performance.now() - started;
       text += packet.data.text || '';
@@ -654,6 +685,7 @@ async function askLive(question, exchange) {
   finishExchange(exchange, {
     text,
     sources: meta?.sources || [],
+    memories: meta?.memories || [],
     trace: {
       persona: meta?.persona || 'default',
       model: meta ? `${meta.provider}/${meta.model || 'default'}` : 'unknown',
@@ -722,7 +754,9 @@ async function askDemo(question, exchange) {
   }
   finishExchange(exchange, {
     text,
-    sources: chosen.map((cell, index) => ({ document: cell.kind === 'memory' ? 'memory' : cell.label.split(' — ')[0], excerpt: cell.body, score: 0.91 - index * 0.17 })),
+    sources: chosen.filter((cell) => cell.kind === 'document')
+      .map((cell, index) => ({ document: cell.label.split(' — ')[0], excerpt: cell.body, score: 0.91 - index * 0.17 })),
+    memories: chosen.filter((cell) => cell.kind === 'memory').map((cell) => ({ excerpt: cell.body })),
     trace: {
       persona: state.personas.find((p) => p.id === state.personaId)?.name || 'Atlas',
       model: 'demo/scripted',

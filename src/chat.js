@@ -26,7 +26,7 @@ export async function handleChat({ store, config, body, sse, signal }) {
   const history = trimHistory(store.listMessages(conversation.id), config.limits.historyChars);
   store.addMessage({ conversation_id: conversation.id, role: 'user', content: message });
 
-  const { system, sources } = await buildSystemPrompt({ store, config, persona, query: message });
+  const { system, sources, memories } = await buildSystemPrompt({ store, config, persona, query: message });
 
   sse.send('meta', {
     conversationId: conversation.id,
@@ -35,6 +35,7 @@ export async function handleChat({ store, config, body, sse, signal }) {
     provider: provider.id,
     model,
     sources,
+    memories,
   });
 
   let text = '';
@@ -167,11 +168,15 @@ export function trimHistory(messages, maxChars) {
 async function buildSystemPrompt({ store, config, persona, query }) {
   const parts = [persona.system_prompt];
   let sources = [];
+  let memories = [];
 
   if (persona.use_memory) {
-    const memories = selectMemories(store.listRecentMemories?.(1000) ?? store.listMemories(), query);
-    if (memories.length > 0) {
-      parts.push('Relevant long-term notes the user asked you to remember:\n' + memories.map((m) => `- ${m.content}`).join('\n'));
+    const selected = selectMemories(store.listRecentMemories?.(1000) ?? store.listMemories(), query);
+    if (selected.length > 0) {
+      parts.push('Relevant long-term notes the user asked you to remember:\n' + selected.map((m) => `- ${m.content}`).join('\n'));
+      // Reported to clients so recall can be shown truthfully: these notes
+      // were actually placed in the prompt for this turn.
+      memories = selected.map((m) => ({ id: m.id, excerpt: String(m.content).slice(0, 300) }));
     }
   }
 
@@ -191,7 +196,7 @@ async function buildSystemPrompt({ store, config, persona, query }) {
     }
   }
 
-  return { system: parts.join('\n\n---\n\n'), sources };
+  return { system: parts.join('\n\n---\n\n'), sources, memories };
 }
 
 /** Rank memory notes by query overlap, then recency, within a hard prompt budget. */
