@@ -1,7 +1,7 @@
 // Regenerates the checked-in brand icons for the web UI favicon geometry:
-// a gold hexagon (#d9a441) carrying the dark glyph (#0b0d0c) from
-// public/index.html. Zero dependencies — polygons are rasterized with 4x4
-// supersampling and encoded as PNG by hand (node:zlib provides deflate).
+// a Claude-terracotta hexagon (#d97757) carrying the warm-charcoal glyph
+// (#1f1e1d) from public/index.html. Zero dependencies — polygons are
+// rasterized with 4x4 supersampling and encoded as PNG by hand.
 //
 //   node scripts/make-icons.mjs
 import fs from 'node:fs';
@@ -11,8 +11,8 @@ import zlib from 'node:zlib';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const GOLD = [0xd9, 0xa4, 0x41, 0xff];
-const DARK = [0x0b, 0x0d, 0x0c, 0xff];
+const GOLD = [0xd9, 0x77, 0x57, 0xff]; // Claude terracotta
+const DARK = [0x1f, 0x1e, 0x1d, 0xff]; // warm charcoal
 // Both shapes live in the favicon's 100x100 viewBox.
 const HEXAGON = [
   [50, 4],
@@ -38,8 +38,8 @@ const GLYPH = [
 ];
 
 const SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <path fill="#d9a441" d="M50 4 90 27v46L50 96 10 73V27z"/>
-  <path fill="#0b0d0c" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/>
+  <path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/>
+  <path fill="#1f1e1d" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/>
 </svg>
 `;
 

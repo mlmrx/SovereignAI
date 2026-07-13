@@ -41,7 +41,7 @@ Training is disabled by default and has no hosted fallback. The workflow never c
 
 ## Useful from the first conversation
 
-- **The Sovereign Path (`/guide.html`)** — an interactive, self-verifying guide: ten waypoints from first launch to full ownership, each with a live check against your own workspace's API. It turns gold when your instance can prove you've been there — progress as evidence, not decoration.
+- **The Sovereign Path (`/guide.html`)** — an interactive, self-verifying guide: ten waypoints from first launch to full ownership, each with a live check against your own workspace's API. It turns terracotta when your instance can prove you've been there — progress as evidence, not decoration.
 - **Command center** — see provider readiness, workspace counts, recent conversations, and context-aware workflows at a glance.
 - **Context you can trust** — every chat shows its active persona, model, local/remote data path, memory state, and knowledge state.
 - **Sources, not mystery** — knowledge-grounded answers include an expandable drawer with the exact retrieved excerpts, documents, methods, and scores.

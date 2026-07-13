@@ -31,13 +31,15 @@ Design a 3-surface experience for living with your own AI:
    terrain (backed by `/api/documents` and `/api/search`).
 
 Invent the design system from scratch, honoring exactly two brand invariants:
-the gold hexagon (`#d9a441`) and the loam-black ground (`#0b0d0c`). Then:
+the terracotta hexagon (`#d97757`, with `#a6522a` as its light-ground form)
+and the Claude-family grounds — warm charcoal (`#1f1e1d`/`#262624`) in dark,
+cream/ivory (`#faf9f5`/`#f0eee6`) in light. Then:
 
 1. **Typography:** v1 established three registers — the Voice (serif:
    Charter/Georgia), the Command (mono), the Machinery (small mono). Evolve or
    replace them with justification. No webfont CDNs — system stacks or
    data-URI `@font-face` only (CSP and zero-dep both forbid font requests).
-2. **Palette:** build outward from the gold family plus semantic ok/err. No
+2. **Palette:** build outward from the terracotta family plus semantic ok/err. No
    blue/purple gradients, no neon-cyan-on-black "AI product" look. Token-level
    theming: light and dark both designed, neither inverted from the other.
 3. **Layout/navigation:** no header-hero-grid-footer, no sidebar, no bottom

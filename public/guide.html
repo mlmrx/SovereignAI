@@ -4,43 +4,43 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>The Sovereign Path — SovereignAI guide</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d9a441' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%230b0d0c' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
 <style>
 /* The Sovereign Path — an interactive guide that teaches by watching.
    Every waypoint carries a live check against the real workspace API:
    the guide never claims you learned something your instance can't
    confirm. Progress is evidence, not decoration. */
 :root {
-  --ground: #f3eede; --panel: #faf7ec; --panel-2: #ece5d0;
-  --ink: #211e12; --dim: #71694f;
-  --gold: #9c6f16; --gold-hot: #7d570c; --gold-glow: rgba(156, 111, 22, 0.24);
-  --line: rgba(125, 95, 25, 0.26);
-  --ok: #4d7c33; --err: #a84a28;
-  --hex-idle: #e2d8bc; --hex-ink: #211e12;
+  --ground: #faf9f5; --panel: #f0eee6; --panel-2: #e5e2d6;
+  --ink: #1f1e1d; --dim: #6e6a60;
+  --gold: #a6522a; --gold-hot: #8a4220; --gold-glow: rgba(166, 82, 42, 0.24);
+  --line: rgba(166, 82, 42, 0.26);
+  --ok: #5a7d3c; --err: #a63a3a;
+  --hex-idle: #ebdbbc; --hex-ink: #1f1e1d;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --ground: #0d0f0b; --panel: #14170f; --panel-2: #1b1f14;
-    --ink: #eae4d1; --dim: #948d78;
-    --gold: #d9a441; --gold-hot: #f2c66a; --gold-glow: rgba(217, 164, 65, 0.30);
-    --line: rgba(217, 164, 65, 0.22);
-    --ok: #8fbf6f; --err: #d06b4a;
-    --hex-idle: #232719; --hex-ink: #0d0f0b;
+    --ground: #1f1e1d; --panel: #262624; --panel-2: #30302e;
+    --ink: #edeae1; --dim: #a6a198;
+    --gold: #d97757; --gold-hot: #e8926f; --gold-glow: rgba(217, 119, 87, 0.30);
+    --line: rgba(217, 119, 87, 0.22);
+    --ok: #8fa870; --err: #cc4b4b;
+    --hex-idle: #3a3733; --hex-ink: #1f1e1d;
   }
 }
 :root[data-theme="dark"] {
-  --ground: #0d0f0b; --panel: #14170f; --panel-2: #1b1f14;
-  --ink: #eae4d1; --dim: #948d78;
-  --gold: #d9a441; --gold-hot: #f2c66a; --gold-glow: rgba(217, 164, 65, 0.30);
-  --line: rgba(217, 164, 65, 0.22); --ok: #8fbf6f; --err: #d06b4a;
-  --hex-idle: #232719; --hex-ink: #0d0f0b;
+  --ground: #1f1e1d; --panel: #262624; --panel-2: #30302e;
+  --ink: #edeae1; --dim: #a6a198;
+  --gold: #d97757; --gold-hot: #e8926f; --gold-glow: rgba(217, 119, 87, 0.30);
+  --line: rgba(217, 119, 87, 0.22); --ok: #8fa870; --err: #cc4b4b;
+  --hex-idle: #3a3733; --hex-ink: #1f1e1d;
 }
 :root[data-theme="light"] {
-  --ground: #f3eede; --panel: #faf7ec; --panel-2: #ece5d0;
-  --ink: #211e12; --dim: #71694f;
-  --gold: #9c6f16; --gold-hot: #7d570c; --gold-glow: rgba(156, 111, 22, 0.24);
-  --line: rgba(125, 95, 25, 0.26); --ok: #4d7c33; --err: #a84a28;
-  --hex-idle: #e2d8bc; --hex-ink: #211e12;
+  --ground: #faf9f5; --panel: #f0eee6; --panel-2: #e5e2d6;
+  --ink: #1f1e1d; --dim: #6e6a60;
+  --gold: #a6522a; --gold-hot: #8a4220; --gold-glow: rgba(166, 82, 42, 0.24);
+  --line: rgba(166, 82, 42, 0.26); --ok: #5a7d3c; --err: #a63a3a;
+  --hex-idle: #ebdbbc; --hex-ink: #1f1e1d;
 }
 
 @view-transition { navigation: auto; }
@@ -176,7 +176,7 @@ button.survey-btn:hover { background: var(--gold-glow); }
   <h1 class="path-title"><span class="hex" aria-hidden="true">⬡</span> The Sovereign Path</h1>
   <p class="path-sub">Ten waypoints from first launch to full ownership. This guide doesn't quiz you —
   it <b>watches your actual workspace</b>: each waypoint carries a live check against your own instance's
-  API, and turns gold only when your instance can prove you've been there. Do things, then press
+  API, and turns terracotta only when your instance can prove you've been there. Do things, then press
   <b>survey</b>. Progress you can't fake is progress you can trust.</p>
 
   <div class="pathbar" id="pathbar" role="list" aria-label="Waypoints"></div>

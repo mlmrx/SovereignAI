@@ -4,43 +4,43 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Memory Ledger — XBrain</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d9a441' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%230b0d0c' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
 <style>
 /* XBrain · Memory Ledger — a bound record of consented memory.
    Registers: Voice (serif) for what is remembered, Machinery (mono) for
    provenance. The spine rule and struck-through revocation are the point:
    memory here is a ledger you audit, not a feed you scroll. */
 :root {
-  --ground: #f3eede; --panel: #faf7ec; --panel-2: #ece5d0;
-  --ink: #211e12; --dim: #71694f;
-  --gold: #9c6f16; --gold-hot: #7d570c; --gold-glow: rgba(156, 111, 22, 0.24);
-  --line: rgba(125, 95, 25, 0.26); --rule: rgba(125, 95, 25, 0.14);
-  --ok: #4d7c33; --err: #a84a28;
-  --seal-ink: #211e12;
+  --ground: #faf9f5; --panel: #f0eee6; --panel-2: #e5e2d6;
+  --ink: #1f1e1d; --dim: #6e6a60;
+  --gold: #a6522a; --gold-hot: #8a4220; --gold-glow: rgba(166, 82, 42, 0.24);
+  --line: rgba(166, 82, 42, 0.26); --rule: rgba(166, 82, 42, 0.14);
+  --ok: #5a7d3c; --err: #a63a3a;
+  --seal-ink: #1f1e1d;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --ground: #0d0f0b; --panel: #14170f; --panel-2: #1b1f14;
-    --ink: #eae4d1; --dim: #948d78;
-    --gold: #d9a441; --gold-hot: #f2c66a; --gold-glow: rgba(217, 164, 65, 0.30);
-    --line: rgba(217, 164, 65, 0.22); --rule: rgba(217, 164, 65, 0.10);
-    --ok: #8fbf6f; --err: #d06b4a;
-    --seal-ink: #0d0f0b;
+    --ground: #1f1e1d; --panel: #262624; --panel-2: #30302e;
+    --ink: #edeae1; --dim: #a6a198;
+    --gold: #d97757; --gold-hot: #e8926f; --gold-glow: rgba(217, 119, 87, 0.30);
+    --line: rgba(217, 119, 87, 0.22); --rule: rgba(217, 119, 87, 0.10);
+    --ok: #8fa870; --err: #cc4b4b;
+    --seal-ink: #1f1e1d;
   }
 }
 :root[data-theme="dark"] {
-  --ground: #0d0f0b; --panel: #14170f; --panel-2: #1b1f14;
-  --ink: #eae4d1; --dim: #948d78;
-  --gold: #d9a441; --gold-hot: #f2c66a; --gold-glow: rgba(217, 164, 65, 0.30);
-  --line: rgba(217, 164, 65, 0.22); --rule: rgba(217, 164, 65, 0.10);
-  --ok: #8fbf6f; --err: #d06b4a; --seal-ink: #0d0f0b;
+  --ground: #1f1e1d; --panel: #262624; --panel-2: #30302e;
+  --ink: #edeae1; --dim: #a6a198;
+  --gold: #d97757; --gold-hot: #e8926f; --gold-glow: rgba(217, 119, 87, 0.30);
+  --line: rgba(217, 119, 87, 0.22); --rule: rgba(217, 119, 87, 0.10);
+  --ok: #8fa870; --err: #cc4b4b; --seal-ink: #1f1e1d;
 }
 :root[data-theme="light"] {
-  --ground: #f3eede; --panel: #faf7ec; --panel-2: #ece5d0;
-  --ink: #211e12; --dim: #71694f;
-  --gold: #9c6f16; --gold-hot: #7d570c; --gold-glow: rgba(156, 111, 22, 0.24);
-  --line: rgba(125, 95, 25, 0.26); --rule: rgba(125, 95, 25, 0.14);
-  --ok: #4d7c33; --err: #a84a28; --seal-ink: #211e12;
+  --ground: #faf9f5; --panel: #f0eee6; --panel-2: #e5e2d6;
+  --ink: #1f1e1d; --dim: #6e6a60;
+  --gold: #a6522a; --gold-hot: #8a4220; --gold-glow: rgba(166, 82, 42, 0.24);
+  --line: rgba(166, 82, 42, 0.26); --rule: rgba(166, 82, 42, 0.14);
+  --ok: #5a7d3c; --err: #a63a3a; --seal-ink: #1f1e1d;
 }
 
 @view-transition { navigation: auto; }
@@ -388,7 +388,7 @@ const DEMO_ENTRIES = [
   'The founder prefers autonomous execution; flag only strategic business calls.',
   'Zero runtime dependencies is a product principle — sovereignty means an auditable supply chain.',
   'Memory writes must always be consented — nothing is learned about the user silently.',
-  'The gold hexagon is the brand mark; it appears wherever the product does.',
+  'The terracotta hexagon is the brand mark; it appears wherever the product does.',
 ];
 async function boot() {
   try {
