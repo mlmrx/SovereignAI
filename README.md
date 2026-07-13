@@ -5,6 +5,8 @@
 ```bash
 node bin/sovereign.js start
 # → open http://127.0.0.1:4321 — the setup wizard walks you through the rest
+# → then open /guide.html — an interactive guide that checks itself off
+#   against your real workspace as you learn
 ```
 
 > **Status:** v0.3.0 — command center UI, source-aware chat, local/self-hosted Fine-Tuning Studio, hardened local security, and production-grade CLI/Docker workflows.
@@ -39,6 +41,7 @@ Training is disabled by default and has no hosted fallback. The workflow never c
 
 ## Useful from the first conversation
 
+- **The Sovereign Path (`/guide.html`)** — an interactive, self-verifying guide: ten waypoints from first launch to full ownership, each with a live check against your own workspace's API. It turns gold when your instance can prove you've been there — progress as evidence, not decoration.
 - **Command center** — see provider readiness, workspace counts, recent conversations, and context-aware workflows at a glance.
 - **Context you can trust** — every chat shows its active persona, model, local/remote data path, memory state, and knowledge state.
 - **Sources, not mystery** — knowledge-grounded answers include an expandable drawer with the exact retrieved excerpts, documents, methods, and scores.
@@ -46,7 +49,7 @@ Training is disabled by default and has no hosted fallback. The workflow never c
 - **Memory you control** — add, search, edit, or forget durable context; automatic extraction is an explicit opt-in.
 - **Weights you control** — curate immutable datasets and run actual LoRA/QLoRA training through a trainer you operate, with consent, holdout, lineage, and deployment gates.
 - **Responsive and accessible** — full mobile navigation, keyboard-visible actions, labeled controls, live generation status, and reduced-motion support.
-- **XBrain (experimental)** — a reimagined three-surface interface: `/xbrain.html` (dialogue: a cortex of hexagonal cells that ignite when your AI truly recalls them, answers with voice/recall/trace faces, select-to-keep consented memory), `/xbrain-ledger.html` (the memory ledger: every kept memory as an auditable line you can amend or strike), and `/xbrain-atlas.html` (the knowledge atlas: probe your documents with real retrieval scores before asking anything). Design brief: [`docs/XBRAIN_DESIGN_BRIEF.md`](docs/XBRAIN_DESIGN_BRIEF.md).
+- **XBrain (experimental)** — a reimagined three-surface interface: `/xbrain.html` (the Mind Field: a full-viewport constellation where every hexagonal cell is a real memory or document — the cells your AI truly recalls ignite and thread into the answer while it streams, with voice/recall/trace faces and select-to-keep consented memory), `/xbrain-ledger.html` (the Memory Ledger: every kept memory as an auditable line you can amend or strike), and `/xbrain-atlas.html` (the Knowledge Atlas: probe your documents with real retrieval scores before asking anything). Design brief: [`docs/XBRAIN_DESIGN_BRIEF.md`](docs/XBRAIN_DESIGN_BRIEF.md).
 - **Race-safe streaming** — stop generation, switch views safely, copy answers or code, and keep a persona consistent for each conversation.
 
 ## Why sovereign
@@ -133,7 +136,7 @@ src/
   training/             canonical dataset snapshots · self-hosted trainer protocol client
   ingest/               zero-dep file ingestion: ZIP reader → DOCX · PDF · text
   rag/                  chunker · BM25 · hybrid retriever
-public/                 responsive command center + wizard + Fine-Tuning Studio + XBrain (experimental)
+public/                 command center + wizard + Fine-Tuning Studio + XBrain triptych + interactive guide
 integrations/           mcp · vscode · jetbrains · browser · chatgpt · trainer protocol
 scripts/                install.ps1 · install.sh · build-sea.mjs (single binary) · make-icons.mjs
 Dockerfile / compose    container distribution (ghcr.io image via CI)
@@ -161,7 +164,7 @@ npm test                    # node:test — nothing to install, there are no dep
 node scripts/build-sea.mjs  # build + smoke-test the single binary for this platform
 ```
 
-The suite includes 100+ core, UI-contract, integration, API, security, config, provider, training, ingestion, CLI, and Compose checks. Docker image builds remain covered by CI.
+The suite includes 130+ core, UI-contract, integration, API, security, config, provider, training, ingestion, CLI, single-binary, and Compose checks. Docker image builds remain covered by CI.
 
 ## Roadmap
 
@@ -175,6 +178,8 @@ The suite includes 100+ core, UI-contract, integration, API, security, config, p
 - [x] Guided local/self-hosted LoRA/QLoRA workflow with reviewed JSONL export
 - [x] Mobile-friendly command center, visible citations, editable memory, and safe streaming controls
 - [x] Single-binary builds (Node SEA) for Windows, macOS, and Linux
+- [x] XBrain experimental triptych (Mind Field · Memory Ledger · Knowledge Atlas) with honest recall reporting
+- [x] Interactive self-verifying user guide (`/guide.html`, The Sovereign Path)
 
 ## License
 
