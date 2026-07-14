@@ -1,5 +1,5 @@
 import { sseEvents, ensureOk } from './parsers.js';
-import { withTimeoutSignal } from '../util.js';
+import { withTimeoutSignal, safeFetch } from '../util.js';
 
 export const DEFAULT_ANTHROPIC_MODEL = 'claude-opus-4-8';
 const API_VERSION = '2023-06-01';
@@ -28,13 +28,13 @@ export const anthropic = {
   },
 
   async health(cfg) {
-    const res = await fetch(`${cfg.baseUrl}/v1/models?limit=1`, { headers: this.headers(cfg), signal: AbortSignal.timeout(8000) });
+    const res = await safeFetch(`${cfg.baseUrl}/v1/models?limit=1`, { headers: this.headers(cfg), signal: AbortSignal.timeout(8000) });
     await ensureOk(res, 'Anthropic');
     return { ok: true, detail: 'API key valid' };
   },
 
   async listModels(cfg) {
-    const res = await fetch(`${cfg.baseUrl}/v1/models`, { headers: this.headers(cfg), signal: AbortSignal.timeout(10000) });
+    const res = await safeFetch(`${cfg.baseUrl}/v1/models`, { headers: this.headers(cfg), signal: AbortSignal.timeout(10000) });
     await ensureOk(res, 'Anthropic');
     const { data = [] } = await res.json();
     return data.map((m) => ({ id: m.id, label: m.display_name ?? m.id }));
@@ -48,7 +48,7 @@ export const anthropic = {
       messages,
     };
     if (system) body.system = system;
-    const res = await fetch(`${cfg.baseUrl}/v1/messages`, {
+    const res = await safeFetch(`${cfg.baseUrl}/v1/messages`, {
       method: 'POST',
       headers: this.headers(cfg),
       body: JSON.stringify(body),

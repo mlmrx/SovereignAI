@@ -57,6 +57,9 @@ export function createApp(rootDir, { env = process.env } = {}) {
   const store = openDb(path.join(rootDir, 'data'));
   seedPersonas(store);
   const startedAt = Date.now();
+  // Emit HSTS only when the operator asserts the origin is served over HTTPS
+  // (a TLS-terminating proxy). Never on the default plain-HTTP local install.
+  const hsts = env.SOVEREIGN_HTTPS === '1' || env.SOVEREIGN_HTTPS === 'true';
 
   const routes = [];
   const route = (method, pattern, handler) => routes.push({ method, pattern: pattern.split('/').filter(Boolean), handler });
@@ -930,7 +933,7 @@ export function createApp(rootDir, { env = process.env } = {}) {
 
   const server = http.createServer(async (req, res) => {
     try {
-      applySecurityHeaders(res);
+      applySecurityHeaders(res, { hsts });
       const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
       const segments = url.pathname.split('/').filter(Boolean);
 

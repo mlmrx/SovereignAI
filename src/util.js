@@ -43,6 +43,16 @@ export class HttpError extends Error {
   }
 }
 
+/**
+ * fetch() for user-configured outbound endpoints (model providers). Refuses to
+ * follow redirects: a provider baseUrl is validated against SSRF targets at
+ * config time, but a 3xx to http://169.254.169.254/ would bypass that check.
+ * `redirect: 'error'` makes the redirect itself throw instead of chasing it.
+ */
+export function safeFetch(url, options = {}) {
+  return fetch(url, { ...options, redirect: 'error' });
+}
+
 export function sendJson(res, status, data) {
   const body = JSON.stringify(data);
   res.writeHead(status, {
@@ -54,13 +64,18 @@ export function sendJson(res, status, data) {
 }
 
 /** Apply browser-facing hardening headers before any response is written. */
-export function applySecurityHeaders(res) {
+export function applySecurityHeaders(res, { hsts = false } = {}) {
   res.setHeader('content-security-policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
   res.setHeader('cross-origin-resource-policy', 'same-origin');
   res.setHeader('permissions-policy', 'camera=(), microphone=(), geolocation=()');
   res.setHeader('referrer-policy', 'no-referrer');
   res.setHeader('x-content-type-options', 'nosniff');
   res.setHeader('x-frame-options', 'DENY');
+  // HSTS is opt-in: it must only be sent when the origin is genuinely served
+  // over HTTPS (a TLS-terminating proxy in front of SovereignAI). Emitting it
+  // on the default plain-HTTP local install would wrongly force https and lock
+  // users out. Cloud/BYOC deploys behind TLS set SOVEREIGN_HTTPS=1.
+  if (hsts) res.setHeader('strict-transport-security', 'max-age=63072000; includeSubDomains');
 }
 
 export function isJsonRequest(req) {

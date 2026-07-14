@@ -1,5 +1,5 @@
 import { ndjsonLines, ensureOk } from './parsers.js';
-import { withTimeoutSignal } from '../util.js';
+import { withTimeoutSignal, safeFetch } from '../util.js';
 
 export const ollama = {
   id: 'ollama',
@@ -10,14 +10,14 @@ export const ollama = {
   },
 
   async health(cfg) {
-    const res = await fetch(`${cfg.baseUrl}/api/version`, { signal: AbortSignal.timeout(3000) });
+    const res = await safeFetch(`${cfg.baseUrl}/api/version`, { signal: AbortSignal.timeout(3000) });
     await ensureOk(res, 'Ollama');
     const { version } = await res.json();
     return { ok: true, detail: `Ollama ${version}` };
   },
 
   async listModels(cfg) {
-    const res = await fetch(`${cfg.baseUrl}/api/tags`, { signal: AbortSignal.timeout(5000) });
+    const res = await safeFetch(`${cfg.baseUrl}/api/tags`, { signal: AbortSignal.timeout(5000) });
     await ensureOk(res, 'Ollama');
     const { models = [] } = await res.json();
     return models.map((m) => ({
@@ -36,7 +36,7 @@ export const ollama = {
     };
     body.options = { num_predict: maxTokens };
     if (temperature !== null && temperature !== undefined) body.options.temperature = temperature;
-    const res = await fetch(`${cfg.baseUrl}/api/chat`, {
+    const res = await safeFetch(`${cfg.baseUrl}/api/chat`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
@@ -67,7 +67,7 @@ export const ollama = {
     if (license) body.license = license;
     if (messages.length) body.messages = messages;
     if (quantize) body.quantize = quantize;
-    const res = await fetch(`${cfg.baseUrl}/api/create`, {
+    const res = await safeFetch(`${cfg.baseUrl}/api/create`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
@@ -89,7 +89,7 @@ export const ollama = {
 
   /** Batch-embed texts. Returns array of vectors. */
   async embed(cfg, model, texts) {
-    const res = await fetch(`${cfg.baseUrl}/api/embed`, {
+    const res = await safeFetch(`${cfg.baseUrl}/api/embed`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ model, input: texts }),

@@ -1,5 +1,5 @@
 import { sseEvents, ensureOk } from './parsers.js';
-import { withTimeoutSignal } from '../util.js';
+import { withTimeoutSignal, safeFetch } from '../util.js';
 
 /** Any OpenAI-compatible chat-completions server: vLLM, llama.cpp, LM Studio, Groq, Mistral, OpenAI… */
 export const openai = {
@@ -17,13 +17,13 @@ export const openai = {
   },
 
   async health(cfg) {
-    const res = await fetch(`${cfg.baseUrl}/v1/models`, { headers: this.headers(cfg), signal: AbortSignal.timeout(5000) });
+    const res = await safeFetch(`${cfg.baseUrl}/v1/models`, { headers: this.headers(cfg), signal: AbortSignal.timeout(5000) });
     await ensureOk(res, 'OpenAI-compatible endpoint');
     return { ok: true, detail: `Reachable at ${cfg.baseUrl}` };
   },
 
   async listModels(cfg) {
-    const res = await fetch(`${cfg.baseUrl}/v1/models`, { headers: this.headers(cfg), signal: AbortSignal.timeout(10000) });
+    const res = await safeFetch(`${cfg.baseUrl}/v1/models`, { headers: this.headers(cfg), signal: AbortSignal.timeout(10000) });
     await ensureOk(res, 'OpenAI-compatible endpoint');
     const { data = [] } = await res.json();
     return data.map((m) => ({ id: m.id, label: m.id }));
@@ -60,7 +60,7 @@ export const openai = {
 async function compatibleChatRequest(cfg, headers, initialBody, signal) {
   let body = initialBody;
   for (let attempt = 0; attempt < 4; attempt++) {
-    const response = await fetch(`${cfg.baseUrl}/v1/chat/completions`, {
+    const response = await safeFetch(`${cfg.baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),

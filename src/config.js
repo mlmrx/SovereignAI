@@ -339,7 +339,37 @@ function urlValue(value, label) {
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') fail(`${label} must use http or https`);
   if (parsed.username || parsed.password) fail(`${label} must not contain credentials; use the API-key field`);
   if (parsed.search || parsed.hash) fail(`${label} must not contain a query string or fragment`);
+  const blocked = ssrfBlockedReason(parsed.hostname);
+  if (blocked) fail(`${label} may not point at ${blocked}`);
   return raw.replace(/\/+$/, '');
+}
+
+// SSRF guard for user-supplied outbound URLs (provider/trainer endpoints the
+// server fetches). Cloud metadata and link-local addresses are always blocked
+// — they are never a legitimate model endpoint and are the classic pivot for
+// stealing instance credentials. Loopback and normal LAN/private hosts remain
+// allowed: a local or on-LAN Ollama box is the common, intended case. Returns a
+// human reason string when blocked, or null when allowed.
+export function ssrfBlockedReason(hostname) {
+  const host = String(hostname).toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
+
+  // IMDS hostnames some clouds resolve by name, plus the canonical metadata IPs.
+  if (host === 'metadata.google.internal' || host === 'metadata') return 'a cloud metadata endpoint';
+
+  const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (v4) {
+    const octets = v4.slice(1).map(Number);
+    if (octets.some((n) => n > 255)) return null; // not a real IPv4 literal; leave to DNS
+    const [a, b] = octets;
+    // 169.254.0.0/16 — link-local, which is where 169.254.169.254 (IMDS) lives.
+    if (a === 169 && b === 254) return 'a link-local / cloud metadata address';
+  }
+
+  // IPv6 link-local (fe80::/10) and the metadata mapping fd00:ec2::254.
+  if (host.startsWith('fe80:') || host.startsWith('fe80::') || host === 'fd00:ec2::254') {
+    return 'a link-local / cloud metadata address';
+  }
+  return null;
 }
 
 function nullableSecret(value, label) {

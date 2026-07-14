@@ -12,6 +12,14 @@ ENV NODE_ENV=production \
     SOVEREIGN_HOST=0.0.0.0 \
     SOVEREIGN_PORT=4321
 
+# Run as a non-root user. The state directory is owned by that user so the app
+# can write its SQLite database and config without root. A hostile request that
+# escapes the app process therefore lands as an unprivileged user, not root.
+RUN mkdir -p /state && \
+    addgroup -S sovereign && adduser -S -G sovereign -h /state sovereign && \
+    chown -R sovereign:sovereign /state /app
+USER sovereign
+
 # Set SOVEREIGN_TOKEN to reach the API/UI from outside the container. When set,
 # every API request (including this container's healthcheck) must send it.
 EXPOSE 4321
