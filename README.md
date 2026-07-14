@@ -136,7 +136,7 @@ src/
   training/             canonical dataset snapshots · self-hosted trainer protocol client
   ingest/               zero-dep file ingestion: ZIP reader → DOCX · PDF · text
   rag/                  chunker · BM25 · hybrid retriever
-public/                 command center + wizard + Fine-Tuning Studio + XBrain triptych + interactive guide
+public/                 command center + wizard + Fine-Tuning Studio + XBrain triptych + guide + landing page (land.html)
 integrations/           mcp · vscode · jetbrains · browser · chatgpt · trainer protocol
 scripts/                install.ps1 · install.sh · build-sea.mjs (single binary) · make-icons.mjs
 Dockerfile / compose    container distribution (ghcr.io image via CI)
