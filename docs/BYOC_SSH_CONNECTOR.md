@@ -1,5 +1,43 @@
 # BYOC rail #1 — Deploy to a Docker host over SSH
 
+> **Status: implemented** (v0.4.0) as `sovereign byoc` — `src/byoc/`
+> (ssh runner · registry · connector), covered by `test/byoc.test.js`.
+>
+> ```
+> sovereign byoc deploy --host you@your-box     # shows the full plan; --yes applies it
+> sovereign byoc list | status <name>           # registry / live health
+> sovereign byoc upgrade <name>                 # health-verified swap, auto-rollback
+> sovereign byoc export <name> [file]           # stream your data to YOUR machine
+> sovereign byoc suspend|resume <name>
+> sovereign byoc destroy <name> --yes [--purge-data]   # verifiable removal
+> ```
+>
+> Implementation choices worth knowing (deliberate deviations from the sketch
+> below):
+>
+> - **SSH transport is the platform OpenSSH client** (spawned, never bundled) —
+>   zero runtime npm dependencies holds. Host keys are pinned into
+>   `<home>/byoc/known_hosts` on first contact and strictly required afterward.
+> - **The token never transits the control plane** (the stretch goal shipped):
+>   it is generated from `/dev/urandom` *on the host*, stored 0600 there, and
+>   health probes run *over the SSH rail*, sourcing the token host-side and
+>   crossing only the host's own loopback. It is read back exactly once — to
+>   print the owner's authenticated URL — and only its SHA-256 lands in the
+>   registry. The env file is owned by the deploy user, not root: we don't
+>   require root, so requiring a root-owned file would contradict ourselves.
+> - **Default image path is "build from your committed source on your host"**
+>   (`git archive HEAD` streamed into `docker build -`): auditable,
+>   reproducible from a commit hash, and it works while the repo/GHCR image is
+>   private. `--image <ref>` pulls a published image instead.
+> - **Container hardening at run time:** `--read-only` rootfs + `--tmpfs /tmp`,
+>   `--security-opt no-new-privileges`, non-root app user (from the image),
+>   loopback bind by default (`--bind lan` to expose, token-protected).
+> - **Deploy is plan-first:** the exact `docker run`, image source, and env
+>   *keys* print before anything executes; `--yes` applies.
+> - Step 5's multi-account control panel is **not** in this rail; the registry
+>   (`<home>/byoc/instances.json`, metadata + token hash only) is the
+>   control-plane record, and the CLI is the handoff UI.
+
 The first "bring-your-own-infrastructure" connector. It proves the whole
 control-plane / data-plane model with the smallest possible surface: the user
 brings a Linux box they own (a VPS, Hetzner, a homelab, on-prem — anything with

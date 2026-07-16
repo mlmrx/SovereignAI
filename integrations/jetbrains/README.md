@@ -16,7 +16,7 @@ Requires JDK 17+ and a local Gradle 8.5+ installation. This repository does not 
 
 ```bash
 cd integrations/jetbrains
-gradle buildPlugin        # produces build/distributions/sovereignai-jetbrains-0.3.0.zip
+gradle buildPlugin        # produces build/distributions/sovereignai-jetbrains-0.4.0.zip
 ```
 
 The CI release workflow (`.github/workflows/release.yml`) builds this automatically and attaches the zip to each GitHub release.

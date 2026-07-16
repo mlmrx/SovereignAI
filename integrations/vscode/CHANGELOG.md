@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.0
+
+- Version alignment with SovereignAI v0.4 (BYOC SSH deployments land in the platform CLI; no extension-side changes).
+
 ## 0.3.0
 
 - Store bearer tokens per server origin in VS Code SecretStorage and migrate the legacy plaintext setting.

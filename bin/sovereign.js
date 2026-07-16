@@ -33,6 +33,8 @@ Commands:
   mcp              Run the MCP server (stdio) for Claude/Codex/Cursor/etc.
   export [file]    Export all data (personas, chats, memory, knowledge) to JSON
   import <file>    Import a previous export
+  byoc <action>    Deploy and manage instances on a Docker host you own,
+                   over SSH ("sovereign byoc help" for details)
   help             Show this help
 
 Options:
@@ -80,6 +82,11 @@ try {
     case 'export': {
       if (wantsHelp(args)) console.log(HELP);
       else await exportData(singlePathArg('export', args, { required: false }));
+      break;
+    }
+    case 'byoc': {
+      const { runByoc } = await import('../src/byoc/cli.js');
+      await runByoc(rootDir, args);
       break;
     }
     case 'import': {

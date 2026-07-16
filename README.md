@@ -108,7 +108,10 @@ sovereign doctor           # diagnose home, config, database, providers, and mod
 sovereign mcp              # MCP server (stdio) for Claude/Codex/Cursor/Gemini CLI
 sovereign export [file]    # export all data to JSON
 sovereign import <file>    # restore from an export
+sovereign byoc <action>    # deploy + manage instances on a Docker host YOU own, over SSH
 ```
+
+**Bring your own cloud:** `sovereign byoc deploy --host you@your-box` provisions a hardened instance on any Linux machine with SSH and Docker — a VPS, a homelab, on-prem. Your data stays on your host; the deploy tooling keeps only connection metadata and a token *hash*, and revoking its SSH key severs it completely. See [the BYOC connector](docs/BYOC_SSH_CONNECTOR.md).
 
 ## Your AI, everywhere
 
@@ -125,7 +128,7 @@ Releases: tagging `v*` triggers CI that packages the `.vsix`, browser zip, JetBr
 ## Architecture
 
 ```
-bin/sovereign.js        CLI (start [--lan] · init · doctor · mcp · export · import)
+bin/sovereign.js        CLI (start [--lan] · init · doctor · mcp · export · import · byoc)
 src/
   server.js             HTTP server, REST API, SSE, static UI, bearer auth
   chat.js               orchestration: history + memory + RAG → stream
@@ -136,6 +139,7 @@ src/
   training/             canonical dataset snapshots · self-hosted trainer protocol client
   ingest/               zero-dep file ingestion: ZIP reader → DOCX · PDF · text
   rag/                  chunker · BM25 · hybrid retriever
+  byoc/                 SSH connector: preflight · provision · upgrade/rollback · verifiable delete
 public/                 command center + wizard + Fine-Tuning Studio + XBrain triptych + guide + landing page (land.html)
 integrations/           mcp · vscode · jetbrains · browser · chatgpt · trainer protocol
 scripts/                install.ps1 · install.sh · build-sea.mjs (single binary) · make-icons.mjs
@@ -180,6 +184,7 @@ The suite includes 130+ core, UI-contract, integration, API, security, config, p
 - [x] Single-binary builds (Node SEA) for Windows, macOS, and Linux
 - [x] XBrain experimental triptych (Mind Field · Memory Ledger · Knowledge Atlas) with honest recall reporting
 - [x] Interactive self-verifying user guide (`/guide.html`, The Sovereign Path)
+- [x] BYOC rail #1: SSH deploy to any Docker host you own, with health-verified upgrades, auto-rollback, export-to-owner, and verifiable delete
 
 ## License
 

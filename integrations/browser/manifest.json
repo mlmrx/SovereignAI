@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SovereignAI — Your Own AI",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Chat through your configured SovereignAI server and save useful reading to its user-controlled knowledge base.",
   "icons": {
     "16": "icons/icon-16.png",
