@@ -23,7 +23,7 @@ First run opens a guided wizard in the web UI:
 
 ## Model Studio: build without giving up ownership
 
-Model Studio turns the model build into data you control instead of a one-shot form. Save reusable recipes in your local SovereignAI SQLite database, tune the base model, system prompt, generation parameters, prompt template, license, quantization, and seed messages, then build or revise the artifact whenever you choose. Every recipe has a readable Ollama Modelfile representation and is included in full-workspace JSON export/import, so it can be inspected, versioned, copied, or restored without SovereignAI.
+Model Studio turns the model build into data you control instead of a one-shot form. Save reusable recipes in your local SovereignAI SQLite database, tune the base model, system prompt, generation parameters, prompt template, license, quantization, and seed messages, then build or revise the artifact whenever you choose. Every recipe has a readable Ollama Modelfile representation and is included in full-workspace JSON export/import, so it can be inspected, versioned, copied, or restored without SovereignAI. The base model field accepts any open-weight source Ollama can resolve, including Hugging Face GGUF repos (`hf.co/<owner>/<repo>[:<quant>]`) — an in-app search browses public GGUF repos and their quantization variants to help fill it in, without downloading anything until you build.
 
 The ownership boundary is explicit:
 
@@ -111,7 +111,7 @@ sovereign import <file>    # restore from an export
 sovereign byoc <action>    # deploy + manage instances on a Docker host YOU own, over SSH
 ```
 
-**Bring your own cloud:** `sovereign byoc deploy --host you@your-box` provisions a hardened instance on any Linux machine with SSH and Docker — a VPS, a homelab, on-prem. Your data stays on your host; the deploy tooling keeps only connection metadata and a token *hash*, and revoking its SSH key severs it completely. See [the BYOC connector](docs/BYOC_SSH_CONNECTOR.md).
+**Bring your own cloud:** `sovereign byoc deploy --host you@your-box` provisions a hardened instance on any Linux machine with SSH and Docker — a VPS, a homelab, on-prem. Your data stays on your host; the deploy tooling keeps only connection metadata and a token *hash*, and revoking its SSH key severs it completely. Don't already have a box? `sovereign byoc gpu deploy <runpod|vastai|lambda>` rents a GPU instance and deploys onto it — **unverified against live provider infrastructure, test with the cheapest GPU type first**; see [the BYOC connector](docs/BYOC_SSH_CONNECTOR.md) for exactly what that means and what it costs.
 
 ## Your AI, everywhere
 
@@ -185,6 +185,7 @@ The suite includes 130+ core, UI-contract, integration, API, security, config, p
 - [x] XBrain experimental triptych (Mind Field · Memory Ledger · Knowledge Atlas) with honest recall reporting
 - [x] Interactive self-verifying user guide (`/guide.html`, The Sovereign Path)
 - [x] BYOC rail #1: SSH deploy to any Docker host you own, with health-verified upgrades, auto-rollback, export-to-owner, and verifiable delete
+- [~] BYOC rail 1.5: rent a GPU instance (RunPod, Vast.ai, Lambda Cloud) instead of bringing your own box — built and tested against mocked APIs, but **unverified against live provider infrastructure** ([details](docs/BYOC_SSH_CONNECTOR.md#rail-15--gpu-marketplace-provisioning))
 
 ## License
 

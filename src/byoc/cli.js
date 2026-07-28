@@ -15,6 +15,8 @@ import {
   suspendInstance,
   upgradeInstance,
 } from './connector.js';
+import { gpuProviders, getGpuProvider } from './providers/index.js';
+import { provisionContainer, provisionVm } from './gpu-provision.js';
 
 export const BYOC_HELP = `sovereign byoc — deploy SovereignAI to a Docker host you own, over SSH
 
@@ -37,7 +39,16 @@ Actions:
   suspend <name> / resume <name>         Stop / start the container
   destroy <name> --yes [--purge-data]    Remove the instance; data volume is
                                          kept unless --purge-data. The result
-                                         is re-inspected and shown.
+                                         is re-inspected and shown. If the
+                                         instance was rented via "gpu deploy",
+                                         this also terminates it (stops
+                                         billing) unless --keep-cloud-instance.
+  gpu <action>                           Rent a GPU instance from a
+                                         marketplace instead of bringing your
+                                         own box. Run "sovereign byoc gpu
+                                         help" for details — UNVERIFIED
+                                         against live infrastructure, test
+                                         with the cheapest GPU type first.
 
 Deploy options:
   --host user@host   SSH target (required)
@@ -52,6 +63,45 @@ Deploy options:
                      checkout of SovereignAI)
   --env K=V          Extra instance env (repeatable), e.g. provider endpoints
   --yes              Apply without prompting
+`;
+
+export const GPU_HELP = `sovereign byoc gpu — rent a GPU instance and deploy onto it (rail 1.5)
+
+UNVERIFIED against live provider infrastructure — built from each
+provider's documented API, with no account available to test against. See
+the warning at the top of src/byoc/providers/<provider>.js before trusting
+this for a real deployment. Try the cheapest GPU type first and watch the
+provider's own console.
+
+Providers: runpod, vastai (container-style: run a pulled image directly, no
+SSH) · lambda (vm-style: a real box, deploys over SSH like rail #1).
+
+Usage: sovereign byoc gpu <action> [args]
+
+Actions:
+  list <provider> [--api-key key]              Show GPU offers and hourly
+                                               pricing (read-only, no cost)
+  deploy <provider> --gpu-type id [options]    Rent an instance and deploy
+                                               (shows the full plan and
+                                               estimated cost; add --yes to
+                                               apply — THIS COSTS MONEY)
+
+Deploy options:
+  --gpu-type id      GPU type/offer id from "gpu list" (required)
+  --name x           Instance name (default "main")
+  --api-key key       Provider API key (default: env var, e.g. RUNPOD_API_KEY)
+  --image ref        Pullable image (required for runpod/vastai; optional
+                     for lambda, which can build your committed source
+                     instead, same as rail #1)
+  --region x         Region hint (lambda only; providers vary in support)
+  --disk-gb N        Container/instance disk size (default 20)
+  --port N           App port on the host (lambda only; default 4321)
+  --bind MODE        loopback or lan (lambda only; default loopback)
+  --env K=V          Extra instance env (lambda only, repeatable)
+  --yes              Apply without prompting (starts billing)
+
+Destroy a GPU-provisioned instance the same way as any other:
+  sovereign byoc destroy <name> --api-key key
 `;
 
 export async function runByoc(rootDir, argv) {
@@ -73,6 +123,8 @@ export async function runByoc(rootDir, argv) {
       return resumeCommand(rootDir, rest);
     case 'destroy':
       return destroyCommand(rootDir, rest);
+    case 'gpu':
+      return gpuCommand(rootDir, rest);
     case 'help':
     case '--help':
     case '-h':
@@ -176,29 +228,195 @@ ${handoff.tunnel ? `    Tunnel     ${handoff.tunnel}\n` : ''}    Web UI     ${ha
 `);
 }
 
+async function gpuCommand(rootDir, argv) {
+  const [sub = 'help', ...rest] = argv;
+  switch (sub) {
+    case 'list':
+      return gpuListCommand(rest);
+    case 'deploy':
+      return gpuDeployCommand(rootDir, rest);
+    case 'help':
+    case '--help':
+    case '-h':
+      console.log(GPU_HELP);
+      return;
+    default:
+      throw new ByocError(`Unknown byoc gpu action: ${sub}\nRun "sovereign byoc gpu help" for usage.`);
+  }
+}
+
+async function gpuListCommand(argv) {
+  const flags = parseFlags(argv, { 'api-key': 'value' }, { positionals: 1 });
+  const providerId = flags._[0];
+  if (!providerId) throw new ByocError(`gpu list requires a provider: ${Object.keys(gpuProviders).join(', ')}\nRun "sovereign byoc gpu help" for usage.`);
+  const provider = getGpuProvider(providerId);
+  const apiKey = flags['api-key'] ?? process.env[apiKeyEnvVar(providerId)];
+  if (!apiKey) throw new ByocError(`gpu list needs an API key: pass --api-key or set ${apiKeyEnvVar(providerId)}\n${provider.authHint}`);
+
+  const offers = await provider.listGpuTypes({ apiKey });
+  if (!offers.length) {
+    console.log(`  ${provider.label} returned no GPU offers.`);
+    return;
+  }
+  console.log(`\n${provider.label} GPU offers (UNVERIFIED against live infra — see src/byoc/providers/${providerId}.js)\n`);
+  for (const offer of offers) {
+    const price = offer.priceHourlyUsd != null ? `$${offer.priceHourlyUsd.toFixed(2)}/hr` : 'price unknown';
+    const vram = offer.vramGB != null ? `${offer.vramGB} GB VRAM` : '';
+    const region = offer.region ? ` (${offer.region})` : '';
+    console.log(`  ${String(offer.id).padEnd(24)} ${String(offer.label ?? '').padEnd(28)} ${price.padEnd(12)} ${vram}${region}`);
+  }
+}
+
+async function gpuDeployCommand(rootDir, argv) {
+  const flags = parseFlags(
+    argv,
+    {
+      'gpu-type': 'value', name: 'value', image: 'value', region: 'value', 'api-key': 'value',
+      'disk-gb': 'value', port: 'value', bind: 'value', env: 'repeat', yes: 'boolean',
+    },
+    { positionals: 1 }
+  );
+  const providerId = flags._[0];
+  if (!providerId) throw new ByocError(`gpu deploy requires a provider: ${Object.keys(gpuProviders).join(', ')}\nRun "sovereign byoc gpu help" for usage.`);
+  const provider = getGpuProvider(providerId);
+  if (!flags['gpu-type']) throw new ByocError(`gpu deploy requires --gpu-type <id>. See "sovereign byoc gpu list ${providerId}".`);
+  const apiKey = flags['api-key'] ?? process.env[apiKeyEnvVar(providerId)];
+  if (!apiKey) throw new ByocError(`gpu deploy needs an API key: pass --api-key or set ${apiKeyEnvVar(providerId)}\n${provider.authHint}`);
+
+  const name = flags.name ?? 'main';
+  if (openRegistry(rootDir).get(name)) {
+    throw new ByocError(`Instance "${name}" already exists in the registry. Use another --name, or destroy it first.`);
+  }
+  const diskGB = flags['disk-gb'] !== undefined ? Number(flags['disk-gb']) : 20;
+  if (!Number.isInteger(diskGB) || diskGB < 1) throw new ByocError(`Invalid --disk-gb "${flags['disk-gb']}"`);
+  if (provider.computeStyle === 'container' && !flags.image) {
+    throw new ByocError(`${provider.label} needs a pullable image: pass --image <ref>. Rail 1.5 does not build or push images for you.`);
+  }
+
+  console.log(`\nGPU deployment plan\n${'-'.repeat(20)}`);
+  console.log(`Provider   ${provider.label} (${provider.computeStyle}-style — ${provider.computeStyle === 'container' ? 'runs a pulled image directly, no SSH' : 'a real box; deploys over SSH like rail #1'})`);
+  console.log(`GPU type   ${flags['gpu-type']}${flags.region ? ` in ${flags.region}` : ''}`);
+  console.log(`Instance   ${name}`);
+  const image = flags.image ? { mode: 'pull', ref: flags.image } : { mode: 'source' };
+  if (provider.computeStyle === 'container') {
+    console.log(`Image      pull ${flags.image}`);
+    console.log('Secrets    SOVEREIGN_TOKEN is generated by THIS CLI and sent to the provider as instance env — unlike rail #1, it is not generated on a host we control, because there is no SSH access to a container-style instance. See docs/BYOC_SSH_CONNECTOR.md.');
+  } else {
+    console.log(`Image      ${image.mode === 'pull' ? `pull ${image.ref}` : 'build on the host from your committed source (git archive HEAD), same as rail #1'}`);
+    console.log('Secrets    SOVEREIGN_TOKEN generated ON the host, same trust model as rail #1.');
+  }
+  console.log(`Billing    starts the moment ${provider.label} accepts this request. "sovereign byoc destroy ${name}" will terminate the cloud instance too — this is not just a local record.`);
+  console.log(`\nTHIS IS UNVERIFIED against live ${provider.label} infrastructure — see the warning at the top of src/byoc/providers/${providerId}.js. Use the cheapest GPU type for a first try.\n`);
+
+  if (!flags.yes) {
+    if (!(await confirm(`Provision on ${provider.label} and deploy? This will start billing. (y/N) `))) {
+      console.log('Nothing was provisioned.');
+      return;
+    }
+  }
+
+  if (provider.computeStyle === 'container') {
+    const result = await provisionContainer({ providerId, apiKey, gpuTypeId: flags['gpu-type'], name, image: flags.image, diskGB, log: console.log });
+    const record = openRegistry(rootDir).save({
+      name,
+      createdAt: new Date().toISOString(),
+      computeStyle: 'container',
+      provider: result.provider,
+      host: result.host,
+      port: result.port,
+      tokenSha256: result.tokenSha256,
+      app: { version: result.status.version, setupComplete: Boolean(result.status.setupComplete) },
+      status: 'running',
+      lastHealth: { at: new Date().toISOString(), ok: true, uptimeSeconds: result.status.uptimeSeconds ?? 0 },
+    });
+    console.log(`
+  ⬡ ${record.name} is live on ${provider.label} (instance ${result.provider.instanceId}) — SovereignAI v${result.status.version}
+    Web UI     http://${result.host}:${result.port}/#token=${encodeURIComponent(result.token)}
+    Note       ${provider.label} maps this port directly to the internet. Treat the URL as a secret — the bearer token is the only thing protecting it. Put TLS in front before sharing it further.
+
+    The token above is shown once and is not stored here (only its hash is).
+    To stop billing: sovereign byoc destroy ${record.name} --api-key <key>
+`);
+    return;
+  }
+
+  const provisioned = await provisionVm({ rootDir, providerId, apiKey, gpuTypeId: flags['gpu-type'], name, region: flags.region, log: console.log });
+  const runner = createSshRunner({
+    target: provisioned.target,
+    sshPort: provisioned.sshPort,
+    keyPath: provisioned.keyPath,
+    knownHostsFile: knownHostsPath(rootDir),
+    strictHostKey: true, // pinned already during provisionVm's SSH-ready wait
+  });
+  const port = parsePortFlag(flags.port, '--port', 4321);
+  const bind = flags.bind ?? 'loopback';
+  const env = {};
+  for (const pair of flags.env ?? []) {
+    const eq = pair.indexOf('=');
+    if (eq <= 0) throw new ByocError(`Invalid --env "${pair}": expected KEY=value`);
+    env[pair.slice(0, eq)] = pair.slice(eq + 1);
+  }
+  const archive = image.mode === 'source' ? sourceArchive() : null;
+
+  const { record, handoff } = await deploy({
+    rootDir, runner, name, port, bind, image, env, archive,
+    fingerprint: () => pinnedHostKeyFingerprint({ host: runner.host, sshPort: provisioned.sshPort, knownHostsFile: knownHostsPath(rootDir) }),
+    log: console.log,
+  });
+  const saved = openRegistry(rootDir).save({ ...record, computeStyle: 'vm', provider: provisioned.provider });
+
+  console.log(`
+  ⬡ ${saved.name} is live on ${provider.label} (${runner.describe()}, instance ${provisioned.provider.instanceId}) — SovereignAI v${record.app.version}
+    Host key   ${record.hostKeyFingerprint ?? '(fingerprint unavailable; see byoc/known_hosts)'}
+${handoff.tunnel ? `    Tunnel     ${handoff.tunnel}\n` : ''}    Web UI     ${handoff.url}
+    ${handoff.note}
+
+    The token above is shown once and is not stored here (only its hash is).
+    To stop billing (this is a rented box, not one you own): sovereign byoc destroy ${saved.name} --api-key <key>
+`);
+}
+
 function listCommand(rootDir, argv) {
   parseFlags(argv, {});
   const instances = openRegistry(rootDir).list();
   if (!instances.length) {
-    console.log('No BYOC instances registered. Start with: sovereign byoc deploy --host user@host');
+    console.log('No BYOC instances registered. Start with: sovereign byoc deploy --host user@host, or sovereign byoc gpu deploy <provider>');
     return;
   }
   for (const record of instances) {
     const health = record.lastHealth
       ? `${record.lastHealth.ok ? 'healthy' : 'unhealthy'} as of ${record.lastHealth.at}`
       : 'never checked';
-    console.log(`  ${record.name.padEnd(12)} ${String(record.status).padEnd(12)} v${record.app?.version ?? '?'}  ${record.ssh.target}:${record.bind.port}  ${health}`);
+    const where = record.computeStyle === 'container'
+      ? `${record.provider?.name ?? '?'} instance ${record.provider?.instanceId ?? '?'} @ ${record.host}:${record.port}`
+      : `${record.ssh.target}:${record.bind.port}`;
+    console.log(`  ${record.name.padEnd(12)} ${String(record.status).padEnd(12)} v${record.app?.version ?? '?'}  ${where}  ${health}`);
   }
   console.log('\n  ("sovereign byoc status <name>" runs a live check.)');
 }
 
 async function statusCommand(rootDir, argv) {
-  const { record, runner } = existingInstance(rootDir, argv);
-  const result = await checkHealth({ rootDir, runner, record });
+  const flags = parseFlags(argv, { 'api-key': 'value' }, { positionals: 1 });
+  const record = loadInstance(rootDir, flags._);
+
+  if (record.computeStyle === 'container') {
+    const provider = getGpuProvider(record.provider.name);
+    const apiKey = flags['api-key'] ?? process.env[apiKeyEnvVar(record.provider.name)];
+    if (!apiKey) {
+      throw new ByocError(`Checking "${record.name}" needs a provider API key: pass --api-key or set ${apiKeyEnvVar(record.provider.name)}`);
+    }
+    const info = await provider.getInstance({ apiKey, instanceId: record.provider.instanceId });
+    console.log(`  ${record.name}: ${provider.label} reports "${info.status}"${info.host ? ` at ${info.host}:${info.port ?? ''}` : ''}.`);
+    if (info.status !== 'running') process.exitCode = 1;
+    return;
+  }
+
+  const { record: rec, runner } = existingInstance(rootDir, flags._);
+  const result = await checkHealth({ rootDir, runner, record: rec });
   if (result.ok) {
-    console.log(`  ${record.name}: healthy — SovereignAI v${result.status.version}, up ${result.status.uptimeSeconds}s, setup ${result.status.setupComplete ? 'complete' : 'pending'}`);
+    console.log(`  ${rec.name}: healthy — SovereignAI v${result.status.version}, up ${result.status.uptimeSeconds}s, setup ${result.status.setupComplete ? 'complete' : 'pending'}`);
   } else {
-    console.log(`  ${record.name}: NOT healthy — container is ${result.containerState}${result.detail ? ` (${result.detail})` : ''}`);
+    console.log(`  ${rec.name}: NOT healthy — container is ${result.containerState}${result.detail ? ` (${result.detail})` : ''}`);
     process.exitCode = 1;
   }
 }
@@ -232,10 +450,25 @@ async function resumeCommand(rootDir, argv) {
 }
 
 async function destroyCommand(rootDir, argv) {
-  const flags = parseFlags(argv, { 'purge-data': 'boolean', yes: 'boolean' }, { positionals: 1 });
-  const { record, runner } = existingInstance(rootDir, flags._.length ? [flags._[0]] : []);
+  const flags = parseFlags(argv, { 'purge-data': 'boolean', yes: 'boolean', 'api-key': 'value', 'keep-cloud-instance': 'boolean' }, { positionals: 1 });
+  const record = loadInstance(rootDir, flags._);
+
+  if (record.computeStyle === 'container') {
+    return destroyContainerInstance(rootDir, record, flags);
+  }
+
+  const runner = createSshRunner({
+    target: record.ssh.target,
+    sshPort: record.ssh.port ?? 22,
+    keyPath: record.ssh.keyPath ?? null,
+    knownHostsFile: knownHostsPath(rootDir),
+    strictHostKey: true,
+  });
   if (flags['purge-data']) {
     console.log(`  WARNING: --purge-data deletes the ${record.volume} volume — chats, memory, documents, keys. Run "sovereign byoc export ${record.name}" first if you want them.`);
+  }
+  if (record.provider && !flags['keep-cloud-instance']) {
+    console.log(`  Note: "${record.name}" is a ${record.provider.name} rented instance. Destroying also terminates the cloud instance (stops billing) — pass --keep-cloud-instance to only remove the app.`);
   }
   if (!flags.yes) {
     if (!(await confirm(`Destroy "${record.name}" on ${record.ssh.target}${flags['purge-data'] ? ' INCLUDING ALL DATA' : ' (keeping the data volume)'}? (y/N) `))) {
@@ -248,17 +481,70 @@ async function destroyCommand(rootDir, argv) {
   if (!flags['purge-data'] && verification.volume === 'present') {
     console.log(`  Your data is still on the host in the ${record.volume} volume. Re-deploy with the same --name to pick it back up, or purge it later.`);
   }
-  if (!clean) {
-    console.log('  Something was left behind — inspect the host before assuming removal.');
+  let cloudTerminated = true;
+  if (record.provider && !flags['keep-cloud-instance']) {
+    cloudTerminated = await terminateProviderInstance(record, flags['api-key']);
+  }
+  if (!clean || !cloudTerminated) {
+    console.log('  Something was left behind — inspect the host/console before assuming removal.');
     process.exitCode = 1;
   }
 }
 
-function existingInstance(rootDir, argv) {
+async function terminateProviderInstance(record, apiKeyFlag) {
+  const provider = getGpuProvider(record.provider.name);
+  const apiKey = apiKeyFlag ?? process.env[apiKeyEnvVar(record.provider.name)];
+  if (!apiKey) {
+    console.log(`  WARNING: could not terminate the ${provider.label} instance ${record.provider.instanceId} — no API key. Pass --api-key or set ${apiKeyEnvVar(record.provider.name)}, or terminate it manually in the ${provider.label} console. IT IS STILL BILLING.`);
+    return false;
+  }
+  try {
+    await provider.terminate({ apiKey, instanceId: record.provider.instanceId });
+    console.log(`  Terminated instance ${record.provider.instanceId} on ${provider.label} — billing stopped.`);
+    return true;
+  } catch (err) {
+    console.log(`  WARNING: could not terminate the ${provider.label} instance ${record.provider.instanceId}: ${err.message}. Check the ${provider.label} console — IT MAY STILL BE BILLING.`);
+    return false;
+  }
+}
+
+async function destroyContainerInstance(rootDir, record, flags) {
+  const provider = getGpuProvider(record.provider.name);
+  console.log(`  "${record.name}" is a container-style instance on ${provider.label} — there is no SSH access or separate local container to remove; this only terminates the cloud instance.`);
+  if (flags['purge-data']) {
+    console.log('  Note: --purge-data has no separate effect here. Container-style instances keep no data volume this CLI controls; terminating the instance removes everything on it. This rail does not support remote export for container-style instances yet.');
+  }
+  if (!flags.yes) {
+    if (!(await confirm(`Terminate "${record.name}" (instance ${record.provider.instanceId}) on ${provider.label}? This deletes everything on it and stops billing. (y/N) `))) {
+      console.log('Nothing was removed.');
+      return;
+    }
+  }
+  const ok = await terminateProviderInstance(record, flags['api-key']);
+  if (ok) {
+    openRegistry(rootDir).remove(record.name);
+  } else {
+    console.log(`  The local record was kept so you can retry: sovereign byoc destroy ${record.name} --api-key <key>`);
+    process.exitCode = 1;
+  }
+}
+
+function loadInstance(rootDir, argv) {
   const name = argv[0];
   if (!name) throw new ByocError('An instance name is required. See "sovereign byoc list".');
   const record = openRegistry(rootDir).get(name);
   if (!record) throw new ByocError(`No instance named "${name}". See "sovereign byoc list".`);
+  return record;
+}
+
+/** For actions that need SSH: upgrade, suspend, resume, export, and the legacy/vm-style destroy path. */
+function existingInstance(rootDir, argv) {
+  const record = loadInstance(rootDir, argv);
+  if (record.computeStyle === 'container') {
+    throw new ByocError(
+      `"${record.name}" is a container-style GPU instance (${record.provider?.name}) with no SSH access, so this action isn't supported for it. Supported for container-style instances: "sovereign byoc status ${record.name}" and "sovereign byoc destroy ${record.name}".`
+    );
+  }
   const runner = createSshRunner({
     target: record.ssh.target,
     sshPort: record.ssh.port ?? 22,
@@ -267,6 +553,10 @@ function existingInstance(rootDir, argv) {
     strictHostKey: true, // the pinned host key must match; a changed key fails loudly
   });
   return { record, runner };
+}
+
+function apiKeyEnvVar(providerId) {
+  return { runpod: 'RUNPOD_API_KEY', vastai: 'VASTAI_API_KEY', lambda: 'LAMBDA_API_KEY' }[providerId] ?? `${providerId.toUpperCase()}_API_KEY`;
 }
 
 async function confirm(question) {
