@@ -594,8 +594,17 @@
                 <div class="form-grid">
                   <label>Recipe title<input id="model-recipe-name" maxlength="200" autocomplete="off" placeholder="e.g. Research copilot" required /></label>
                   <label>Ollama artifact name<input id="model-artifact-name" maxlength="593" autocomplete="off" placeholder="e.g. atlas-research:latest" required /></label>
-                  <label class="span-2">Base model<input id="model-base" maxlength="2048" list="ollama-model-options" autocomplete="off" placeholder="e.g. llama3.1:latest" required /></label>
+                  <label class="span-2">Base model<input id="model-base" maxlength="2048" list="ollama-model-options" autocomplete="off" placeholder="e.g. llama3.1:latest or hf.co/owner/repo:Q4_K_M" required /></label>
                   <datalist id="ollama-model-options"></datalist>
+                  <details class="model-advanced model-hf-browse span-2">
+                    <summary><span><strong>Browse open weights on Hugging Face</strong><small>Search public GGUF repos and fill in the base model above</small></span><svg class="icon"><use href="#i-chevron"/></svg></summary>
+                    <div class="model-advanced-body">
+                      <p id="model-fit-hint" class="model-studio-status"></p>
+                      <label class="search-field compact" for="model-hf-query"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span class="sr-only">Search Hugging Face for GGUF models</span><input id="model-hf-query" type="search" autocomplete="off" placeholder="e.g. llama 3.2 1b instruct" /></label>
+                      <div id="model-hf-results" class="model-hf-results" role="list" aria-live="polite"></div>
+                      <p id="model-hf-status" class="model-studio-status" role="status" aria-live="polite">Searches huggingface.co's public API. Nothing downloads until you build — this only fills in the base model field above.</p>
+                    </div>
+                  </details>
                   <label class="span-2">System prompt<textarea id="model-system" rows="7" maxlength="131072" placeholder="Define the model's role, behavior, knowledge boundaries, and response style."></textarea></label>
                 </div>
 

@@ -1,5 +1,6 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
+import os from 'node:os';
 import path from 'node:path';
 import {
   loadConfig,
@@ -25,6 +26,8 @@ import {
   presentModelRecipe,
   unwrapPortableModelRecipe,
 } from './model-recipes.js';
+import { HfCatalogError, searchGgufModels, listGgufFiles } from './hf-catalog.js';
+import { buildModelRecommendation } from './model-recommendation.js';
 import {
   TRAINING_DATASET_SCHEMA,
   TrainingValidationError,
@@ -258,6 +261,44 @@ export function createApp(rootDir, { env = process.env } = {}) {
     }
     const presented = presentRecipe(saved);
     return { ...result, recipe: presented, portable: presented.portable, modelfile: presented.modelfile, ownership: presented.ownership };
+  });
+
+  // Browse open-weight GGUF repos on Hugging Face to help fill in a recipe's
+  // base model. Read-only metadata lookups against a fixed host — no weights
+  // pass through this server; a build still pulls directly from Hugging Face
+  // to the configured Ollama endpoint.
+  const catalogRoute = (handler) => async (args) => {
+    try {
+      return await handler(args);
+    } catch (err) {
+      if (err instanceof HfCatalogError) throw new HttpError(err.status, err.message);
+      throw err;
+    }
+  };
+  route('GET', '/api/model-catalog/search', catalogRoute(async ({ query }) => ({
+    results: await searchGgufModels(query.q),
+  })));
+  route('GET', '/api/model-catalog/files', catalogRoute(async ({ query }) => ({
+    files: await listGgufFiles(query.repo),
+  })));
+
+  // Heuristic guidance: what model size/quant should run comfortably here,
+  // and whether the workspace's training investment is worth an actual LoRA
+  // run yet. See model-recommendation.js for the (pure, unit-tested) rules.
+  route('GET', '/api/model-recommendation', async () => {
+    const documents = store.listDocuments();
+    const counts = store.getCounts();
+    const { maxTrainCount } = store.getFineTuningReadiness();
+    return buildModelRecommendation({
+      totalMemoryBytes: os.totalmem(),
+      endpointLocal: loopbackUrl(config.providers.ollama.baseUrl),
+      corpus: {
+        documents: counts.documents,
+        totalDocumentChars: documents.reduce((sum, doc) => sum + (Number(doc.size) || 0), 0),
+        memories: counts.memories,
+      },
+      maxTrainCount,
+    });
   });
 
   // Compatibility endpoint used by the setup wizard. Successful builds are

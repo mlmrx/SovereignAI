@@ -36,6 +36,10 @@ const state = {
   modelRecipeRequestId: 0,
   modelRecipeDetailRequestId: 0,
   modelRecipeBusy: false,
+  hfSearchRequestId: 0,
+  hfFilesRequestId: 0,
+  hfExpandedRepo: null,
+  modelRecommendation: null,
   conversationId: null,
   conversationPersonaId: null,
   conversationRequestId: 0,
@@ -1291,8 +1295,23 @@ async function loadSettings() {
   state.settingsLoaded = true;
   markSettingsDirty(false);
   renderModelOwnership();
-  await Promise.all([refreshModelOptions(), refreshOllamaModelOptions(), loadModelRecipes()]);
+  await Promise.all([refreshModelOptions(), refreshOllamaModelOptions(), loadModelRecipes(), loadModelRecommendation()]);
   renderProviderStatus();
+}
+
+/** Best-effort "what should run on this machine" hint for the Hugging Face browser. Non-critical: Model Studio works fine without it. */
+async function loadModelRecommendation() {
+  if (!state.modelRecommendation) {
+    try { state.modelRecommendation = await api.get('/api/model-recommendation'); }
+    catch { state.modelRecommendation = null; }
+  }
+  renderModelFitHint();
+}
+
+function renderModelFitHint() {
+  const hint = $('#model-fit-hint');
+  const fit = state.modelRecommendation?.modelFit;
+  hint.textContent = fit ? fit.reasoning : '';
 }
 
 function markSettingsDirty(dirty = true) {
@@ -1857,6 +1876,113 @@ $('#model-import-file').addEventListener('change', async (event) => {
     toast(error instanceof SyntaxError ? 'This file is not valid JSON.' : error.message, { type: 'error', title: 'Import failed' });
   } finally { setModelStudioBusy(false); }
 });
+
+/* Model Studio — Hugging Face open-weight browser. Read-only lookups that
+   only ever fill in the base model field; building still pulls straight from
+   Hugging Face to the configured Ollama endpoint (see src/hf-catalog.js). */
+function setHfStatus(message, type = '') {
+  const status = $('#model-hf-status');
+  status.textContent = message || 'Searches huggingface.co’s public API. Nothing downloads until you build — this only fills in the base model field above.';
+  status.className = `model-studio-status${type ? ` ${type}` : ''}`;
+}
+
+function renderHfResults(results) {
+  const host = $('#model-hf-results');
+  if (!results.length) {
+    host.innerHTML = '<div class="model-hf-empty">No GGUF repos matched that search.</div>';
+    return;
+  }
+  host.innerHTML = results.map((model) => {
+    const meta = [
+      Number.isFinite(model.downloads) ? `${model.downloads.toLocaleString()} downloads` : null,
+      Number.isFinite(model.likes) ? `${model.likes.toLocaleString()} likes` : null,
+      model.license ? `license: ${escapeHtml(model.license)}` : null,
+    ].filter(Boolean).join(' · ');
+    return `<div class="model-hf-result" role="listitem">
+      <div class="model-hf-result-head">
+        <strong>${escapeHtml(model.id)}</strong>
+        <a href="${escapeHtml(model.url)}" target="_blank" rel="noopener noreferrer">${icon('external')}<span class="sr-only">Open ${escapeHtml(model.id)} on Hugging Face</span></a>
+      </div>
+      <p class="model-hf-result-meta">${meta || 'No download/like counts reported'}</p>
+      <button class="btn small model-hf-browse-btn" type="button" data-repo="${escapeHtml(model.id)}">Show GGUF files</button>
+      <div class="model-hf-files" hidden></div>
+    </div>`;
+  }).join('');
+
+  $$('.model-hf-browse-btn', host).forEach((button) => button.addEventListener('click', () => toggleHfFiles(button)));
+}
+
+async function toggleHfFiles(button) {
+  const repo = button.dataset.repo;
+  const filesHost = $('.model-hf-files', button.closest('.model-hf-result'));
+  if (state.hfExpandedRepo === repo && !filesHost.hidden) {
+    filesHost.hidden = true;
+    button.textContent = 'Show GGUF files';
+    state.hfExpandedRepo = null;
+    return;
+  }
+  state.hfExpandedRepo = repo;
+  filesHost.hidden = false;
+  filesHost.innerHTML = '<div class="model-hf-empty">Loading files…</div>';
+  button.textContent = 'Hide GGUF files';
+  const requestId = ++state.hfFilesRequestId;
+  try {
+    const { files } = await api.get(`/api/model-catalog/files?repo=${encodeURIComponent(repo)}`);
+    if (requestId !== state.hfFilesRequestId) return;
+    filesHost.innerHTML = files.length
+      ? files.map((file) => `<button class="model-hf-file-btn" type="button" data-base="${escapeHtml(file.base)}"><span>${escapeHtml(file.filename)}</span>${file.quantization ? `<span>${escapeHtml(file.quantization)}</span>` : ''}</button>`).join('')
+      : '<div class="model-hf-empty">No .gguf files found in this repo.</div>';
+    $$('.model-hf-file-btn', filesHost).forEach((fileButton) => fileButton.addEventListener('click', () => applyHfBase(fileButton.dataset.base)));
+  } catch (error) {
+    if (requestId !== state.hfFilesRequestId) return;
+    filesHost.innerHTML = `<div class="model-hf-empty">${escapeHtml(error.message)}</div>`;
+  }
+}
+
+function applyHfBase(base) {
+  const input = $('#model-base');
+  input.value = base;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.focus();
+  $('.model-hf-browse')?.removeAttribute('open');
+  setHfStatus(`Base model set to ${base}. Review the license before building.`, 'success');
+  toast(`Base model set to ${base}`, { type: 'success' });
+}
+
+async function searchHfModels() {
+  const query = $('#model-hf-query').value.trim();
+  if (!query) {
+    $('#model-hf-results').innerHTML = '';
+    setHfStatus();
+    return;
+  }
+  const requestId = ++state.hfSearchRequestId;
+  setHfStatus('Searching Hugging Face…');
+  try {
+    const { results } = await api.get(`/api/model-catalog/search?q=${encodeURIComponent(query)}`);
+    if (requestId !== state.hfSearchRequestId) return;
+    renderHfResults(results);
+    setHfStatus(results.length ? `${results.length} repo${results.length === 1 ? '' : 's'} found. Nothing downloads until you build.` : undefined);
+  } catch (error) {
+    if (requestId !== state.hfSearchRequestId) return;
+    $('#model-hf-results').innerHTML = '';
+    setHfStatus(error.message, 'error');
+  }
+}
+
+(() => {
+  let hfSearchTimer;
+  $('#model-hf-query').addEventListener('input', () => {
+    clearTimeout(hfSearchTimer);
+    hfSearchTimer = setTimeout(searchHfModels, 450);
+  });
+  $('#model-hf-query').addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    clearTimeout(hfSearchTimer);
+    searchHfModels();
+  });
+})();
 
 window.addEventListener('beforeunload', (event) => {
   if (!state.settingsDirty && !state.modelRecipeDirty && !window.SOVEREIGN_FINE_TUNE?.isDirty?.()) return;

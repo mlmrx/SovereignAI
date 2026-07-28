@@ -239,6 +239,75 @@ test('document ingestion and keyword search', async () => {
   assert.equal(search.body[0].method, 'keyword');
 });
 
+test('model catalog search proxies Hugging Face and requires a query', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options) => {
+    const href = typeof url === 'string' ? url : url.toString();
+    if (href.startsWith('https://huggingface.co/')) {
+      assert.ok(href.includes('search=llama'));
+      return new Response(
+        JSON.stringify([
+          { id: 'bartowski/Llama-3.2-1B-Instruct-GGUF', downloads: 100, likes: 5, tags: ['gguf', 'license:apache-2.0'] },
+        ]),
+        { status: 200, headers: { 'content-type': 'application/json' } }
+      );
+    }
+    return originalFetch(url, options);
+  };
+  try {
+    const res = await get('/api/model-catalog/search?q=' + encodeURIComponent('llama'));
+    assert.equal(res.status, 200);
+    assert.equal(res.body.results.length, 1);
+    assert.equal(res.body.results[0].id, 'bartowski/Llama-3.2-1B-Instruct-GGUF');
+    assert.equal(res.body.results[0].license, 'apache-2.0');
+
+    const missingQuery = await get('/api/model-catalog/search?q=');
+    assert.equal(missingQuery.status, 400);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('model catalog file listing guesses quantization and rejects a malformed repo id', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options) => {
+    const href = typeof url === 'string' ? url : url.toString();
+    if (href.startsWith('https://huggingface.co/')) {
+      return new Response(
+        JSON.stringify({ siblings: [{ rfilename: 'model.Q4_K_M.gguf' }, { rfilename: 'README.md' }] }),
+        { status: 200, headers: { 'content-type': 'application/json' } }
+      );
+    }
+    return originalFetch(url, options);
+  };
+  try {
+    const res = await get('/api/model-catalog/files?repo=' + encodeURIComponent('bartowski/Llama-3.2-1B-Instruct-GGUF'));
+    assert.equal(res.status, 200);
+    assert.deepEqual(res.body.files, [
+      { filename: 'model.Q4_K_M.gguf', quantization: 'Q4_K_M', base: 'hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF:Q4_K_M' },
+    ]);
+
+    const badRepo = await get('/api/model-catalog/files?repo=' + encodeURIComponent('not-a-valid-repo'));
+    assert.equal(badRepo.status, 400);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('model recommendation reports device memory fit and fine-tuning readiness', async () => {
+  const res = await get('/api/model-recommendation');
+  assert.equal(res.status, 200);
+  assert.equal(typeof res.body.hardware.totalMemoryGB, 'number');
+  // Test config's Ollama baseUrl defaults to localhost, so the fit estimate should apply.
+  assert.equal(res.body.modelFit.applies, true);
+  assert.match(res.body.modelFit.label, /^~\d+B at Q4_K_M$/);
+  // No training datasets exist in this fixture workspace, regardless of document/test ordering.
+  assert.equal(res.body.fineTuning.suggested, false);
+  assert.equal(res.body.fineTuning.exampleCount, 0);
+  assert.ok(res.body.corpus.documents >= 0);
+  assert.ok(res.body.corpus.totalDocumentChars >= 0);
+});
+
 test('config redacts secrets and merge keeps them', async () => {
   await send('PUT', '/api/config', { providers: { anthropic: { enabled: true, apiKey: 'sk-ant-secret123456' } } });
   const cfg = await get('/api/config');

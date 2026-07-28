@@ -202,6 +202,12 @@ export class Store {
     return Object.fromEntries(Object.entries(row).map(([key, value]) => [key, Number(value)]));
   }
 
+  /** Largest approved (locked) training dataset across all projects, for the model-fit/fine-tune recommendation. */
+  getFineTuningReadiness() {
+    const row = this.db.prepare('SELECT MAX(train_count) AS maxTrainCount FROM training_datasets').get();
+    return { maxTrainCount: row.maxTrainCount === null ? 0 : Number(row.maxTrainCount) };
+  }
+
   isEmptyExceptPersonas() {
     const row = this.db.prepare(
       `SELECT

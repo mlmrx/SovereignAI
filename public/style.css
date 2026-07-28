@@ -660,6 +660,18 @@ textarea { resize: vertical; line-height: 1.5; }
 .model-primary-actions { justify-content: flex-end; }
 .model-studio-status { min-height: 17px; margin: 10px 0 -3px; color: var(--muted); font-size: 9px; line-height: 1.45; }
 .model-studio-status.error { color: var(--danger); }.model-studio-status.success { color: var(--local); }
+.model-hf-browse .model-advanced-body { display: grid; gap: 10px; }
+.model-hf-results { display: grid; gap: 8px; max-height: 320px; overflow-y: auto; }
+.model-hf-result { display: grid; gap: 6px; padding: 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+.model-hf-result-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.model-hf-result-head strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-family: var(--mono); font-size: 10px; }
+.model-hf-result-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; color: var(--muted); font-size: 8px; }
+.model-hf-result-meta a { color: var(--accent); }
+.model-hf-files { display: grid; gap: 5px; margin-top: 2px; }
+.model-hf-file-btn { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg); color: var(--text-soft); font-family: var(--mono); font-size: 9px; text-align: left; cursor: pointer; }
+.model-hf-file-btn:hover { border-color: var(--accent-border); background: var(--surface-hover); color: var(--text); }
+.model-hf-empty { padding: 13px; border: 1px dashed var(--border); border-radius: 9px; color: var(--muted); text-align: center; font-size: 9px; }
+.model-hf-browse-btn { padding: 3px 8px; border-radius: 999px; font-size: 8px; }
 .data-card { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 15px; }.data-card p { margin: 3px 0 0; color: var(--muted); font-size: 10px; }.data-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 11px; background: var(--accent-soft); color: var(--accent-bright); }.data-actions { display: flex; gap: 7px; }
 .save-bar { position: sticky; z-index: 5; bottom: 14px; max-width: 860px; min-height: 65px; display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 30px auto 0; padding: 11px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: rgba(38,38,36,.95); box-shadow: 0 -12px 40px rgba(0,0,0,.22); backdrop-filter: blur(12px); }
 #save-status { color: var(--muted); font-size: 10px; }
