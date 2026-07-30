@@ -308,6 +308,53 @@ test('model recommendation reports device memory fit and fine-tuning readiness',
   assert.ok(res.body.corpus.totalDocumentChars >= 0);
 });
 
+test('chat import: auto-detects a ChatGPT-shaped export, is idempotent, and validates platform/persona', async () => {
+  const chatgptExport = [
+    {
+      title: 'API import test',
+      create_time: 1700000000,
+      update_time: 1700000100,
+      conversation_id: 'api-test-1',
+      current_node: 'n2',
+      mapping: {
+        root: { id: 'root', message: null, parent: null, children: ['n1'] },
+        n1: { id: 'n1', message: { author: { role: 'user' }, content: { content_type: 'text', parts: ['Hello'] }, create_time: 1700000010 }, parent: 'root', children: ['n2'] },
+        n2: { id: 'n2', message: { author: { role: 'assistant' }, content: { content_type: 'text', parts: ['Hi'] }, create_time: 1700000020 }, parent: 'n1', children: [] },
+      },
+    },
+  ];
+  const contentBase64 = Buffer.from(JSON.stringify(chatgptExport)).toString('base64');
+
+  const first = await send('POST', '/api/chat-import', { contentBase64 });
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  assert.equal(first.body.platform, 'chatgpt');
+  assert.equal(first.body.imported, 1);
+  assert.equal(first.body.skipped, 0);
+
+  const second = await send('POST', '/api/chat-import', { contentBase64 });
+  assert.equal(second.status, 200);
+  assert.equal(second.body.imported, 0);
+  assert.equal(second.body.skipped, 1, 're-importing the same export must not duplicate it');
+
+  const missingBody = await send('POST', '/api/chat-import', {});
+  assert.equal(missingBody.status, 400);
+
+  const badPlatform = await send('POST', '/api/chat-import', { contentBase64, platform: 'nope' });
+  assert.equal(badPlatform.status, 400);
+  assert.match(badPlatform.body.error, /Unknown platform/);
+
+  const badPersona = await send('POST', '/api/chat-import', { contentBase64: Buffer.from('[]').toString('base64'), personaId: 'ghost' });
+  assert.equal(badPersona.status, 400);
+  assert.match(badPersona.body.error, /Unknown personaId/);
+});
+
+test('chat import surfaces a clear 400 for unrecognizable JSON instead of a 500', async () => {
+  const contentBase64 = Buffer.from(JSON.stringify({ some: 'unrelated shape' })).toString('base64');
+  const res = await send('POST', '/api/chat-import', { contentBase64 });
+  assert.equal(res.status, 400);
+  assert.match(res.body.error, /Could not recognize/);
+});
+
 test('config redacts secrets and merge keeps them', async () => {
   await send('PUT', '/api/config', { providers: { anthropic: { enabled: true, apiKey: 'sk-ant-secret123456' } } });
   const cfg = await get('/api/config');

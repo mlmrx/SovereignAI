@@ -33,6 +33,11 @@ Commands:
   mcp              Run the MCP server (stdio) for Claude/Codex/Cursor/etc.
   export [file]    Export all data (personas, chats, memory, knowledge) to JSON
   import <file>    Import a previous export
+  import-chat <file> [--from platform] [--persona id]
+                   Import chat history from another AI platform's export
+                   (chatgpt, claude, gemini, or generic — auto-detected if
+                   --from is omitted). Re-running the same file is safe;
+                   already-imported conversations are skipped, not duplicated.
   byoc <action>    Deploy and manage instances on a Docker host you own,
                    over SSH ("sovereign byoc help" for details)
   help             Show this help
@@ -92,6 +97,11 @@ try {
     case 'import': {
       if (wantsHelp(args)) console.log(HELP);
       else await importData(singlePathArg('import', args, { required: true }));
+      break;
+    }
+    case 'import-chat': {
+      if (wantsHelp(args)) console.log(HELP);
+      else await importChatCommand(args);
       break;
     }
     case 'help':
@@ -205,6 +215,43 @@ async function importData(file) {
       replacePersonas: shouldReplaceSeedPersonas(store, parsed.data),
     });
     console.log('Imported:', counts);
+  } finally {
+    store.close();
+  }
+}
+
+async function importChatCommand(argv) {
+  const flags = { _: [] };
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === '--from') flags.from = argv[++i];
+    else if (arg === '--persona') flags.persona = argv[++i];
+    else if (arg.startsWith('--')) throw new CliError(`Unknown option ${arg}\nRun "sovereign help" for usage.`);
+    else flags._.push(arg);
+  }
+  if (flags._.length !== 1) {
+    throw new CliError('Usage: sovereign import-chat <file> [--from chatgpt|claude|gemini|generic] [--persona id]');
+  }
+  const file = flags._[0];
+  if (!fs.existsSync(file)) throw new CliError(`File not found: ${file}`);
+
+  const { createApp } = await import('../src/server.js');
+  const { importChatExport, supportedPlatforms } = await import('../src/chat-import/index.js');
+  if (flags.from && !supportedPlatforms().includes(flags.from)) {
+    throw new CliError(`Unknown --from "${flags.from}". Supported: ${supportedPlatforms().join(', ')}`);
+  }
+  const { store } = createApp(rootDir);
+  try {
+    if (flags.persona && !store.getPersona(flags.persona)) {
+      throw new CliError(`No persona with id "${flags.persona}". See the Personas list in settings, or omit --persona.`);
+    }
+    const buffer = fs.readFileSync(file);
+    const result = importChatExport(store, buffer, { platform: flags.from, personaId: flags.persona ?? null });
+    console.log(`Detected platform: ${result.platform}`);
+    console.log(
+      `Imported ${result.imported} conversation${result.imported === 1 ? '' : 's'}, skipped ${result.skipped} already imported (of ${result.totalParsed} parsed).`
+    );
+    for (const warning of result.warnings) console.log(`  ! ${warning}`);
   } finally {
     store.close();
   }

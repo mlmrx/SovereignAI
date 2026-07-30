@@ -692,6 +692,29 @@
               </div>
               <input type="file" id="import-file" accept=".json,application/json" hidden />
             </div>
+
+            <div class="settings-card data-card chat-import-card">
+              <span class="data-icon"><svg class="icon"><use href="#i-upload"/></svg></span>
+              <div>
+                <strong>Import chat history from another platform</strong>
+                <p>Bring conversations from ChatGPT's or Claude's official data export (or a generic JSON shape for anything else — Grok, Kimi, GLM, DeepSeek, Qwen, etc.) into this workspace. Parsing happens locally; nothing is uploaded anywhere else. Re-importing the same file is safe — already-imported conversations are skipped, not duplicated.</p>
+                <div class="chat-import-controls">
+                  <label class="chat-import-field">Platform<select id="chat-import-platform">
+                    <option value="">Auto-detect</option>
+                    <option value="chatgpt">ChatGPT (OpenAI)</option>
+                    <option value="claude">Claude (Anthropic)</option>
+                    <option value="gemini">Gemini (Google — experimental)</option>
+                    <option value="generic">Generic JSON (any other platform)</option>
+                  </select></label>
+                  <label class="chat-import-field">Assign to persona<select id="chat-import-persona"><option value="">No persona</option></select></label>
+                </div>
+                <p id="chat-import-status" class="model-studio-status" role="status" aria-live="polite"></p>
+              </div>
+              <div class="data-actions">
+                <button class="btn" id="chat-import-btn" type="button">Choose export file…</button>
+              </div>
+              <input type="file" id="chat-import-file" accept=".json,.zip,application/json,application/zip" hidden />
+            </div>
           </section>
 
           <div class="save-bar">

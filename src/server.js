@@ -28,6 +28,7 @@ import {
 } from './model-recipes.js';
 import { HfCatalogError, searchGgufModels, listGgufFiles } from './hf-catalog.js';
 import { buildModelRecommendation } from './model-recommendation.js';
+import { ChatImportError, importChatExport, supportedPlatforms as supportedChatPlatforms } from './chat-import/index.js';
 import {
   TRAINING_DATASET_SCHEMA,
   TrainingValidationError,
@@ -153,6 +154,32 @@ export function createApp(rootDir, { env = process.env } = {}) {
   route('DELETE', '/api/conversations/:id', async ({ params }) => {
     store.deleteConversation(params.id);
     return { ok: true };
+  });
+
+  // Import chat history from another AI platform's export (ChatGPT, Claude,
+  // Gemini, or the generic fallback shape). Sized like document uploads
+  // (readJsonBody's 20 MB default) — a very large export is better handled
+  // with `sovereign import-chat <file>`, which reads straight from disk.
+  route('POST', '/api/chat-import', async ({ body }) => {
+    if (typeof body.contentBase64 !== 'string' || !body.contentBase64) throw new HttpError(400, 'contentBase64 is required');
+    if (body.platform !== undefined && !supportedChatPlatforms().includes(body.platform)) {
+      throw new HttpError(400, `Unknown platform "${body.platform}". Supported: ${supportedChatPlatforms().join(', ')}`);
+    }
+    if (body.personaId !== undefined && body.personaId !== null && !store.getPersona(body.personaId)) {
+      throw new HttpError(400, 'Unknown personaId');
+    }
+    let buffer;
+    try {
+      buffer = Buffer.from(body.contentBase64, 'base64');
+    } catch {
+      throw new HttpError(400, 'contentBase64 is not valid base64');
+    }
+    try {
+      return importChatExport(store, buffer, { platform: body.platform, personaId: body.personaId ?? null });
+    } catch (err) {
+      if (err instanceof ChatImportError) throw new HttpError(400, err.message);
+      throw err;
+    }
   });
 
   // ---- memories ----

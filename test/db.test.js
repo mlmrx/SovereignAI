@@ -67,6 +67,59 @@ test('conversations and messages', () => {
   store.close();
 });
 
+test('importConversation/importMessage preserve source timestamps and enable idempotent re-import', () => {
+  const { store } = tempStore();
+  assert.equal(store.findConversationByExternalId('chatgpt', 'ext-1'), null);
+
+  const convo = store.importConversation({
+    title: 'Imported chat',
+    external_id: 'ext-1',
+    source_platform: 'chatgpt',
+    created_at: '2023-11-14T22:13:20.000Z',
+    updated_at: '2023-11-14T22:15:00.000Z',
+  });
+  assert.equal(convo.created_at, '2023-11-14T22:13:20.000Z', 'the source platform\'s own timestamp is kept, not stamped "now"');
+  assert.equal(convo.external_id, 'ext-1');
+  assert.equal(convo.source_platform, 'chatgpt');
+
+  store.importMessage({ conversation_id: convo.id, role: 'user', content: 'hi', created_at: '2023-11-14T22:13:30.000Z' });
+  const messages = store.listMessages(convo.id);
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].created_at, '2023-11-14T22:13:30.000Z');
+
+  const found = store.findConversationByExternalId('chatgpt', 'ext-1');
+  assert.equal(found.id, convo.id);
+  assert.equal(store.findConversationByExternalId('claude', 'ext-1'), null, 'the platform is part of the identity, not just the external id');
+  store.close();
+});
+
+test('the conversations.external_id/source_platform unique index rejects a duplicate import at the database level', () => {
+  const { store } = tempStore();
+  store.importConversation({ title: 'A', external_id: 'dup', source_platform: 'chatgpt', created_at: '2024-01-01T00:00:00.000Z' });
+  assert.throws(() => store.importConversation({ title: 'B', external_id: 'dup', source_platform: 'chatgpt', created_at: '2024-01-01T00:00:00.000Z' }));
+  // Same external_id under a DIFFERENT platform is a different identity and must not collide.
+  assert.doesNotThrow(() => store.importConversation({ title: 'C', external_id: 'dup', source_platform: 'claude', created_at: '2024-01-01T00:00:00.000Z' }));
+  store.close();
+});
+
+test('exporting and reimporting a workspace preserves external_id/source_platform on imported conversations', () => {
+  const { store } = tempStore();
+  const convo = store.importConversation({ title: 'Imported', external_id: 'ext-9', source_platform: 'claude', created_at: '2024-02-01T00:00:00.000Z' });
+  store.importMessage({ conversation_id: convo.id, role: 'user', content: 'hi', created_at: '2024-02-01T00:00:01.000Z' });
+
+  const exported = store.exportAll();
+  assert.equal(exported.conversations[0].external_id, 'ext-9');
+  assert.equal(exported.conversations[0].source_platform, 'claude');
+
+  const { store: restored } = tempStore();
+  restored.importAll(exported, { replacePersonas: false });
+  const roundTripped = restored.getConversation(convo.id);
+  assert.equal(roundTripped.external_id, 'ext-9');
+  assert.equal(roundTripped.source_platform, 'claude');
+  store.close();
+  restored.close();
+});
+
 test('status counts and memory edits use focused store operations', () => {
   const { store } = tempStore();
   store.createPersona({ name: 'P', system_prompt: 'S' });

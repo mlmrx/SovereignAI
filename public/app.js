@@ -689,6 +689,15 @@ async function loadPersonas() {
   const preferred = previous || state.config?.defaults?.personaId;
   if (preferred && state.personas.some((persona) => persona.id === preferred)) select.value = preferred;
   renderChatContext();
+
+  const importSelect = $('#chat-import-persona');
+  if (importSelect) {
+    const previousImportValue = importSelect.value;
+    importSelect.innerHTML =
+      '<option value="">No persona</option>' +
+      state.personas.map((persona) => `<option value="${escapeHtml(persona.id)}">${escapeHtml(persona.name)}</option>`).join('');
+    if (state.personas.some((persona) => persona.id === previousImportValue)) importSelect.value = previousImportValue;
+  }
 }
 
 function renderChatContext() {
@@ -2207,6 +2216,59 @@ $('#import-file').addEventListener('change', async (event) => {
     toast(`${count} records imported. Reloading the workspace…`, { type: 'success' });
     setTimeout(() => location.reload(), 800);
   } catch (error) { toast(error.message, { type: 'error', title: 'Import failed' }); }
+});
+
+function setChatImportStatus(html, type = '') {
+  const status = $('#chat-import-status');
+  status.innerHTML = html;
+  status.className = `model-studio-status${type ? ` ${type}` : ''}`;
+}
+
+async function fileToBase64(file) {
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error('Could not read file'));
+    reader.readAsDataURL(file);
+  });
+  return dataUrl.slice(dataUrl.indexOf(',') + 1);
+}
+
+$('#chat-import-btn').addEventListener('click', () => $('#chat-import-file').click());
+$('#chat-import-file').addEventListener('change', async (event) => {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  if (file.size > MAX_UPLOAD_BYTES) {
+    setChatImportStatus(
+      `File exceeds the ${formatBytes(MAX_UPLOAD_BYTES)} upload limit here — run <code>sovereign import-chat</code> from the command line for a larger export.`,
+      'error'
+    );
+    return;
+  }
+  const button = $('#chat-import-btn');
+  button.disabled = true;
+  setChatImportStatus('Reading and importing…');
+  try {
+    const contentBase64 = await fileToBase64(file);
+    const platform = $('#chat-import-platform').value || undefined;
+    const personaId = $('#chat-import-persona').value || undefined;
+    const result = await api.send('POST', '/api/chat-import', { contentBase64, platform, personaId });
+    const summary = `Detected ${escapeHtml(result.platform)}. Imported ${result.imported} conversation${result.imported === 1 ? '' : 's'}, skipped ${result.skipped} already imported (of ${result.totalParsed} parsed).`;
+    const warningList = result.warnings.length
+      ? `<br>${result.warnings.map((w) => `• ${escapeHtml(w)}`).join('<br>')}`
+      : '';
+    setChatImportStatus(summary + warningList, result.imported > 0 ? 'success' : '');
+    if (result.imported > 0) {
+      toast(`Imported ${result.imported} conversation${result.imported === 1 ? '' : 's'} from ${result.platform}.`, { type: 'success' });
+      await Promise.allSettled([loadConversations(), refreshCounts()]);
+    }
+  } catch (error) {
+    setChatImportStatus(escapeHtml(error.message), 'error');
+    toast(error.message, { type: 'error', title: 'Import failed' });
+  } finally {
+    button.disabled = false;
+  }
 });
 
 async function refreshCounts() {

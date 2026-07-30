@@ -86,6 +86,88 @@ test('CLI rejects unsafe start flags and unknown commands before starting', (t) 
   assert.match(help.stdout, /--port N/);
 });
 
+const CHATGPT_FIXTURE = [
+  {
+    title: 'CLI import test',
+    create_time: 1700000000,
+    update_time: 1700000100,
+    conversation_id: 'cli-test-1',
+    current_node: 'n2',
+    mapping: {
+      root: { id: 'root', message: null, parent: null, children: ['n1'] },
+      n1: {
+        id: 'n1',
+        message: { author: { role: 'user' }, content: { content_type: 'text', parts: ['Hello'] }, create_time: 1700000010 },
+        parent: 'root',
+        children: ['n2'],
+      },
+      n2: {
+        id: 'n2',
+        message: { author: { role: 'assistant' }, content: { content_type: 'text', parts: ['Hi there'] }, create_time: 1700000020 },
+        parent: 'n1',
+        children: [],
+      },
+    },
+  },
+];
+
+test('import-chat: help, usage guardrails, and unknown platform/persona errors', (t) => {
+  const home = makeTemp(t, 'import-chat-guardrails');
+
+  const help = runCli(['help'], { home });
+  assert.match(help.stdout, /import-chat <file>/);
+
+  const noArgs = runCli(['import-chat'], { home });
+  assert.equal(noArgs.status, 1);
+  assert.match(noArgs.stderr, /Usage: sovereign import-chat/);
+
+  const missingFile = runCli(['import-chat', path.join(home, 'nope.json')], { home });
+  assert.equal(missingFile.status, 1);
+  assert.match(missingFile.stderr, /File not found/);
+
+  const fixture = path.join(home, 'export.json');
+  fs.writeFileSync(fixture, JSON.stringify(CHATGPT_FIXTURE));
+
+  const badPlatform = runCli(['import-chat', fixture, '--from', 'nope'], { home });
+  assert.equal(badPlatform.status, 1);
+  assert.match(badPlatform.stderr, /Unknown --from "nope"/);
+  assert.match(badPlatform.stderr, /chatgpt/);
+
+  const badPersona = runCli(['import-chat', fixture, '--persona', 'ghost-persona'], { home });
+  assert.equal(badPersona.status, 1);
+  assert.match(badPersona.stderr, /No persona with id "ghost-persona"/);
+
+  const unknownFlag = runCli(['import-chat', fixture, '--wat'], { home });
+  assert.equal(unknownFlag.status, 1);
+  assert.match(unknownFlag.stderr, /Unknown option --wat/);
+});
+
+test('import-chat imports a ChatGPT-shaped export and is idempotent on re-run', (t) => {
+  const home = makeTemp(t, 'import-chat-run');
+  const fixture = path.join(home, 'export.json');
+  fs.writeFileSync(fixture, JSON.stringify(CHATGPT_FIXTURE));
+
+  const first = runCli(['import-chat', fixture], { home });
+  assert.equal(first.status, 0, first.stderr);
+  assert.match(first.stdout, /Detected platform: chatgpt/);
+  assert.match(first.stdout, /Imported 1 conversation, skipped 0 already imported \(of 1 parsed\)/);
+
+  const second = runCli(['import-chat', fixture], { home });
+  assert.equal(second.status, 0, second.stderr);
+  assert.match(second.stdout, /Imported 0 conversations, skipped 1 already imported \(of 1 parsed\)/);
+});
+
+test('import-chat accepts an explicit --from and a generic JSON shape', (t) => {
+  const home = makeTemp(t, 'import-chat-generic');
+  const fixture = path.join(home, 'export.json');
+  fs.writeFileSync(fixture, JSON.stringify([{ title: 'From another tool', messages: [{ role: 'user', content: 'hi' }] }]));
+
+  const result = runCli(['import-chat', fixture, '--from', 'generic'], { home });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Detected platform: generic/);
+  assert.match(result.stdout, /Imported 1 conversation/);
+});
+
 test('doctor reports local readiness and never prints configured secrets', (t) => {
   const sandbox = makeTemp(t, 'doctor');
   const home = path.join(sandbox, 'state');

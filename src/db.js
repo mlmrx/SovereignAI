@@ -163,6 +163,12 @@ export function openDb(dataDir) {
   db.exec(SCHEMA);
   ensureColumn(db, 'training_examples', 'reviewed', 'INTEGER NOT NULL DEFAULT 0');
   ensureColumn(db, 'training_runs', 'submission_consent', "TEXT NOT NULL DEFAULT '{}'");
+  ensureColumn(db, 'conversations', 'external_id', 'TEXT');
+  ensureColumn(db, 'conversations', 'source_platform', 'TEXT');
+  // Partial index: only imported conversations carry an external_id, and this
+  // is what makes re-importing the same export idempotent instead of
+  // duplicating every conversation on a second run.
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_conversations_external ON conversations(source_platform, external_id) WHERE external_id IS NOT NULL');
   for (const file of [dbFile, `${dbFile}-wal`, `${dbFile}-shm`]) {
     if (fs.existsSync(file)) tightenPermissions(file, 0o600);
   }
@@ -331,6 +337,40 @@ export class Store {
     });
   }
 
+  /** Idempotency check for chat-history import: has this external conversation already been imported? */
+  findConversationByExternalId(sourcePlatform, externalId) {
+    if (!sourcePlatform || !externalId) return null;
+    return (
+      this.db.prepare('SELECT * FROM conversations WHERE source_platform = ? AND external_id = ?').get(sourcePlatform, externalId) ?? null
+    );
+  }
+
+  /**
+   * Create a conversation from an imported chat history. Unlike
+   * createConversation (used by the live chat flow), this preserves the
+   * source platform's own timestamps and external id rather than stamping
+   * "now" — an imported conversation should sort and read like it did on
+   * the platform it came from.
+   */
+  importConversation({ persona_id = null, title = '', external_id, source_platform, created_at, updated_at }) {
+    const row = {
+      id: newId(),
+      persona_id,
+      title,
+      created_at: created_at ?? now(),
+      updated_at: updated_at ?? created_at ?? now(),
+      external_id: external_id ?? null,
+      source_platform: source_platform ?? null,
+    };
+    this.db
+      .prepare(
+        `INSERT INTO conversations (id, persona_id, title, created_at, updated_at, external_id, source_platform)
+         VALUES (:id, :persona_id, :title, :created_at, :updated_at, :external_id, :source_platform)`
+      )
+      .run(row);
+    return this.getConversation(row.id);
+  }
+
   // ---- Messages ----
   listMessages(conversationId) {
     return this.db.prepare('SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at, rowid').all(conversationId);
@@ -347,6 +387,28 @@ export class Store {
       tokens_in: m.tokens_in ?? null,
       tokens_out: m.tokens_out ?? null,
       created_at: now(),
+    };
+    this.db
+      .prepare(
+        `INSERT INTO messages (id, conversation_id, role, content, provider, model, tokens_in, tokens_out, created_at)
+         VALUES (:id, :conversation_id, :role, :content, :provider, :model, :tokens_in, :tokens_out, :created_at)`
+      )
+      .run(row);
+    return row;
+  }
+
+  /** Same as addMessage, but preserves the source platform's original timestamp instead of stamping "now". */
+  importMessage({ conversation_id, role, content, created_at }) {
+    const row = {
+      id: newId(),
+      conversation_id,
+      role,
+      content,
+      provider: null,
+      model: null,
+      tokens_in: null,
+      tokens_out: null,
+      created_at: created_at ?? now(),
     };
     this.db
       .prepare(
@@ -776,7 +838,7 @@ export class Store {
   importAll(data, { replacePersonas = false } = {}) {
     const tables = {
       personas: 'INSERT OR REPLACE INTO personas (id, name, description, system_prompt, provider, model, temperature, use_memory, use_knowledge, created_at, updated_at) VALUES (:id, :name, :description, :system_prompt, :provider, :model, :temperature, :use_memory, :use_knowledge, :created_at, :updated_at)',
-      conversations: 'INSERT OR REPLACE INTO conversations (id, persona_id, title, created_at, updated_at) VALUES (:id, :persona_id, :title, :created_at, :updated_at)',
+      conversations: 'INSERT OR REPLACE INTO conversations (id, persona_id, title, created_at, updated_at, external_id, source_platform) VALUES (:id, :persona_id, :title, :created_at, :updated_at, :external_id, :source_platform)',
       messages: 'INSERT OR REPLACE INTO messages (id, conversation_id, role, content, provider, model, tokens_in, tokens_out, created_at) VALUES (:id, :conversation_id, :role, :content, :provider, :model, :tokens_in, :tokens_out, :created_at)',
       memories: 'INSERT OR REPLACE INTO memories (id, content, created_at) VALUES (:id, :content, :created_at)',
       documents: 'INSERT OR REPLACE INTO documents (id, name, size, chunk_count, embedded, created_at) VALUES (:id, :name, :size, :chunk_count, :embedded, :created_at)',
@@ -1040,6 +1102,8 @@ function normalizeConversation(row) {
     title: optionalNullableText(row.title, '', 'title', 10000),
     created_at: timestamp(row.created_at, 'created_at'),
     updated_at: timestamp(row.updated_at, 'updated_at'),
+    external_id: nullableText(row.external_id, 'external_id', 512),
+    source_platform: nullableText(row.source_platform, 'source_platform', 64),
   };
 }
 

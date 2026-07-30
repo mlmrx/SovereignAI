@@ -108,10 +108,13 @@ sovereign doctor           # diagnose home, config, database, providers, and mod
 sovereign mcp              # MCP server (stdio) for Claude/Codex/Cursor/Gemini CLI
 sovereign export [file]    # export all data to JSON
 sovereign import <file>    # restore from an export
+sovereign import-chat <file> [--from platform]   # bring in chat history from another AI platform
 sovereign byoc <action>    # deploy + manage instances on a Docker host YOU own, over SSH
 ```
 
 **Bring your own cloud:** `sovereign byoc deploy --host you@your-box` provisions a hardened instance on any Linux machine with SSH and Docker — a VPS, a homelab, on-prem. Your data stays on your host; the deploy tooling keeps only connection metadata and a token *hash*, and revoking its SSH key severs it completely. Don't already have a box? `sovereign byoc gpu deploy <runpod|vastai|lambda>` rents a GPU instance and deploys onto it — **unverified against live provider infrastructure, test with the cheapest GPU type first**; see [the BYOC connector](docs/BYOC_SSH_CONNECTOR.md) for exactly what that means and what it costs.
+
+**Bring your history with you:** `sovereign import-chat` (CLI, or Settings → Data & privacy in the web UI) parses ChatGPT's and Claude's official export ZIPs directly — built with real confidence, since both are well-documented, stable formats. Gemini's Google Takeout export is supported experimentally (prompts only; see [the chat import guide](docs/CHAT_IMPORT.md)). Everything else — Grok, Kimi, GLM, DeepSeek, Qwen, or any platform without a dedicated parser — goes through a documented generic JSON format instead of a guessed-at one. Parsing is entirely local; re-running the same file is safe and never duplicates history.
 
 ## Your AI, everywhere
 
@@ -186,6 +189,7 @@ The suite includes 130+ core, UI-contract, integration, API, security, config, p
 - [x] Interactive self-verifying user guide (`/guide.html`, The Sovereign Path)
 - [x] BYOC rail #1: SSH deploy to any Docker host you own, with health-verified upgrades, auto-rollback, export-to-owner, and verifiable delete
 - [~] BYOC rail 1.5: rent a GPU instance (RunPod, Vast.ai, Lambda Cloud) instead of bringing your own box — built and tested against mocked APIs, but **unverified against live provider infrastructure** ([details](docs/BYOC_SSH_CONNECTOR.md#rail-15--gpu-marketplace-provisioning))
+- [x] Chat history import from ChatGPT and Claude's official exports (built with real confidence), Gemini via Google Takeout (experimental), and a documented generic JSON format covering every other platform ([details](docs/CHAT_IMPORT.md))
 
 ## License
 
