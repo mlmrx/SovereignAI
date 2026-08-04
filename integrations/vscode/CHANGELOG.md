@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0
+
+- Version alignment with SovereignAI v0.5 (memory provenance, verified/encrypted exports, Personal Context Portfolio, and distillation land in the platform; no extension-side changes).
+
 ## 0.4.0
 
 - Version alignment with SovereignAI v0.4 (BYOC SSH deployments land in the platform CLI; no extension-side changes).

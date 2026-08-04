@@ -29,10 +29,10 @@ test('CI and release workflows use the bounded package suite and explicit artifa
 });
 
 test('release integration source versions align with SovereignAI v0.4', () => {
-  assert.equal(JSON.parse(read('integrations/browser/manifest.json')).version, '0.4.0');
-  assert.equal(JSON.parse(read('integrations/vscode/package.json')).version, '0.4.0');
-  assert.match(read('integrations/jetbrains/build.gradle.kts'), /version = "0.4.0"/);
-  assert.match(read('integrations/chatgpt/openapi.yaml'), /version: 0.4.0/);
+  assert.equal(JSON.parse(read('integrations/browser/manifest.json')).version, '0.5.0');
+  assert.equal(JSON.parse(read('integrations/vscode/package.json')).version, '0.5.0');
+  assert.match(read('integrations/jetbrains/build.gradle.kts'), /version = "0.5.0"/);
+  assert.match(read('integrations/chatgpt/openapi.yaml'), /version: 0.5.0/);
 });
 
 test('Docker uses one durable state root and retains the prior database volume', () => {
