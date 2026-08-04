@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS conversations (
   persona_id TEXT,
   title TEXT DEFAULT '',
   created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  updated_at TEXT NOT NULL,
+  distilled_at TEXT
 );
 CREATE TABLE IF NOT EXISTS messages (
   id TEXT PRIMARY KEY,
@@ -40,7 +41,10 @@ CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id
 CREATE TABLE IF NOT EXISTS memories (
   id TEXT PRIMARY KEY,
   content TEXT NOT NULL,
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  origin TEXT,
+  source_conversation_id TEXT,
+  updated_at TEXT
 );
 CREATE TABLE IF NOT EXISTS documents (
   id TEXT PRIMARY KEY,
@@ -165,6 +169,16 @@ export function openDb(dataDir) {
   ensureColumn(db, 'training_runs', 'submission_consent', "TEXT NOT NULL DEFAULT '{}'");
   ensureColumn(db, 'conversations', 'external_id', 'TEXT');
   ensureColumn(db, 'conversations', 'source_platform', 'TEXT');
+  // Memory provenance (v0.5). NULL is meaningful on migrated rows: origin and
+  // updated_at were not tracked before this version, and claiming "manual" or
+  // "never edited" for pre-existing memories would be fabricated provenance.
+  ensureColumn(db, 'memories', 'origin', 'TEXT');
+  ensureColumn(db, 'memories', 'source_conversation_id', 'TEXT');
+  ensureColumn(db, 'memories', 'updated_at', 'TEXT');
+  // When an imported conversation was last swept for durable memories
+  // ("sovereign distill") — set even when the sweep found nothing, so
+  // re-running distillation is idempotent instead of re-billing every chat.
+  ensureColumn(db, 'conversations', 'distilled_at', 'TEXT');
   // Partial index: only imported conversations carry an external_id, and this
   // is what makes re-importing the same export idempotent instead of
   // duplicating every conversation on a second run.
@@ -182,6 +196,13 @@ function tightenPermissions(target, mode) {
     if (err.code !== 'EPERM' && err.code !== 'ENOSYS') throw err;
   }
 }
+
+/**
+ * How a memory entered the system. NULL (pre-v0.5 rows and imports of older
+ * exports) means "recorded before provenance tracking" — deliberately not
+ * backfilled to 'manual', which would be fabricated provenance.
+ */
+export const MEMORY_ORIGINS = new Set(['manual', 'extracted', 'distilled']);
 
 function ensureColumn(db, table, column, definition) {
   const exists = db.prepare(`PRAGMA table_info(${table})`).all().some((row) => row.name === column);
@@ -371,6 +392,18 @@ export class Store {
     return this.getConversation(row.id);
   }
 
+  /** Imported conversations that have not yet been swept for durable memories. */
+  listDistillableConversations({ redo = false } = {}) {
+    const where = redo
+      ? 'WHERE source_platform IS NOT NULL'
+      : 'WHERE source_platform IS NOT NULL AND distilled_at IS NULL';
+    return this.db.prepare(`SELECT * FROM conversations ${where} ORDER BY created_at, rowid`).all();
+  }
+
+  markConversationDistilled(id) {
+    this.db.prepare('UPDATE conversations SET distilled_at = ? WHERE id = ?').run(now(), id);
+  }
+
   // ---- Messages ----
   listMessages(conversationId) {
     return this.db.prepare('SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at, rowid').all(conversationId);
@@ -432,14 +465,27 @@ export class Store {
       .reverse();
   }
 
-  addMemory(content) {
-    const row = { id: newId(), content, created_at: now() };
-    this.db.prepare('INSERT INTO memories (id, content, created_at) VALUES (:id, :content, :created_at)').run(row);
+  addMemory(content, { origin = 'manual', sourceConversationId = null } = {}) {
+    if (!MEMORY_ORIGINS.has(origin)) throw new Error(`Unknown memory origin "${origin}"`);
+    const row = {
+      id: newId(),
+      content,
+      created_at: now(),
+      origin,
+      source_conversation_id: sourceConversationId,
+      updated_at: null,
+    };
+    this.db
+      .prepare(
+        `INSERT INTO memories (id, content, created_at, origin, source_conversation_id, updated_at)
+         VALUES (:id, :content, :created_at, :origin, :source_conversation_id, :updated_at)`
+      )
+      .run(row);
     return row;
   }
 
   updateMemory(id, content) {
-    const result = this.db.prepare('UPDATE memories SET content = ? WHERE id = ?').run(content, id);
+    const result = this.db.prepare('UPDATE memories SET content = ?, updated_at = ? WHERE id = ?').run(content, now(), id);
     return result.changes ? this.db.prepare('SELECT * FROM memories WHERE id = ?').get(id) : null;
   }
 
@@ -838,9 +884,10 @@ export class Store {
   importAll(data, { replacePersonas = false } = {}) {
     const tables = {
       personas: 'INSERT OR REPLACE INTO personas (id, name, description, system_prompt, provider, model, temperature, use_memory, use_knowledge, created_at, updated_at) VALUES (:id, :name, :description, :system_prompt, :provider, :model, :temperature, :use_memory, :use_knowledge, :created_at, :updated_at)',
-      conversations: 'INSERT OR REPLACE INTO conversations (id, persona_id, title, created_at, updated_at, external_id, source_platform) VALUES (:id, :persona_id, :title, :created_at, :updated_at, :external_id, :source_platform)',
+      conversations: 'INSERT OR REPLACE INTO conversations (id, persona_id, title, created_at, updated_at, external_id, source_platform, distilled_at) VALUES (:id, :persona_id, :title, :created_at, :updated_at, :external_id, :source_platform, :distilled_at)',
       messages: 'INSERT OR REPLACE INTO messages (id, conversation_id, role, content, provider, model, tokens_in, tokens_out, created_at) VALUES (:id, :conversation_id, :role, :content, :provider, :model, :tokens_in, :tokens_out, :created_at)',
-      memories: 'INSERT OR REPLACE INTO memories (id, content, created_at) VALUES (:id, :content, :created_at)',
+      memories:
+        'INSERT OR REPLACE INTO memories (id, content, created_at, origin, source_conversation_id, updated_at) VALUES (:id, :content, :created_at, :origin, :source_conversation_id, :updated_at)',
       documents: 'INSERT OR REPLACE INTO documents (id, name, size, chunk_count, embedded, created_at) VALUES (:id, :name, :size, :chunk_count, :embedded, :created_at)',
       chunks: 'INSERT OR REPLACE INTO chunks (id, document_id, idx, content, embedding) VALUES (:id, :document_id, :idx, :content, :embedding)',
       model_recipes: `INSERT OR REPLACE INTO model_recipes
@@ -1104,6 +1151,7 @@ function normalizeConversation(row) {
     updated_at: timestamp(row.updated_at, 'updated_at'),
     external_id: nullableText(row.external_id, 'external_id', 512),
     source_platform: nullableText(row.source_platform, 'source_platform', 64),
+    distilled_at: nullableTimestamp(row.distilled_at, 'distilled_at'),
   };
 }
 
@@ -1124,10 +1172,19 @@ function normalizeMessage(row) {
 }
 
 function normalizeMemory(row) {
+  const origin = nullableText(row.origin, 'origin', 32);
+  if (origin !== null && !MEMORY_ORIGINS.has(origin)) {
+    throw new Error(`origin must be one of ${[...MEMORY_ORIGINS].join(', ')}, or null`);
+  }
   return {
     id: requiredId(row.id, 'id'),
     content: requiredText(row.content, 'content', 20 * 1024 * 1024),
     created_at: timestamp(row.created_at, 'created_at'),
+    origin,
+    // Provenance metadata, not a live foreign key: the referenced conversation
+    // may have been deleted since — the historical pointer is still true.
+    source_conversation_id: nullableText(row.source_conversation_id, 'source_conversation_id', 512),
+    updated_at: nullableTimestamp(row.updated_at, 'updated_at'),
   };
 }
 

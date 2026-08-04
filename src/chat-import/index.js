@@ -65,7 +65,7 @@ export function parseChatExport(buffer, { platform } = {}) {
  */
 export function importChatExport(store, buffer, { platform, personaId = null } = {}) {
   const { platform: detected, conversations, warnings } = parseChatExport(buffer, { platform });
-  let imported = 0;
+  const importedConversationIds = [];
   let skipped = 0;
   for (const convo of conversations) {
     if (store.findConversationByExternalId(detected, convo.externalId)) {
@@ -83,9 +83,16 @@ export function importChatExport(store, buffer, { platform, personaId = null } =
     for (const message of convo.messages) {
       store.importMessage({ conversation_id: record.id, role: message.role, content: message.content, created_at: message.createdAt });
     }
-    imported++;
+    importedConversationIds.push(record.id);
   }
-  return { platform: detected, imported, skipped, totalParsed: conversations.length, warnings };
+  return {
+    platform: detected,
+    imported: importedConversationIds.length,
+    skipped,
+    totalParsed: conversations.length,
+    warnings,
+    importedConversationIds,
+  };
 }
 
 function detectPlatform(parsed) {

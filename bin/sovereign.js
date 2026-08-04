@@ -31,13 +31,24 @@ Commands:
   init             Create config in the active SovereignAI home
   doctor           Diagnose config, data, providers, models, and connectivity
   mcp              Run the MCP server (stdio) for Claude/Codex/Cursor/etc.
-  export [file]    Export all data (personas, chats, memory, knowledge) to JSON
-  import <file>    Import a previous export
-  import-chat <file> [--from platform] [--persona id]
+  export [file]    Export all data (personas, chats, memory, knowledge) to a
+                   checksummed JSON archive   [--encrypt]
+  import <file>    Import a previous export (verifies checksums; decrypts
+                   encrypted archives after asking for the passphrase)
+  verify <file>    Check an export archive against its own manifest without
+                   importing anything
+  portfolio [file] Write the Personal Context Portfolio — memories (with
+                   provenance), personas, and knowledge inventory as one
+                   markdown document you can paste into any AI tool
+  import-chat <file> [--from platform] [--persona id] [--distill]
                    Import chat history from another AI platform's export
                    (chatgpt, claude, gemini, or generic — auto-detected if
                    --from is omitted). Re-running the same file is safe;
                    already-imported conversations are skipped, not duplicated.
+  distill [--limit N] [--redo]
+                   Sweep imported conversations for durable memories using
+                   your configured model (one model call per conversation;
+                   idempotent — swept conversations are skipped unless --redo)
   byoc <action>    Deploy and manage instances on a Docker host you own,
                    over SSH ("sovereign byoc help" for details)
   help             Show this help
@@ -51,6 +62,9 @@ Options:
 Environment:
   SOVEREIGN_HOME   Config + data directory. Installed launchers set a stable
                    default; set it explicitly for a separate/project instance.
+  SOVEREIGN_EXPORT_PASSPHRASE
+                   Passphrase for --encrypt / encrypted import in
+                   non-interactive runs (scripts, CI); prompted for otherwise.
 `;
 
 try {
@@ -86,7 +100,26 @@ try {
     }
     case 'export': {
       if (wantsHelp(args)) console.log(HELP);
-      else await exportData(singlePathArg('export', args, { required: false }));
+      else {
+        const encrypt = args.includes('--encrypt');
+        const rest = args.filter((arg) => arg !== '--encrypt');
+        await exportData(singlePathArg('export', rest, { required: false }), { encrypt });
+      }
+      break;
+    }
+    case 'verify': {
+      if (wantsHelp(args)) console.log(HELP);
+      else await verifyCommand(singlePathArg('verify', args, { required: true }));
+      break;
+    }
+    case 'portfolio': {
+      if (wantsHelp(args)) console.log(HELP);
+      else await portfolioCommand(singlePathArg('portfolio', args, { required: false }));
+      break;
+    }
+    case 'distill': {
+      if (wantsHelp(args)) console.log(HELP);
+      else await distillCommand(args);
       break;
     }
     case 'byoc': {
@@ -182,35 +215,68 @@ function init() {
   );
 }
 
-async function exportData(file) {
+async function exportData(file, { encrypt = false } = {}) {
   const { createApp } = await import('../src/server.js');
+  const { buildExport, encryptExport } = await import('../src/portability.js');
   const { store } = createApp(rootDir);
   try {
-    const out = {
-      sovereignai: VERSION,
-      exportedAt: new Date().toISOString(),
-      data: store.exportAll(),
-    };
+    const out = buildExport(store, VERSION);
+    let payload = JSON.stringify(out, null, 2);
+    if (encrypt) {
+      const passphrase = await exportPassphrase({ confirm: true });
+      payload = JSON.stringify(encryptExport(payload, passphrase), null, 2);
+    }
     const target = file ?? `sovereign-export-${new Date().toISOString().slice(0, 10)}.json`;
-    fs.writeFileSync(target, JSON.stringify(out, null, 2), { mode: 0o600 });
+    fs.writeFileSync(target, payload, { mode: 0o600 });
     try {
       fs.chmodSync(target, 0o600);
     } catch (err) {
       if (err.code !== 'EPERM' && err.code !== 'ENOSYS') throw err;
     }
-    console.log(`Exported to ${target}`);
+    const tables = Object.values(out.manifest.tables).reduce((sum, table) => sum + table.rows, 0);
+    console.log(`Exported ${tables} rows to ${target}${encrypt ? ' (encrypted: aes-256-gcm, scrypt-derived key)' : ''}`);
+    console.log(`Archive digest sha256:${out.manifest.sha256}`);
+    console.log(`Verify anytime with: sovereign verify ${target}`);
   } finally {
     store.close();
   }
 }
 
+/** Parse an export file from disk, transparently decrypting the encrypted envelope. */
+async function readExportFile(file) {
+  const { isEncryptedExport, decryptExport } = await import('../src/portability.js');
+  let parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+  let encrypted = false;
+  if (isEncryptedExport(parsed)) {
+    encrypted = true;
+    const passphrase = await exportPassphrase({ confirm: false });
+    parsed = JSON.parse(decryptExport(parsed, passphrase));
+  }
+  return { parsed, encrypted };
+}
+
 async function importData(file) {
   const { createApp } = await import('../src/server.js');
   const { shouldReplaceSeedPersonas } = await import('../src/personas.js');
+  const { verifyExportManifest } = await import('../src/portability.js');
+  const { parsed, encrypted } = await readExportFile(file);
+  if (!parsed.data) throw new Error('Not a SovereignAI export file');
+  if (encrypted) console.log('Decrypted archive.');
+  const verification = verifyExportManifest(parsed);
+  if (verification.status === 'mismatch') {
+    for (const m of verification.mismatches) console.error(`  ✗ ${m.table}: ${m.detail}`);
+    throw new Error(
+      'Export failed checksum verification — the file changed after it was written (corruption, truncation, or an edit). ' +
+        'If you edited it on purpose, delete its "manifest" field and import again.'
+    );
+  }
+  console.log(
+    verification.status === 'verified'
+      ? 'Checksums verified.'
+      : 'No manifest (export predates v0.5); importing without verification.'
+  );
   const { store } = createApp(rootDir);
   try {
-    const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
-    if (!parsed.data) throw new Error('Not a SovereignAI export file');
     const counts = store.importAll(parsed.data, {
       replacePersonas: shouldReplaceSeedPersonas(store, parsed.data),
     });
@@ -220,17 +286,176 @@ async function importData(file) {
   }
 }
 
+async function verifyCommand(file) {
+  const { verifyExportManifest } = await import('../src/portability.js');
+  const { parsed, encrypted } = await readExportFile(file);
+  if (encrypted) console.log('Decrypted archive (the auth tag already proves an encrypted archive is intact).');
+  const verification = verifyExportManifest(parsed);
+  if (verification.status === 'absent') {
+    console.log('No manifest: this export predates v0.5 and cannot be verified, only inspected.');
+    return;
+  }
+  for (const [name, table] of Object.entries(parsed.manifest.tables ?? {})) {
+    const bad = verification.mismatches.find((m) => m.table === name);
+    console.log(`  ${bad ? '✗' : '✓'} ${name}: ${table.rows} rows${bad ? ` — ${bad.detail}` : ''}`);
+  }
+  for (const m of verification.mismatches.filter((m) => !(m.table in (parsed.manifest.tables ?? {})))) {
+    console.log(`  ✗ ${m.table}: ${m.detail}`);
+  }
+  if (verification.status === 'verified') {
+    console.log(`Result: verified. Archive digest sha256:${parsed.manifest.sha256}`);
+  } else {
+    console.log('Result: FAILED verification.');
+    process.exitCode = 1;
+  }
+}
+
+async function portfolioCommand(file) {
+  const { createApp } = await import('../src/server.js');
+  const { buildPortfolio } = await import('../src/portfolio.js');
+  const { loadConfig } = await import('../src/config.js');
+  const { store } = createApp(rootDir);
+  try {
+    const { markdown, counts } = buildPortfolio(store, loadConfig(rootDir), VERSION);
+    const target = file ?? `sovereign-portfolio-${new Date().toISOString().slice(0, 10)}.md`;
+    fs.writeFileSync(target, markdown, { mode: 0o600 });
+    try {
+      fs.chmodSync(target, 0o600);
+    } catch (err) {
+      if (err.code !== 'EPERM' && err.code !== 'ENOSYS') throw err;
+    }
+    console.log(`Portfolio written to ${target}`);
+    console.log(`  ${counts.memories} memories · ${counts.personas} personas · ${counts.documents} documents inventoried`);
+    console.log('  It contains personal context — treat it like a diary, not a config file.');
+  } finally {
+    store.close();
+  }
+}
+
+async function distillCommand(argv) {
+  const flags = { redo: false };
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === '--redo') flags.redo = true;
+    else if (arg === '--limit') {
+      const value = argv[++i];
+      if (!/^\d+$/.test(value ?? '') || Number(value) < 1) throw new CliError('--limit requires a positive integer');
+      flags.limit = Number(value);
+    } else throw new CliError(`Unknown distill option: ${arg}`);
+  }
+  const { createApp } = await import('../src/server.js');
+  const { store, config } = createApp(rootDir);
+  try {
+    await runDistillation(store, config, flags);
+  } finally {
+    store.close();
+  }
+}
+
+/**
+ * One model call per conversation, sequential on purpose: progress stays
+ * readable, a failure stops before burning more calls, and local providers
+ * aren't flooded. Conversations are marked distilled even when nothing
+ * durable was found, so re-runs never re-bill the same history.
+ */
+async function runDistillation(store, config, { limit, redo = false } = {}) {
+  const { distillConversationMemories } = await import('../src/memory-extract.js');
+  let conversations = store.listDistillableConversations({ redo });
+  if (limit) conversations = conversations.slice(0, limit);
+  if (!conversations.length) {
+    console.log(redo ? 'No imported conversations to distill.' : 'Nothing to distill: every imported conversation has already been swept (use --redo to sweep again).');
+    return;
+  }
+  console.log(`Distilling durable memories from ${conversations.length} imported conversation${conversations.length === 1 ? '' : 's'} using ${config.defaults.provider}/${config.defaults.model || 'provider default'}.`);
+  console.log('This makes one model call per conversation.');
+  let added = 0;
+  let done = 0;
+  for (const conversation of conversations) {
+    const label = conversation.title?.slice(0, 60) || conversation.id;
+    let facts;
+    try {
+      facts = await distillConversationMemories({
+        store,
+        config,
+        conversation,
+        messages: store.listMessages(conversation.id),
+      });
+    } catch (err) {
+      console.error(`  ✗ ${label} — ${err.message}`);
+      console.error(`Stopped after ${done} of ${conversations.length}; already-swept conversations stay marked. Fix the provider and re-run.`);
+      process.exitCode = 1;
+      return;
+    }
+    store.markConversationDistilled(conversation.id);
+    done++;
+    added += facts.length;
+    console.log(`  ✓ [${done}/${conversations.length}] ${label} — ${facts.length ? `${facts.length} new memor${facts.length === 1 ? 'y' : 'ies'}` : 'nothing durable'}`);
+  }
+  console.log(`Done: ${added} new memor${added === 1 ? 'y' : 'ies'} distilled from ${done} conversation${done === 1 ? '' : 's'}. Review them in the Memory view.`);
+}
+
+async function exportPassphrase({ confirm }) {
+  const fromEnv = process.env.SOVEREIGN_EXPORT_PASSPHRASE;
+  if (fromEnv !== undefined) {
+    if (fromEnv.length < 8) throw new CliError('SOVEREIGN_EXPORT_PASSPHRASE must be at least 8 characters');
+    return fromEnv;
+  }
+  if (!process.stdin.isTTY) {
+    throw new CliError('No terminal available to prompt for a passphrase; set SOVEREIGN_EXPORT_PASSPHRASE');
+  }
+  const passphrase = await promptHidden('Passphrase (min 8 chars): ');
+  if (passphrase.length < 8) throw new CliError('Passphrase must be at least 8 characters');
+  if (confirm) {
+    const again = await promptHidden('Confirm passphrase: ');
+    if (again !== passphrase) throw new CliError('Passphrases did not match');
+  }
+  return passphrase;
+}
+
+function promptHidden(question) {
+  return new Promise((resolve, reject) => {
+    const stdin = process.stdin;
+    process.stderr.write(question);
+    stdin.resume();
+    stdin.setRawMode(true);
+    let value = '';
+    const onData = (chunk) => {
+      for (const char of chunk.toString('utf8')) {
+        if (char === '\r' || char === '\n') {
+          cleanup();
+          process.stderr.write('\n');
+          return resolve(value);
+        }
+        if (char === '\u0003') {
+          cleanup();
+          process.stderr.write('\n');
+          return reject(new CliError('Cancelled'));
+        }
+        if (char === '\u007f' || char === '\b') value = value.slice(0, -1);
+        else value += char;
+      }
+    };
+    const cleanup = () => {
+      stdin.setRawMode(false);
+      stdin.pause();
+      stdin.off('data', onData);
+    };
+    stdin.on('data', onData);
+  });
+}
+
 async function importChatCommand(argv) {
   const flags = { _: [] };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--from') flags.from = argv[++i];
     else if (arg === '--persona') flags.persona = argv[++i];
+    else if (arg === '--distill') flags.distill = true;
     else if (arg.startsWith('--')) throw new CliError(`Unknown option ${arg}\nRun "sovereign help" for usage.`);
     else flags._.push(arg);
   }
   if (flags._.length !== 1) {
-    throw new CliError('Usage: sovereign import-chat <file> [--from chatgpt|claude|gemini|generic] [--persona id]');
+    throw new CliError('Usage: sovereign import-chat <file> [--from chatgpt|claude|gemini|generic] [--persona id] [--distill]');
   }
   const file = flags._[0];
   if (!fs.existsSync(file)) throw new CliError(`File not found: ${file}`);
@@ -240,7 +465,7 @@ async function importChatCommand(argv) {
   if (flags.from && !supportedPlatforms().includes(flags.from)) {
     throw new CliError(`Unknown --from "${flags.from}". Supported: ${supportedPlatforms().join(', ')}`);
   }
-  const { store } = createApp(rootDir);
+  const { store, config } = createApp(rootDir);
   try {
     if (flags.persona && !store.getPersona(flags.persona)) {
       throw new CliError(`No persona with id "${flags.persona}". See the Personas list in settings, or omit --persona.`);
@@ -252,6 +477,13 @@ async function importChatCommand(argv) {
       `Imported ${result.imported} conversation${result.imported === 1 ? '' : 's'}, skipped ${result.skipped} already imported (of ${result.totalParsed} parsed).`
     );
     for (const warning of result.warnings) console.log(`  ! ${warning}`);
+    if (flags.distill) {
+      if (result.imported === 0) console.log('Nothing new to distill.');
+      else {
+        console.log('');
+        await runDistillation(store, config, {});
+      }
+    }
   } finally {
     store.close();
   }

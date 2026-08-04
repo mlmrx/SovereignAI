@@ -38,6 +38,16 @@ content and are created with owner-only permissions on POSIX systems when
 written by the `sovereign export` CLI. Browser downloads follow the browser and
 operating system's download permissions.
 
+Since v0.5, exports carry a checksum manifest ([format spec](EXPORT_FORMAT.md)):
+`sovereign verify <file>` checks an archive without importing it, and
+`sovereign import` refuses an archive whose contents no longer match — delete
+the file's `manifest` field to import a deliberately hand-edited export.
+`sovereign export --encrypt` wraps the archive in AES-256-GCM with a key
+derived (scrypt) from a passphrase only you hold: use it whenever a backup
+leaves hardware you control (rented GPU hosts, shared drives, cloud storage).
+Set `SOVEREIGN_EXPORT_PASSPHRASE` for non-interactive runs. A lost passphrase
+is unrecoverable by design.
+
 ## Ownership, backup, and restore
 
 There are four distinct things to own and back up:

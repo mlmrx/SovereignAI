@@ -1218,13 +1218,25 @@ function renderMemories() {
   }
   host.innerHTML = memories.map((memory) => `
     <article class="memory-card" data-id="${escapeHtml(memory.id)}">
-      <div><div class="memory-content">${escapeHtml(memory.content)}</div><div class="memory-date">Saved ${formatDate(memory.created_at, { relative: true })}</div></div>
+      <div><div class="memory-content">${escapeHtml(memory.content)}</div><div class="memory-date">Saved ${formatDate(memory.created_at, { relative: true })}${memoryProvenance(memory)}</div></div>
       <div class="memory-actions"><button class="mini-btn edit-memory" type="button" aria-label="Edit memory">${icon('edit')}</button><button class="mini-btn danger delete-memory" type="button" aria-label="Forget memory">${icon('trash')}</button></div>
     </article>`).join('');
   $$('.memory-card', host).forEach((card) => {
     $('.edit-memory', card).addEventListener('click', () => editMemory(card));
     $('.delete-memory', card).addEventListener('click', () => deleteMemory(card.dataset.id));
   });
+}
+
+/* Provenance is shown exactly as recorded; rows saved before tracking
+   existed say so instead of pretending an origin was known. */
+function memoryProvenance(memory) {
+  const notes = [];
+  if (memory.origin === 'manual') notes.push('added by you');
+  else if (memory.origin === 'extracted') notes.push('auto-extracted from a chat');
+  else if (memory.origin === 'distilled') notes.push('distilled from imported history');
+  else notes.push('recorded before provenance tracking');
+  if (memory.updated_at) notes.push(`edited ${formatDate(memory.updated_at, { relative: true })}`);
+  return ` · ${notes.map(escapeHtml).join(' · ')}`;
 }
 
 $('#memory-form').addEventListener('submit', async (event) => {

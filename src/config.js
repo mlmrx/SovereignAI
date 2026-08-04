@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { deepMerge } from './util.js';
 
-export const VERSION = '0.4.0';
+export const VERSION = '0.5.0';
 
 const PROVIDER_IDS = ['ollama', 'openai', 'anthropic'];
 const TOP_LEVEL_KEYS = new Set([

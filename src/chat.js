@@ -95,6 +95,7 @@ export async function handleChat({ store, config, body, sse, signal }) {
       model,
       userMessage: message,
       assistantReply: text,
+      conversationId: conversation.id,
     }).catch(() => {});
   }
 

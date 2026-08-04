@@ -29,6 +29,8 @@ import {
 import { HfCatalogError, searchGgufModels, listGgufFiles } from './hf-catalog.js';
 import { buildModelRecommendation } from './model-recommendation.js';
 import { ChatImportError, importChatExport, supportedPlatforms as supportedChatPlatforms } from './chat-import/index.js';
+import { buildExport, isEncryptedExport, verifyExportManifest } from './portability.js';
+import { buildPortfolio } from './portfolio.js';
 import {
   TRAINING_DATASET_SCHEMA,
   TrainingValidationError,
@@ -983,21 +985,33 @@ export function createApp(rootDir, { env = process.env } = {}) {
   });
 
   // ---- data portability ----
-  route('GET', '/api/export', async () => ({
-    sovereignai: VERSION,
-    exportedAt: new Date().toISOString(),
-    data: store.exportAll(),
-  }));
+  route('GET', '/api/export', async () => buildExport(store, VERSION));
   route('POST', '/api/import', async ({ body }) => {
+    if (isEncryptedExport(body)) {
+      throw new HttpError(400, 'This export is encrypted. Decrypt it with "sovereign import <file>" on the CLI — the API does not accept passphrases.');
+    }
     if (!body.data) throw new HttpError(400, 'Invalid export file: missing data');
+    // Verify before validating: a checksum mismatch means the file changed
+    // after export (corruption, truncation, or an edit). Deliberate edits are
+    // allowed by removing the manifest field — documented in
+    // docs/EXPORT_FORMAT.md — so integrity stays strict without locking the
+    // owner out of their own data.
+    const verification = verifyExportManifest(body);
+    if (verification.status === 'mismatch') {
+      const details = verification.mismatches.map((m) => `${m.table}: ${m.detail}`).join('; ');
+      throw new HttpError(400, `Export failed checksum verification (${details}). If you edited the file on purpose, delete its "manifest" field and import again.`);
+    }
     try {
       const replacePersonas = shouldReplaceSeedPersonas(store, body.data);
-      return { imported: store.importAll(body.data, { replacePersonas }) };
+      return { imported: store.importAll(body.data, { replacePersonas }), verification: verification.status };
     } catch (err) {
       if (err instanceof ImportValidationError) throw new HttpError(400, err.message);
       throw err;
     }
   });
+  // The seed crystal: distilled portable context (memories with provenance,
+  // personas, knowledge inventory) as one pasteable markdown document.
+  route('GET', '/api/portfolio', async () => buildPortfolio(store, config, VERSION));
 
   const server = http.createServer(async (req, res) => {
     try {

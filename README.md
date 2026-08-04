@@ -4,12 +4,12 @@
 
 ```bash
 node bin/sovereign.js start
-# → open http://127.0.0.1:4321 — the setup wizard walks you through the rest
+# → open ru — the setup wizard walks you through the rest
 # → then open /guide.html — an interactive guide that checks itself off
 #   against your real workspace as you learn
 ```
 
-> **Status:** v0.3.0 — command center UI, source-aware chat, local/self-hosted Fine-Tuning Studio, hardened local security, and production-grade CLI/Docker workflows.
+> **Status:** v0.5.0 — portability both ways, honestly recorded: memory provenance, checksummed (and optionally encrypted) export archives with a [documented open format](docs/EXPORT_FORMAT.md), a pasteable Personal Context Portfolio, and opt-in memory distillation from imported chat history. Plus everything before it: command center UI, source-aware chat, Fine-Tuning Studio, BYOC rails, chat-history import, single binaries.
 
 ## Create your own AI in 5 simple steps
 
@@ -57,7 +57,8 @@ Training is disabled by default and has no hosted fallback. The workflow never c
 - **Own the runtime** — one Node process on your hardware. **Zero npm dependencies**: no supply chain, auditable, works offline. Docker image available.
 - **Own the brain** — Ollama models, OpenAI-compatible servers (vLLM, llama.cpp, LM Studio, Groq…), or BYO-key Anthropic; switchable per persona. Model Studio saves portable recipes and builds custom named artifacts on the Ollama endpoint you control.
 - **Own the memory** — conversations, long-term memory (manual notes + optional automatic fact extraction), and a document knowledge base in local SQLite. Hybrid retrieval: semantic embeddings when available, BM25 keyword always — fully offline capable.
-- **Own the data** — PDF/DOCX/text ingestion runs entirely locally (even the parsers are dependency-free). Portable JSON backups cover personas, chats, memory, knowledge, model recipes, and fine-tuning project history; provider/trainer settings and secrets are deliberately omitted and reconfigured separately.
+- **Own the data** — PDF/DOCX/text ingestion runs entirely locally (even the parsers are dependency-free). Portable JSON backups cover personas, chats, memory, knowledge, model recipes, and fine-tuning project history; provider/trainer settings and secrets are deliberately omitted and reconfigured separately. Archives are checksummed and verifiable (`sovereign verify`), optionally encrypted with a passphrase only you hold, and the format is [openly documented](docs/EXPORT_FORMAT.md) so your data outlives this software.
+- **Own the provenance** — every memory records how it entered the system (added by you, auto-extracted, or distilled from imported history), from which conversation, and when it was last edited. Records that predate tracking say so instead of pretending. The Personal Context Portfolio (`sovereign portfolio`) turns that layer into one markdown document you can paste into any other AI tool — the export door platforms don't build.
 - **Share on your terms** — `sovereign start --lan` exposes it on your LAN or tailnet behind an auto-generated bearer token. The `#token=` fragment keeps the secret out of HTTP request URLs and access logs. Default is localhost-only.
 
 ## Install
@@ -69,16 +70,19 @@ inside one file. See [operations](docs/OPERATIONS.md#single-binary-installs)
 for the one-time SmartScreen/Gatekeeper confirmation unsigned binaries need.
 
 **Windows (PowerShell):**
+
 ```powershell
 irm https://raw.githubusercontent.com/mlmrx/SovereignAI/main/scripts/install.ps1 | iex
 ```
 
 **macOS / Linux:**
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/mlmrx/SovereignAI/main/scripts/install.sh | sh
 ```
 
 **Docker:**
+
 ```bash
 # macOS/Linux: keep and display the token before starting
 export SOVEREIGN_TOKEN="$(openssl rand -hex 24)"
@@ -106,25 +110,28 @@ sovereign start [--lan]    # run the server (LAN/tailnet mode with --lan)
 sovereign init             # write a starter config file
 sovereign doctor           # diagnose home, config, database, providers, and models
 sovereign mcp              # MCP server (stdio) for Claude/Codex/Cursor/Gemini CLI
-sovereign export [file]    # export all data to JSON
-sovereign import <file>    # restore from an export
-sovereign import-chat <file> [--from platform]   # bring in chat history from another AI platform
+sovereign export [file] [--encrypt]   # checksummed JSON archive (optionally AES-256-GCM encrypted)
+sovereign import <file>    # restore from an export (verifies checksums, decrypts if needed)
+sovereign verify <file>    # check an archive against its manifest without importing
+sovereign portfolio [file] # your Personal Context Portfolio as pasteable markdown
+sovereign import-chat <file> [--from platform] [--distill]   # bring in chat history from another AI platform
+sovereign distill          # sweep imported conversations for durable memories (opt-in, one model call each)
 sovereign byoc <action>    # deploy + manage instances on a Docker host YOU own, over SSH
 ```
 
-**Bring your own cloud:** `sovereign byoc deploy --host you@your-box` provisions a hardened instance on any Linux machine with SSH and Docker — a VPS, a homelab, on-prem. Your data stays on your host; the deploy tooling keeps only connection metadata and a token *hash*, and revoking its SSH key severs it completely. Don't already have a box? `sovereign byoc gpu deploy <runpod|vastai|lambda>` rents a GPU instance and deploys onto it — **unverified against live provider infrastructure, test with the cheapest GPU type first**; see [the BYOC connector](docs/BYOC_SSH_CONNECTOR.md) for exactly what that means and what it costs.
+**Bring your own cloud:** `sovereign byoc deploy --host you@your-box` provisions a hardened instance on any Linux machine with SSH and Docker — a VPS, a homelab, on-prem. Your data stays on your host; the deploy tooling keeps only connection metadata and a token _hash_, and revoking its SSH key severs it completely. Don't already have a box? `sovereign byoc gpu deploy <runpod|vastai|lambda>` rents a GPU instance and deploys onto it — **unverified against live provider infrastructure, test with the cheapest GPU type first**; see [the BYOC connector](docs/BYOC_SSH_CONNECTOR.md) for exactly what that means and what it costs.
 
-**Bring your history with you:** `sovereign import-chat` (CLI, or Settings → Data & privacy in the web UI) parses ChatGPT's and Claude's official export ZIPs directly — built with real confidence, since both are well-documented, stable formats. Gemini's Google Takeout export is supported experimentally (prompts only; see [the chat import guide](docs/CHAT_IMPORT.md)). Everything else — Grok, Kimi, GLM, DeepSeek, Qwen, or any platform without a dedicated parser — goes through a documented generic JSON format instead of a guessed-at one. Parsing is entirely local; re-running the same file is safe and never duplicates history.
+**Bring your history with you:** `sovereign import-chat` (CLI, or Settings → Data & privacy in the web UI) parses ChatGPT's and Claude's official export ZIPs directly — built with real confidence, since both are well-documented, stable formats. Imported history starts as archive prose; add `--distill` (or run `sovereign distill` later) to opt into sweeping it for durable memories with your configured model — one call per conversation, idempotent, every distilled memory tagged with its source. Gemini's Google Takeout export is supported experimentally (prompts only; see [the chat import guide](docs/CHAT_IMPORT.md)). Everything else — Grok, Kimi, GLM, DeepSeek, Qwen, or any platform without a dedicated parser — goes through a documented generic JSON format instead of a guessed-at one. Parsing is entirely local; re-running the same file is safe and never duplicates history.
 
 ## Your AI, everywhere
 
-| Surface | What you get | Where |
-|---|---|---|
-| **MCP server** | Your AI's memory + knowledge inside **Claude Desktop, Claude Code, Codex CLI, Cursor, Windsurf, Gemini CLI** | [`integrations/mcp/`](integrations/mcp/README.md) |
-| **VS Code extension** (`.vsix`) | Streaming chat panel, ask-about-selection, save-code-to-knowledge (also Cursor/Windsurf/VSCodium) | [`integrations/vscode/`](integrations/vscode/README.md) |
-| **JetBrains plugin** | Tool-window chat + editor actions for IntelliJ, PyCharm, WebStorm, GoLand… | [`integrations/jetbrains/`](integrations/jetbrains/README.md) |
-| **Browser extension** (MV3) | Popup chat + right-click "save to my AI's knowledge / memory" | [`integrations/browser/`](integrations/browser/README.md) |
-| **ChatGPT Custom GPT** | Actions schema so ChatGPT can query *your* AI (needs a tunnel) | [`integrations/chatgpt/`](integrations/chatgpt/README.md) |
+| Surface                         | What you get                                                                                                 | Where                                                         |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| **MCP server**                  | Your AI's memory + knowledge inside **Claude Desktop, Claude Code, Codex CLI, Cursor, Windsurf, Gemini CLI** | [`integrations/mcp/`](integrations/mcp/README.md)             |
+| **VS Code extension** (`.vsix`) | Streaming chat panel, ask-about-selection, save-code-to-knowledge (also Cursor/Windsurf/VSCodium)            | [`integrations/vscode/`](integrations/vscode/README.md)       |
+| **JetBrains plugin**            | Tool-window chat + editor actions for IntelliJ, PyCharm, WebStorm, GoLand…                                   | [`integrations/jetbrains/`](integrations/jetbrains/README.md) |
+| **Browser extension** (MV3)     | Popup chat + right-click "save to my AI's knowledge / memory"                                                | [`integrations/browser/`](integrations/browser/README.md)     |
+| **ChatGPT Custom GPT**          | Actions schema so ChatGPT can query _your_ AI (needs a tunnel)                                               | [`integrations/chatgpt/`](integrations/chatgpt/README.md)     |
 
 Releases: tagging `v*` triggers CI that packages the `.vsix`, browser zip, JetBrains plugin zip, and single-file executables for Windows/macOS/Linux into a GitHub Release and publishes the Docker image to GHCR. Marketplace publishing activates when `VSCE_PAT` / `OVSX_PAT` repo secrets are added; every store artifact ships icons and listing copy per the [store submission guide](docs/STORE_SUBMISSION.md).
 
@@ -135,6 +142,8 @@ bin/sovereign.js        CLI (start [--lan] · init · doctor · mcp · export ·
 src/
   server.js             HTTP server, REST API, SSE, static UI, bearer auth
   chat.js               orchestration: history + memory + RAG → stream
+  portability.js        export manifest (per-table SHA-256) + encrypted archives
+  portfolio.js          Personal Context Portfolio (pasteable markdown seed crystal)
   mcp.js                MCP server (stdio JSON-RPC, zero deps)
   memory-extract.js     automatic long-term memory extraction (opt-in)
   db.js                 SQLite storage (node:sqlite, built into Node 22)
@@ -154,7 +163,7 @@ Decision records: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## API (localhost)
 
-`POST /api/chat` (SSE) · `POST /api/ask` (JSON) · CRUD and build routes under `/api/model-recipes` · `POST /api/create-model` (legacy direct Ollama build) · `POST /api/documents` (text or base64 PDF/DOCX) · `GET /api/search?q=` · CRUD for `personas` / `conversations` / `memories` · `GET /api/export` / `POST /api/import` · `GET /api/providers` · `GET /api/models` · `GET/PUT /api/config`
+`POST /api/chat` (SSE) · `POST /api/ask` (JSON) · CRUD and build routes under `/api/model-recipes` · `POST /api/create-model` (legacy direct Ollama build) · `POST /api/documents` (text or base64 PDF/DOCX) · `GET /api/search?q=` · CRUD for `personas` / `conversations` / `memories` · `GET /api/export` / `POST /api/import` (manifest-verified) · `GET /api/portfolio` · `GET /api/providers` · `GET /api/models` · `GET/PUT /api/config`
 
 Fine-tuning routes live under `/api/training`: project/source/example curation, immutable dataset locking/export, trainer capabilities, run submit/refresh/cancel, evaluation decisions, and digest-gated Ollama persona assignment. Dataset bytes are sent only by the run-submission route after endpoint-bound consent.
 
@@ -190,6 +199,10 @@ The suite includes 130+ core, UI-contract, integration, API, security, config, p
 - [x] BYOC rail #1: SSH deploy to any Docker host you own, with health-verified upgrades, auto-rollback, export-to-owner, and verifiable delete
 - [~] BYOC rail 1.5: rent a GPU instance (RunPod, Vast.ai, Lambda Cloud) instead of bringing your own box — built and tested against mocked APIs, but **unverified against live provider infrastructure** ([details](docs/BYOC_SSH_CONNECTOR.md#rail-15--gpu-marketplace-provisioning))
 - [x] Chat history import from ChatGPT and Claude's official exports (built with real confidence), Gemini via Google Takeout (experimental), and a documented generic JSON format covering every other platform ([details](docs/CHAT_IMPORT.md))
+- [x] Memory provenance: every memory records how it entered (manual / auto-extracted / distilled), from which conversation, and when it was edited — never fabricated for pre-existing records
+- [x] Verified, portable exports: per-table checksums and an archive digest in a [documented open format](docs/EXPORT_FORMAT.md), `sovereign verify`, and optional passphrase encryption (AES-256-GCM, scrypt)
+- [x] Personal Context Portfolio: memories + personas + knowledge inventory as one pasteable markdown seed crystal (`sovereign portfolio`, `GET /api/portfolio`)
+- [x] Opt-in memory distillation over imported chat history (`sovereign distill`, `import-chat --distill`) — idempotent, provenance-tagged, costs printed up front
 
 ## License
 

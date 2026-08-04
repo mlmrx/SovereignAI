@@ -97,6 +97,30 @@ standard ChatGPT/Claude's parsers were held to.
   tool-call payloads, custom instructions or memory features, and (for
   Gemini) the model's responses — see the caveat above.
 
+## Distilling memories from imported history (opt-in)
+
+An import puts conversations into your archive; it does not, by itself, teach
+your AI anything durable about you — that would silently flatten a year of
+history into whatever a model happens to say about it, and it would cost one
+model call per conversation. Both are your call, so distillation is a
+separate, explicit step:
+
+```bash
+sovereign import-chat export.zip --distill   # sweep right after importing
+sovereign distill                            # or sweep any time later
+sovereign distill --limit 20                 # bound a first run
+sovereign distill --redo                     # re-sweep everything (re-bills)
+```
+
+Each imported conversation gets one call to your configured default model,
+which extracts at most five durable facts (preferences, identity, projects,
+decisions). Facts land in Memory tagged `distilled` with a pointer to the
+conversation they came from, so the Memory view can always answer "why does
+my AI believe this?". Sweeps are sequential with per-conversation progress,
+stop at the first provider error, and are idempotent: a swept conversation is
+marked (`distilled_at`) and skipped on the next run — even when the sweep
+found nothing durable — unless you pass `--redo`.
+
 ## Idempotency and identity
 
 Each imported conversation is tagged with `source_platform` and
