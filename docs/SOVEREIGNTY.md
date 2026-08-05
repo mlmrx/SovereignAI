@@ -17,7 +17,7 @@ compromise disclosed, every exit built before the door.*
 |---|---|---|---|---|
 | **Your data** | 🟢 Sovereign | Everything: SQLite in a directory you choose, no hosted control plane, no telemetry, secrets never exported | No at-rest DB encryption (use OS disk encryption); plain HTTP on localhost | Checksummed, optionally encrypted export in a [documented open format](EXPORT_FORMAT.md) any tool can read |
 | **Provenance** | 🟢 Sovereign | Every memory records how it entered, from which conversation, which model wrote it, and when it was edited | Records predating v0.5 tracking honestly say "unknown" — we refuse to backfill | Provenance round-trips through export; the [portfolio](../README.md) carries receipts into any other tool |
-| **Runtime** | 🟢 Sovereign | Zero npm dependencies — the code you audit is the code that runs; single binary or run-from-source | Node.js itself (and V8 under it) is a runtime we did not write or audit | Runs from source with nothing but Node; MIT license means the code survives us |
+| **Runtime** | 🟢 Sovereign | Zero npm dependencies — the code you audit is the code that runs; single binary or run-from-source | Node.js itself (and V8 under it) is a runtime we did not write or audit | Runs from source with nothing but Node; the license's irrevocable future-MIT grant means every release turns MIT within two years, so the code survives us |
 | **Retrieval / knowledge** | 🟢 Sovereign | Zero-dep local parsing (PDF/DOCX/ZIP), BM25 always works offline | Semantic embeddings require an embedding model (see Model layer) | Keyword search degrades gracefully; documents re-export as-is |
 | **Distribution** | 🟡 Conditional | `SHA256SUMS.txt` on every release; minisign signature when configured; reproducible path = clone and run from source | Binaries are unsigned by an OS vendor; GitHub/GHCR is a single distribution point owned by Microsoft | Source checkout — the zero-trust install that needs none of our artifacts |
 | **Compute (BYOC)** | 🟡 Conditional | Rail #1: hardware you own, host-key pinning, token hashes only, verifiable delete | Rail 1.5 (rented GPUs) is tenancy: the marketplace owns the disk, and container-style deploys expose the instance token to the provisioning CLI (disclosed in the deploy plan) | `export-to-owner` streams your data home; `destroy --purge-data` verifies removal |
@@ -33,8 +33,10 @@ mechanism that delivers it — not an aspiration.
 1. **Your hardware** — it runs where you decide: laptop, homelab, your VPS
    (`sovereign byoc deploy`), even a rented GPU with the trade-offs printed
    before provisioning.
-2. **Your runtime** — zero-dependency, MIT-licensed code; the single binary
-   embeds the same byte-identical files you can read in this repository.
+2. **Your runtime** — zero-dependency, fair-source code (FSL: self-hosting
+   is unrestricted, and each release becomes MIT on its second anniversary);
+   the single binary embeds the same byte-identical files you can read in
+   this repository.
 3. **Your data** — one SQLite folder you can copy, permissioned to you,
    where deleted means zeroed (`secure_delete`), not soft-hidden.
 4. **Your AI's identity** — its name, personas, and system prompts are

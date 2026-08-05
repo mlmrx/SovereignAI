@@ -12,10 +12,12 @@ git commit -s -m "Your change"
 ```
 
 The `Signed-off-by:` line certifies you have the right to contribute the
-code and agree it ships under the project's MIT license. We use the DCO
-instead of a CLA on purpose: a CLA would let us relicense your work later,
-and [we have promised not to](docs/LICENSING.md). Your contribution stays
-MIT because ours does.
+code and agree your contribution is licensed to the project under the MIT
+license, so it can ship inside the FSL-distributed core and its commercial
+editions. The license repays the favor on a schedule: every release — your
+contribution included — automatically becomes plain MIT two years after it
+ships ([the policy and the why](docs/LICENSING.md)). You keep your
+copyright, and there is no CLA to sign.
 
 ## Ground rules that get PRs merged
 

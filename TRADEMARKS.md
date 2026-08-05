@@ -1,8 +1,8 @@
 # Trademark policy
 
 The SovereignAI™ name, the ⬡ hexagon mark, and the project logo are
-trademarks of Unify Dynamics. The MIT license covers the **code**; it does
-not grant rights to the **name**.
+trademarks of Unify Dynamics. The [FSL license](LICENSE) covers the
+**code**; it does not grant rights to the **name**.
 
 This is the deliberate shape of our protection: fork everything, freely,
 forever — under your own name.
@@ -23,12 +23,14 @@ forever — under your own name.
 - Use the name or mark in a way that implies endorsement, partnership, or
   official status that doesn't exist.
 
-## Why a trademark and not a restrictive license
+## Why the trademark matters alongside the license
 
-Our license promise is [MIT forever](docs/LICENSING.md). The name is the
-one thing we keep, because in a product category whose currency is trust,
-the mark is where the trust accrues — and a fork that must introduce
-itself honestly starts from zero on the only axis that matters here.
+Our license promise is [fair source: MIT two years after each
+release](docs/LICENSING.md). The license bars a competing hosted service
+while a release is commercially fresh; the name is the one thing we keep
+permanently, because in a product category whose currency is trust, the
+mark is where the trust accrues — and a fork that must introduce itself
+honestly starts from zero on the only axis that matters here.
 
 Questions or permission requests: open a GitHub issue or email the
 maintainers.

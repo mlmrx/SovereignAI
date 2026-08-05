@@ -2,23 +2,45 @@
 
 SovereignAI's brand is trust, so its licensing strategy is written down in
 plain language, in public, before there is any revenue to defend. This page
-is the policy; [`LICENSE`](../LICENSE) is the law (MIT).
+is the policy; [`LICENSE`](../LICENSE) is the law — the **Functional Source
+License, FSL-1.1-MIT** (fair source).
 
-## The covenant: the core is MIT, permanently
+## The license in one paragraph
 
-Everything an individual needs to own all twelve layers — the server, the
-web UI, the CLI, memory with provenance, knowledge, chat and life import,
-distillation, Model Studio, Fine-Tuning Studio's control plane, the BYOC
-rails, export/verify/portfolio, the MCP server, and the editor/browser
-integrations in this repository — **is MIT-licensed and will remain
-MIT-licensed.** Not "open source for now." Not "until the license change."
-The self-hosted product you can download today will never be relicensed,
-rate-limited, feature-stripped, or moved behind a paywall.
+You may use, read, modify, fork, redistribute, and self-host everything in
+this repository, free, for any purpose **except one**: offering a competing
+commercial SovereignAI product or service on a release younger than two
+years. On the second anniversary of each release, that release automatically
+becomes plain **MIT** — the future grant is irrevocable and part of the
+license text itself, not a promise anyone could later withdraw.
 
-This is partly principle and partly physics: MIT grants are irrevocable, so
-every shipped release is already free forever regardless of what anyone
-decides later. We convert that constraint into a promise and put our name
-on it.
+## The covenant: your exit is licensed, not promised
+
+What an individual gets did not change when the license did:
+
+- **Self-hosting is unrestricted.** Run it on your laptop, homelab, VPS, or
+  rented GPU, for yourself, your family, or inside your company. "Internal
+  use and access" is an explicitly Permitted Purpose.
+- **Forking and modifying are unrestricted.** Read every line, patch it,
+  maintain your own fork. The zero-dependency audit story is unchanged.
+- **Lock-in is impossible by construction.** If Unify Dynamics disappears,
+  raises prices, or loses your trust, every release you have is already
+  carrying its own MIT conversion date. The worst case is not "trapped";
+  it is "wait until the release you run turns two."
+- **Nothing an individual needs to own all twelve layers will be paywalled,
+  rate-limited, or feature-stripped.** The commercial path is by addition,
+  never subtraction.
+
+## What the license forbids, and why
+
+Exactly one actor is restricted: a company selling SovereignAI itself —
+hosted or repackaged — in competition with us, on releases newer than two
+years. That restriction is what funds the development of everything above
+it. A sovereignty product that cannot pay its maintainers ends the same way
+every abandoned privacy project ends: unmaintained, then unsafe, then gone.
+The license trades a freedom almost none of our users ever needed (reselling
+our current code as a service) for the revenue that keeps the freedoms they
+do need maintained.
 
 ## The commercial path: by addition, never subtraction
 
@@ -27,7 +49,7 @@ layers**, and never by clawing back what is:
 
 1. **The managed edition** — we operate a SovereignAI instance for people
    and teams who want the sovereignty without the ops. The instance they
-   get runs this same MIT code; the orchestration, billing, and fleet
+   get runs this same public code; the orchestration, billing, and fleet
    tooling that runs *our side* of that service is proprietary. You keep
    the boundary, the export, and the exit — leaving the managed edition is
    the same `sovereign export` as leaving anything else.
@@ -35,42 +57,71 @@ layers**, and never by clawing back what is:
    fleet management for many BYOC instances, data-residency contracts.
    These serve organizations, not individuals, and may ship under a
    commercial license in a separate repository (`/ee` never lands here).
-3. **Support, deployment, and training** for teams running it themselves.
+3. **Commercial license grants** — an organization whose use would
+   otherwise be a Competing Use (for example, bundling SovereignAI into a
+   hosted offering) can license that right from us directly.
+4. **Support, deployment, and training** for teams running it themselves.
 
-The test for which side of the line a feature falls on: *does an individual
-need it to own their own AI?* If yes, it's MIT, here, free. If it only
-matters when someone else runs it for you or when an organization manages
-many people, it may be commercial.
+The test for which side of the line a feature falls on is unchanged: *does
+an individual need it to own their own AI?* If yes, it's here, free, under
+the FSL. If it only matters when someone else runs it for you or when an
+organization manages many people, it may be commercial.
 
-## What we deliberately did not choose
+## Why we moved off MIT — recorded honestly
 
-- **AGPL / dual licensing** — genuinely open source, but it would break the
-  "MIT forever" already printed on our landing page, require a CLA that
-  taxes every contributor, and not actually stop a determined host (every
-  shipped MIT release remains forkable anyway). Breaking a published
-  promise to gain a defense that doesn't defend is a bad trade.
-- **BUSL / SSPL / source-available** — not open source, whatever the
-  marketing says. A product whose sovereignty ledger tells users to demand
-  auditable claims cannot ship a license that fails the definition it
-  markets under.
-- **The protection we chose instead is the trademark** (see
-  [`TRADEMARKS.md`](../TRADEMARKS.md)): the code is anyone's, the *name*
-  is not. A hosted fork must call itself something else and earn its own
-  trust — and trust is this category's scarcest input.
+The first draft of this policy promised "MIT forever." We reversed that
+decision before the first public release — no public artifact ever shipped
+under MIT, so no grant was broken — for one reason: **MIT gives a
+hyperscaler the right to take the finished product and sell it as a hosted
+service without funding a line of its development.** The trademark (our
+original defense) forces such a fork to rename itself, but a renamed clone
+with a marketing budget is still a clone. The FSL closes that gap for the
+two years in which each release is commercially alive, and then hands the
+code to the commons anyway.
+
+What survives from the original covenant — and is now *stronger* than a
+promise, because it is license text: every release becomes MIT, on a date
+you can compute, whether or not we still exist to keep our word.
+
+## Why not the others
+
+- **AGPL / dual licensing** — genuinely open source, and we respect teams
+  that choose it, but it does not actually defend the revenue: AGPL obliges
+  a hosted competitor to publish *their modifications*, not to stop selling
+  a service on our unmodified code. It also carries an enterprise-adoption
+  tax we would pay while gaining little.
+- **BUSL** — the same shape as the FSL with more parameters, a slower
+  (up-to-four-year) conversion, and heavier text. The FSL is the same idea
+  with the honesty dialed up and the wait dialed down.
+- **SSPL / Elastic License** — never convert to open source. A product
+  whose sovereignty ledger tells users to demand auditable exits should not
+  ship a license whose own exit clause is "trust us."
+- **Staying MIT** — see above. The name-only defense assumed trust cannot
+  be bought; the last decade of hosted-fork history says otherwise.
 
 ## Contributions
 
 Contributions are accepted under the
 [Developer Certificate of Origin](https://developercertificate.org/)
-(`Signed-off-by`, see [`CONTRIBUTING.md`](../CONTRIBUTING.md)) and are
-licensed MIT like the rest of the core. We deliberately use the DCO rather
-than a CLA: a CLA exists to let a company relicense your work later, and we
-have promised not to. The inability to relicense contributor code is not a
-risk we accepted — it is the mechanism that makes the covenant real.
+(`Signed-off-by`, see [`CONTRIBUTING.md`](../CONTRIBUTING.md)). Inbound
+contributions are licensed to the project under the **MIT license**; the
+combined work is distributed under the FSL. There is no CLA to sign and you
+keep your copyright. The trade is symmetrical and dated: your contribution
+spends at most two years inside the fair-source window, then ships to
+everyone — including you — as MIT, via the license's own future grant.
+
+## The integrations stay MIT
+
+The editor and browser integrations (`integrations/vscode`,
+`integrations/jetbrains`, `integrations/browser`, the trainer sidecar
+docs) are thin clients that talk to *your* server. They remain plain MIT:
+maximum distribution, no commercial surface, and store review processes
+prefer it.
 
 ## Third-party layers
 
-The MIT license covers this codebase, not the layers it touches: base
-model weights carry their own licenses (surfaced in Model Studio's
-`license` field), and imported data remains governed by wherever it came
-from. The [sovereignty ledger](SOVEREIGNTY.md) tracks those boundaries.
+The FSL covers this codebase, not the layers it touches: base model
+weights carry their own licenses (surfaced in Model Studio's `license`
+field and the starter shelf), and imported data remains governed by
+wherever it came from. The [sovereignty ledger](SOVEREIGNTY.md) tracks
+those boundaries.

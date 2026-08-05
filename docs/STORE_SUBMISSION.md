@@ -23,7 +23,7 @@ v0.3.0`), which attaches to the GitHub Release:
 **Short description:** Chat with your self-hosted SovereignAI workspace:
 your models, your memory, your knowledge, on your machine.
 
-**Long description:** SovereignAI is a private, MIT-licensed AI command
+**Long description:** SovereignAI is a private, fair-source AI command
 center you run yourself — local models via Ollama, optional BYO-key providers,
 durable memory, and a local document knowledge base. This extension connects
 to *your* SovereignAI server (localhost by default) so you can use your

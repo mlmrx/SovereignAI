@@ -3,7 +3,7 @@
 **Your private AI command center.** Bring your preferred model, durable memory, and personal knowledge into one workspace you can inspect, move, and run yourself.
 
 > **Why this exists:** [You are the most fragmented database on earth](docs/WHY.md) — and the reassembled you is only safe on hardware you control.
-> **What "sovereign" means here, audited:** [The Sovereignty Ledger](docs/SOVEREIGNTY.md) — every layer, its status, its compromise, your exit. Name it, shape its behavior, add your documents, and use Model Studio to create an inspectable, portable recipe for a named model on your configured Ollama endpoint. Zero runtime dependencies. MIT licensed.
+> **What "sovereign" means here, audited:** [The Sovereignty Ledger](docs/SOVEREIGNTY.md) — every layer, its status, its compromise, your exit. Name it, shape its behavior, add your documents, and use Model Studio to create an inspectable, portable recipe for a named model on your configured Ollama endpoint. Zero runtime dependencies. Fair-source licensed (FSL-1.1-MIT) — every release becomes MIT two years after it ships.
 
 ```bash
 node bin/sovereign.js start
@@ -221,6 +221,6 @@ The suite includes 130+ core, UI-contract, integration, API, security, config, p
 
 ## License
 
-[MIT](LICENSE) — free to use, modify, and distribute. Your AI should be yours; so should the code that runs it.
+[FSL-1.1-MIT](LICENSE) — the Functional Source License. Free to use, read, modify, fork, and self-host, for individuals and companies alike; the only restricted act is selling a competing SovereignAI product or service on a release younger than two years. On its second anniversary, every release automatically becomes plain MIT — that grant is irrevocable and written into the license text itself.
 
-That's a covenant, not a current status: the self-hosted core — everything an individual needs to own all twelve layers — stays MIT **permanently**, and the [licensing policy](docs/LICENSING.md) says so in writing, including exactly how the commercial path works (by addition: a managed edition and organization features — never by clawing back what's free). The code is anyone's; the [name is not](TRADEMARKS.md). Contributions ship under the [DCO](CONTRIBUTING.md) — no CLA, deliberately, because a CLA exists to enable the relicensing we've promised not to do.
+The covenant survives the license change, and is now enforced rather than promised: your exit is a date you can compute, not our goodwill. Nothing an individual needs to own all twelve layers is ever paywalled, rate-limited, or feature-stripped; the commercial path works by addition (a managed edition, organization features, commercial grants — see the [licensing policy](docs/LICENSING.md)), never by clawing back what's free. The code is yours to run; the [name is not](TRADEMARKS.md). Contributions ship under the [DCO](CONTRIBUTING.md) — no CLA to sign. The thin-client integrations (VS Code, JetBrains, browser) remain plain MIT.
