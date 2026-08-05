@@ -24,10 +24,11 @@ test('persona CRUD', () => {
   store.close();
 });
 
-test('database connections enable busy waiting and foreign-key enforcement', () => {
+test('database connections enable busy waiting, foreign-key enforcement, and secure delete', () => {
   const { store } = tempStore();
   assert.equal(store.db.prepare('PRAGMA foreign_keys').get().foreign_keys, 1);
   assert.equal(store.db.prepare('PRAGMA busy_timeout').get().timeout, 5000);
+  assert.equal(store.db.prepare('PRAGMA secure_delete').get().secure_delete, 1, 'deleted rows must be zeroed, not left as recoverable residue');
   store.close();
 });
 

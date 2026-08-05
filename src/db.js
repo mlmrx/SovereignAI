@@ -181,6 +181,11 @@ export function openDb(dataDir) {
   const dbFile = path.join(dataDir, 'sovereign.db');
   const db = new DatabaseSync(dbFile);
   db.exec('PRAGMA busy_timeout = 5000;');
+  // "Deletion is deletion" must hold at the byte level too: zero freed pages
+  // so struck memories and purged rows don't linger as recoverable residue.
+  // (WAL frames still recycle on their own schedule; full at-rest protection
+  // remains the OS disk encryption documented in docs/SOVEREIGNTY.md.)
+  db.exec('PRAGMA secure_delete = ON;');
   // Keep enforcement enabled for compatible/future schemas. The current
   // tables predate FK clauses, so Store methods still own manual cascades.
   db.exec('PRAGMA foreign_keys = ON;');
