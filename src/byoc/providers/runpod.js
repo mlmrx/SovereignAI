@@ -70,33 +70,37 @@ export const runpod = {
       .filter((t) => t.id);
   },
 
-  async provision({ apiKey, gpuTypeId, name, image, env = {}, diskGB = 20 }) {
+  // `port` (default 4321) is the container port the service listens on;
+  // `args` (optional) become the image's CMD via RunPod's `dockerArgs` —
+  // used by the serve rail to pass `--model …` to vLLM. Drift note: the
+  // `dockerArgs` input field name is part of the unverified API surface above.
+  async provision({ apiKey, gpuTypeId, name, image, env = {}, diskGB = 20, port = 4321, args = [] }) {
     if (!gpuTypeId) throw new GpuProviderError('RunPod needs a gpuTypeId (see "sovereign byoc gpu list runpod")', { status: 400 });
     if (!image) throw new GpuProviderError('RunPod needs a pullable image: pass --image <ref>', { status: 400 });
+    const input = {
+      cloudType: 'ALL',
+      gpuTypeId,
+      gpuCount: 1,
+      name: instanceLabel(name),
+      imageName: image,
+      containerDiskInGb: diskGB,
+      ports: `${port}/http`,
+      env: Object.entries(env).map(([key, value]) => ({ key, value: String(value) })),
+    };
+    if (args.length) input.dockerArgs = args.join(' ');
     const data = await graphql(
       apiKey,
       `mutation Deploy($input: PodFindAndDeployOnDemandInput!) {
         podFindAndDeployOnDemand(input: $input) { id }
       }`,
-      {
-        input: {
-          cloudType: 'ALL',
-          gpuTypeId,
-          gpuCount: 1,
-          name: instanceLabel(name),
-          imageName: image,
-          containerDiskInGb: diskGB,
-          ports: '4321/http',
-          env: Object.entries(env).map(([key, value]) => ({ key, value: String(value) })),
-        },
-      }
+      { input }
     );
     const podId = data?.podFindAndDeployOnDemand?.id;
     if (!podId) throw new GpuProviderError('RunPod did not return a pod id', { status: 502 });
     return { instanceId: podId };
   },
 
-  async getInstance({ apiKey, instanceId }) {
+  async getInstance({ apiKey, instanceId, port = 4321 }) {
     const data = await graphql(
       apiKey,
       `query Pod($id: String!) {
@@ -110,7 +114,7 @@ export const runpod = {
     );
     const pod = data?.pod;
     if (!pod?.id) return { instanceId, status: 'terminated', host: null, port: null };
-    const httpPort = (pod.runtime?.ports ?? []).find((p) => Number(p?.privatePort) === 4321 && p?.isIpPublic);
+    const httpPort = (pod.runtime?.ports ?? []).find((p) => Number(p?.privatePort) === port && p?.isIpPublic);
     let status = 'pending';
     if (pod.desiredStatus === 'RUNNING' && httpPort) status = 'running';
     else if (pod.desiredStatus === 'EXITED' || pod.desiredStatus === 'TERMINATED') status = 'terminated';

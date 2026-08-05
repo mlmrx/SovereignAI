@@ -124,7 +124,8 @@ test('listGgufFiles guesses quantization from GGUF filenames and ignores non-GGU
         { status: 200, headers: { 'content-type': 'application/json' } }
       ),
     async () => {
-      const files = await listGgufFiles('bartowski/Llama-3.2-1B-Instruct-GGUF');
+      const { files, license } = await listGgufFiles('bartowski/Llama-3.2-1B-Instruct-GGUF');
+      assert.equal(license, null, 'a repo with no license declaration must report null, never a guess');
       assert.deepEqual(files, [
         { filename: 'model.Q4_K_M.gguf', quantization: 'Q4_K_M', base: 'hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF:Q4_K_M' },
         { filename: 'model.Q8_0.gguf', quantization: 'Q8_0', base: 'hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF:Q8_0' },
@@ -155,7 +156,7 @@ test('listGgufFiles recognizes hyphen-separated quant labels, not just dot-separ
         { status: 200, headers: { 'content-type': 'application/json' } }
       ),
     async () => {
-      const files = await listGgufFiles('bartowski/Llama-3.2-1B-Instruct-GGUF');
+      const { files } = await listGgufFiles('bartowski/Llama-3.2-1B-Instruct-GGUF');
       assert.deepEqual(
         files.map((f) => f.quantization),
         ['IQ3_M', 'Q4_0_4_4', 'Q4_K_M', 'Q6_K', 'F16']
@@ -172,8 +173,9 @@ test('listGgufFiles returns an empty list when the repo has no siblings metadata
   await withFetch(
     async () => new Response(JSON.stringify({}), { status: 200 }),
     async () => {
-      const files = await listGgufFiles('owner/repo');
+      const { files, license } = await listGgufFiles('owner/repo');
       assert.deepEqual(files, []);
+      assert.equal(license, null);
     }
   );
 });

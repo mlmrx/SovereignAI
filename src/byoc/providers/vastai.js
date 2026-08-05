@@ -61,20 +61,28 @@ export const vastai = {
       .filter((o) => o.id && o.label);
   },
 
-  async provision({ apiKey, gpuTypeId, name, image, env = {}, diskGB = 20 }) {
+  // `port` (default 4321) selects which container port to expose/find;
+  // `args` (optional) run the image ENTRYPOINT with arguments (runtype
+  // 'args') — used by the serve rail to pass `--model …` to vLLM. Drift
+  // note: the `args`/`runtype` create-body fields are part of the unverified
+  // API surface above.
+  async provision({ apiKey, gpuTypeId, name, image, env = {}, diskGB = 20, port = 4321, args = [] }) {
     if (!gpuTypeId) throw new GpuProviderError('Vast.ai needs an offer id (see "sovereign byoc gpu list vastai")', { status: 400 });
     if (!image) throw new GpuProviderError('Vast.ai needs a pullable image: pass --image <ref>', { status: 400 });
-    const envString = Object.entries(env)
-      .map(([key, value]) => `-e ${key}=${JSON.stringify(String(value))}`)
-      .join(' ');
-    const data = await vastFetch(apiKey, 'PUT', `/asks/${encodeURIComponent(gpuTypeId)}/`, {
+    const envString = [
+      ...Object.entries(env).map(([key, value]) => `-e ${key}=${JSON.stringify(String(value))}`),
+      `-p ${port}:${port}`,
+    ].join(' ');
+    const body = {
       client_id: 'me',
       image,
       disk: diskGB,
       env: envString,
-      runtype: 'ssh', // keep the container running as a service rather than exiting like a batch job
+      runtype: args.length ? 'args' : 'ssh', // 'ssh' keeps a service image alive; 'args' runs ENTRYPOINT with the given arguments
       label: instanceLabel(name),
-    });
+    };
+    if (args.length) body.args = args.join(' ');
+    const data = await vastFetch(apiKey, 'PUT', `/asks/${encodeURIComponent(gpuTypeId)}/`, body);
     const instanceId = data?.new_contract ?? data?.new_contract_id;
     if (instanceId === undefined || instanceId === null) {
       throw new GpuProviderError('Vast.ai did not return an instance id', { status: 502 });
@@ -82,13 +90,13 @@ export const vastai = {
     return { instanceId: String(instanceId) };
   },
 
-  async getInstance({ apiKey, instanceId }) {
+  async getInstance({ apiKey, instanceId, port = 4321 }) {
     const data = await vastFetch(apiKey, 'GET', `/instances/${encodeURIComponent(instanceId)}/`);
     const inst = data?.instances ?? data;
     if (!inst || inst.id === undefined || inst.id === null) {
       return { instanceId, status: 'terminated', host: null, port: null };
     }
-    const mapped = inst.ports?.['4321/tcp']?.[0];
+    const mapped = inst.ports?.[`${port}/tcp`]?.[0];
     let status = 'pending';
     if (inst.actual_status === 'running' && mapped) status = 'running';
     else if (inst.actual_status === 'exited') status = 'terminated';

@@ -115,7 +115,11 @@ strings. Ids are opaque strings unique within their table.
   memories; `null` = never swept.
 
 ### messages
-`id, conversation_id, role (user|assistant|system), content, provider (null), model (null), tokens_in (null), tokens_out (null), created_at`
+`id, conversation_id, role (user|assistant|system), content, provider (null), model (null), model_digest (null), tokens_in (null), tokens_out (null), created_at`
+
+- `model_digest` — the exact weights that produced an assistant reply (the
+  Ollama model digest), when resolvable. `null` for providers that expose no
+  digest and for rows predating tracking — unknown, never guessed.
 
 ### memories
 `id, content, created_at, origin (null), source_conversation_id (null), updated_at (null), author_provider (null), author_model (null)`

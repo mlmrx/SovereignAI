@@ -128,6 +128,8 @@ sovereign byoc <action>    # deploy + manage instances on a Docker host YOU own,
 
 **Bring your own cloud:** `sovereign byoc deploy --host you@your-box` provisions a hardened instance on any Linux machine with SSH and Docker — a VPS, a homelab, on-prem. Your data stays on your host; the deploy tooling keeps only connection metadata and a token _hash_, and revoking its SSH key severs it completely. Don't already have a box? `sovereign byoc gpu deploy <runpod|vastai|lambda>` rents a GPU instance and deploys onto it — **unverified against live provider infrastructure, test with the cheapest GPU type first**; see [the BYOC connector](docs/BYOC_SSH_CONNECTOR.md) for exactly what that means and what it costs.
 
+**Ride the open-weights wave:** when a release is too big for your box — the frontier-scale MoE class — `sovereign byoc gpu serve runpod --gpu-type <id> --model <huggingface-id>` rents a GPU running vLLM's OpenAI-compatible server with those exact weights and wires it in as a provider (`--wire`). One command to serve, one to destroy, billing disclosed at every step. Meanwhile every answer from a local model now carries a **weight-digest receipt** (which exact weights replied), and the Hugging Face browser shows each repo's **declared license at the point of choice** — open weights are not automatically open license.
+
 **Bring your history with you:** `sovereign import-chat` (CLI, or Settings → Data & privacy in the web UI) parses ChatGPT's and Claude's official export ZIPs directly — built with real confidence, since both are well-documented, stable formats. Imported history starts as archive prose; add `--distill` (or run `sovereign distill` later) to opt into sweeping it for durable memories with your configured model — one call per conversation, idempotent, every distilled memory tagged with its source. Gemini's Google Takeout export is supported experimentally (prompts only; see [the chat import guide](docs/CHAT_IMPORT.md)). Everything else — Grok, Kimi, GLM, DeepSeek, Qwen, or any platform without a dedicated parser — goes through a documented generic JSON format instead of a guessed-at one. Parsing is entirely local; re-running the same file is safe and never duplicates history.
 
 ## Your AI, everywhere
@@ -213,6 +215,7 @@ The suite includes 130+ core, UI-contract, integration, API, security, config, p
 - [x] The first five minutes: Arrival (import → live distillation → provenance-grounded reveal), the Mind control-room view as the landing surface, and streamed distillation (`POST /api/distill`) in the web UI
 - [x] Cognition sovereignty: machine-written memories name their authoring model, the "cognition stays home" switch, checksummed (optionally minisign-signed) releases, and the public [Sovereignty Ledger](docs/SOVEREIGNTY.md)
 - [x] Life Import rail #1 — email ([details](docs/LIFE_IMPORT.md)): zero-dep mbox scanning into evidence-backed life records, with the subscription audit and renewals radar in the Mind view
+- [x] Open-weights rails: `byoc gpu serve` (rented GPU running vLLM with the open weights you choose, OpenAI-compat wire-in), weight-digest receipts on every local answer, and weight-license disclosure in the Hugging Face browser
 - [ ] Life Import rail #2 — bank/card statements (CSV/OFX), extending the same audit with authoritative amounts
 
 ## License

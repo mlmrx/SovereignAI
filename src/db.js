@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS messages (
   content TEXT NOT NULL,
   provider TEXT,
   model TEXT,
+  model_digest TEXT,
   tokens_in INTEGER,
   tokens_out INTEGER,
   created_at TEXT NOT NULL
@@ -205,6 +206,10 @@ export function openDb(dataDir) {
   // rows (the author is the human) and on rows that predate tracking.
   ensureColumn(db, 'memories', 'author_provider', 'TEXT');
   ensureColumn(db, 'memories', 'author_model', 'TEXT');
+  // Which exact weights produced an assistant reply: the Ollama model digest
+  // when resolvable, NULL otherwise (remote providers expose no digest —
+  // reported as unknown, not guessed).
+  ensureColumn(db, 'messages', 'model_digest', 'TEXT');
   // When an imported conversation was last swept for durable memories
   // ("sovereign distill") — set even when the sweep found nothing, so
   // re-running distillation is idempotent instead of re-billing every chat.
@@ -477,14 +482,15 @@ export class Store {
       content: m.content,
       provider: m.provider ?? null,
       model: m.model ?? null,
+      model_digest: m.model_digest ?? null,
       tokens_in: m.tokens_in ?? null,
       tokens_out: m.tokens_out ?? null,
       created_at: now(),
     };
     this.db
       .prepare(
-        `INSERT INTO messages (id, conversation_id, role, content, provider, model, tokens_in, tokens_out, created_at)
-         VALUES (:id, :conversation_id, :role, :content, :provider, :model, :tokens_in, :tokens_out, :created_at)`
+        `INSERT INTO messages (id, conversation_id, role, content, provider, model, model_digest, tokens_in, tokens_out, created_at)
+         VALUES (:id, :conversation_id, :role, :content, :provider, :model, :model_digest, :tokens_in, :tokens_out, :created_at)`
       )
       .run(row);
     return row;
@@ -499,14 +505,15 @@ export class Store {
       content,
       provider: null,
       model: null,
+      model_digest: null,
       tokens_in: null,
       tokens_out: null,
       created_at: created_at ?? now(),
     };
     this.db
       .prepare(
-        `INSERT INTO messages (id, conversation_id, role, content, provider, model, tokens_in, tokens_out, created_at)
-         VALUES (:id, :conversation_id, :role, :content, :provider, :model, :tokens_in, :tokens_out, :created_at)`
+        `INSERT INTO messages (id, conversation_id, role, content, provider, model, model_digest, tokens_in, tokens_out, created_at)
+         VALUES (:id, :conversation_id, :role, :content, :provider, :model, :model_digest, :tokens_in, :tokens_out, :created_at)`
       )
       .run(row);
     return row;
@@ -998,7 +1005,7 @@ export class Store {
     const tables = {
       personas: 'INSERT OR REPLACE INTO personas (id, name, description, system_prompt, provider, model, temperature, use_memory, use_knowledge, created_at, updated_at) VALUES (:id, :name, :description, :system_prompt, :provider, :model, :temperature, :use_memory, :use_knowledge, :created_at, :updated_at)',
       conversations: 'INSERT OR REPLACE INTO conversations (id, persona_id, title, created_at, updated_at, external_id, source_platform, distilled_at) VALUES (:id, :persona_id, :title, :created_at, :updated_at, :external_id, :source_platform, :distilled_at)',
-      messages: 'INSERT OR REPLACE INTO messages (id, conversation_id, role, content, provider, model, tokens_in, tokens_out, created_at) VALUES (:id, :conversation_id, :role, :content, :provider, :model, :tokens_in, :tokens_out, :created_at)',
+      messages: 'INSERT OR REPLACE INTO messages (id, conversation_id, role, content, provider, model, model_digest, tokens_in, tokens_out, created_at) VALUES (:id, :conversation_id, :role, :content, :provider, :model, :model_digest, :tokens_in, :tokens_out, :created_at)',
       memories:
         'INSERT OR REPLACE INTO memories (id, content, created_at, origin, source_conversation_id, updated_at, author_provider, author_model) VALUES (:id, :content, :created_at, :origin, :source_conversation_id, :updated_at, :author_provider, :author_model)',
       life_records:
@@ -1281,6 +1288,7 @@ function normalizeMessage(row) {
     content: text(row.content, 'content', 20 * 1024 * 1024),
     provider: nullableText(row.provider, 'provider', 2048),
     model: nullableText(row.model, 'model', 2048),
+    model_digest: nullableText(row.model_digest, 'model_digest', 128),
     tokens_in: nullableInteger(row.tokens_in, 'tokens_in', 0),
     tokens_out: nullableInteger(row.tokens_out, 'tokens_out', 0),
     created_at: timestamp(row.created_at, 'created_at'),

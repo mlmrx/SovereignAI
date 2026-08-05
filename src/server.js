@@ -309,9 +309,7 @@ export function createApp(rootDir, { env = process.env } = {}) {
   route('GET', '/api/model-catalog/search', catalogRoute(async ({ query }) => ({
     results: await searchGgufModels(query.q),
   })));
-  route('GET', '/api/model-catalog/files', catalogRoute(async ({ query }) => ({
-    files: await listGgufFiles(query.repo),
-  })));
+  route('GET', '/api/model-catalog/files', catalogRoute(async ({ query }) => await listGgufFiles(query.repo)));
 
   // Heuristic guidance: what model size/quant should run comfortably here,
   // and whether the workspace's training investment is worth an actual LoRA

@@ -51,7 +51,14 @@ export async function searchGgufModels(query) {
   return data.map(summarizeModel).filter((model) => model.id);
 }
 
-/** List GGUF files (quantization variants) published in one Hugging Face repo. */
+/**
+ * List GGUF files (quantization variants) published in one Hugging Face repo,
+ * plus the repo's declared weight license. "Open weights" is not "open
+ * license" (community licenses, research-only releases) — surfacing the
+ * declared license at selection time is disclosure-at-the-point-of-use,
+ * same rule as every other boundary in this product. `null` means the repo
+ * declares none: reported as unlisted, never guessed.
+ */
 export async function listGgufFiles(repo) {
   const id = validateRepoId(repo);
   const data = await fetchJson(new URL(`${HF_API}/models/${id}`));
@@ -61,14 +68,21 @@ export async function listGgufFiles(repo) {
     .filter((name) => name.toLowerCase().endsWith('.gguf'))
     .sort();
 
-  return filenames.map((filename) => {
-    const quantization = guessQuantization(filename);
-    return {
-      filename,
-      quantization,
-      base: quantization ? `hf.co/${id}:${quantization}` : `hf.co/${id}`,
-    };
-  });
+  const tags = Array.isArray(data?.tags) ? data.tags : [];
+  const licenseTag = tags.find((tag) => typeof tag === 'string' && tag.startsWith('license:'));
+  const cardLicense = typeof data?.cardData?.license === 'string' ? data.cardData.license : null;
+
+  return {
+    license: licenseTag ? licenseTag.slice('license:'.length) : cardLicense,
+    files: filenames.map((filename) => {
+      const quantization = guessQuantization(filename);
+      return {
+        filename,
+        quantization,
+        base: quantization ? `hf.co/${id}:${quantization}` : `hf.co/${id}`,
+      };
+    }),
+  };
 }
 
 function validateRepoId(repo) {

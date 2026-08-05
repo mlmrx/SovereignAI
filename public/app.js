@@ -950,6 +950,7 @@ async function sendMessage(overrideText) {
         pending.append(packet.data.text || '', { follow: shouldScroll });
       } else if (packet.event === 'done') {
         usage = packet.data.usage || null;
+        state.lastModelDigest = packet.data.modelDigest || null;
       } else if (packet.event === 'error') {
         streamError = packet.data.message || 'The model request failed.';
         completionStatus = 'Response interrupted';
@@ -959,6 +960,7 @@ async function sendMessage(overrideText) {
     const metaBits = [];
     if (usage?.input_tokens != null) metaBits.push(`${usage.input_tokens} in · ${usage.output_tokens ?? '?'} out`);
     if (metadata?.model) metaBits.push(`${metadata.provider}/${metadata.model}`);
+    if (state.lastModelDigest) metaBits.push(`weights ${state.lastModelDigest.slice(0, 12)}`);
     if (streamError) metaBits.push('stream interrupted');
     pending.finish({ nextMeta: metaBits.join(' · '), nextSources: metadata?.sources || [], wasError: Boolean(streamError) });
     if (streamError) toast(streamError, { type: 'error', title: 'Response interrupted' });
@@ -1920,7 +1922,7 @@ function renderHfResults(results) {
     const meta = [
       Number.isFinite(model.downloads) ? `${model.downloads.toLocaleString()} downloads` : null,
       Number.isFinite(model.likes) ? `${model.likes.toLocaleString()} likes` : null,
-      model.license ? `license: ${escapeHtml(model.license)}` : null,
+      model.license ? `license: ${escapeHtml(model.license)}` : 'license: unlisted — check the repo before building',
     ].filter(Boolean).join(' · ');
     return `<div class="model-hf-result" role="listitem">
       <div class="model-hf-result-head">
@@ -1951,25 +1953,36 @@ async function toggleHfFiles(button) {
   button.textContent = 'Hide GGUF files';
   const requestId = ++state.hfFilesRequestId;
   try {
-    const { files } = await api.get(`/api/model-catalog/files?repo=${encodeURIComponent(repo)}`);
+    const { files, license } = await api.get(`/api/model-catalog/files?repo=${encodeURIComponent(repo)}`);
     if (requestId !== state.hfFilesRequestId) return;
+    const licenseNote = `<div class="model-hf-empty">Weights license: ${license ? escapeHtml(license) : 'unlisted — read the repo before building'}. The license travels with the weights, not with your recipe.</div>`;
     filesHost.innerHTML = files.length
-      ? files.map((file) => `<button class="model-hf-file-btn" type="button" data-base="${escapeHtml(file.base)}"><span>${escapeHtml(file.filename)}</span>${file.quantization ? `<span>${escapeHtml(file.quantization)}</span>` : ''}</button>`).join('')
+      ? licenseNote + files.map((file) => `<button class="model-hf-file-btn" type="button" data-base="${escapeHtml(file.base)}" data-license="${escapeHtml(license ?? '')}"><span>${escapeHtml(file.filename)}</span>${file.quantization ? `<span>${escapeHtml(file.quantization)}</span>` : ''}</button>`).join('')
       : '<div class="model-hf-empty">No .gguf files found in this repo.</div>';
-    $$('.model-hf-file-btn', filesHost).forEach((fileButton) => fileButton.addEventListener('click', () => applyHfBase(fileButton.dataset.base)));
+    $$('.model-hf-file-btn', filesHost).forEach((fileButton) => fileButton.addEventListener('click', () => applyHfBase(fileButton.dataset.base, fileButton.dataset.license)));
   } catch (error) {
     if (requestId !== state.hfFilesRequestId) return;
     filesHost.innerHTML = `<div class="model-hf-empty">${escapeHtml(error.message)}</div>`;
   }
 }
 
-function applyHfBase(base) {
+function applyHfBase(base, license = '') {
   const input = $('#model-base');
   input.value = base;
   input.dispatchEvent(new Event('input', { bubbles: true }));
   input.focus();
+  const licenseField = $('#model-license');
+  if (license && licenseField && !licenseField.value.trim()) {
+    licenseField.value = `Base model weights: ${license} (declared by the Hugging Face repo — verify before redistribution).`;
+    licenseField.dispatchEvent(new Event('input', { bubbles: true }));
+  }
   $('.model-hf-browse')?.removeAttribute('open');
-  setHfStatus(`Base model set to ${base}. Review the license before building.`, 'success');
+  setHfStatus(
+    license
+      ? `Base model set to ${base} — weights license ${license}, noted on the recipe.`
+      : `Base model set to ${base}. The repo lists no license — read it before building.`,
+    'success'
+  );
   toast(`Base model set to ${base}`, { type: 'success' });
 }
 

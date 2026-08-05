@@ -42,10 +42,10 @@ function defaultSleep(ms) {
 }
 function noop() {}
 
-async function pollUntilRunning(provider, { apiKey, instanceId, timeoutMs, sleep, log }) {
+async function pollUntilRunning(provider, { apiKey, instanceId, timeoutMs, sleep, log, port }) {
   const deadline = Date.now() + timeoutMs;
   for (;;) {
-    const info = await provider.getInstance({ apiKey, instanceId });
+    const info = await provider.getInstance({ apiKey, instanceId, ...(port ? { port } : {}) });
     if (info.status === 'running') return info;
     if (info.status === 'error' || info.status === 'terminated') {
       throw new GpuProvisionError(`${provider.label} reports the instance as "${info.status}" before it became reachable. Check the ${provider.label} console for the failure reason.`);
@@ -138,6 +138,117 @@ export async function provisionContainer({
     token,
     tokenSha256,
     status,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// The serve rail: rent a GPU that runs an INFERENCE server (vLLM) with open
+// weights, instead of a SovereignAI instance. Same container mechanics and
+// the same disclosed trust deviation (the API key transits this process as
+// instance env), different image, port, and readiness probe: vLLM answers
+// on /v1/models once the weights are loaded.
+// ---------------------------------------------------------------------------
+
+const SERVE_PORT = 8000;
+export const DEFAULT_SERVE_IMAGE = 'vllm/vllm-openai:latest';
+
+async function pollVllmReady({ host, port, apiKey, model, timeoutMs, sleep, log, fetchImpl = fetch }) {
+  const deadline = Date.now() + timeoutMs;
+  let lastError = 'no response yet';
+  for (;;) {
+    try {
+      const res = await fetchImpl(`http://${host}:${port}/v1/models`, {
+        headers: { authorization: `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (res.ok) {
+        const body = await res.json();
+        const ids = Array.isArray(body?.data) ? body.data.map((m) => m?.id).filter(Boolean) : [];
+        if (ids.length) return { models: ids };
+        lastError = 'server is up but reports no models yet';
+      } else {
+        lastError = `/v1/models returned HTTP ${res.status}`;
+      }
+    } catch (err) {
+      lastError = err.message;
+    }
+    if (Date.now() >= deadline) {
+      throw new GpuProvisionError(
+        `The instance came up but the inference server never became ready: ${lastError}. ` +
+          `Large weights (${model}) can take many minutes to download on first boot — check the provider console before assuming failure, and terminate there if you give up.`
+      );
+    }
+    log(`  waiting for vLLM to load ${model}… (${lastError})`);
+    await sleep(PROVISION_POLL_MS);
+  }
+}
+
+/**
+ * Provision a container-style GPU instance running an OpenAI-compatible
+ * inference server (vLLM) for one open-weights model. Returns the endpoint,
+ * the API key (shown once by the caller, hash stored), and the model ids
+ * the server actually reports.
+ */
+export async function provisionServeContainer({
+  providerId,
+  apiKey,
+  gpuTypeId,
+  name,
+  model,
+  image = DEFAULT_SERVE_IMAGE,
+  extraArgs = [],
+  hfToken,
+  diskGB = 60,
+  log = noop,
+  sleep = defaultSleep,
+  provisionTimeoutMs = DEFAULT_PROVISION_TIMEOUT_MS,
+  readyTimeoutMs = 20 * 60_000, // weight download + load dominates; Kimi-class models are hundreds of GB
+  fetchImpl = fetch,
+} = {}) {
+  const provider = getGpuProvider(providerId);
+  if (provider.computeStyle !== 'container') {
+    throw new GpuProvisionError(
+      `${provider.label} is ${provider.computeStyle}-style; "gpu serve" currently supports container-style providers (RunPod, Vast.ai). ` +
+        'On a VM provider, SSH in and `docker run vllm/vllm-openai --model …` yourself — see docs/BYOC_SSH_CONNECTOR.md.'
+    );
+  }
+  if (!model) throw new GpuProvisionError('gpu serve needs a model: pass --model <huggingface-id>');
+
+  const serveKey = crypto.randomBytes(24).toString('hex');
+  const env = { VLLM_API_KEY: serveKey };
+  if (hfToken) env.HF_TOKEN = hfToken; // forwarded for gated repos; never stored anywhere by this CLI
+
+  log(`• Requesting a GPU instance from ${provider.label} to serve ${model}…`);
+  const { instanceId } = await provider.provision({
+    apiKey,
+    gpuTypeId,
+    name,
+    image,
+    diskGB,
+    env,
+    port: SERVE_PORT,
+    args: ['--model', model, ...extraArgs],
+  });
+  log(`  requested: instance ${instanceId} — if anything below fails, terminate it in the ${provider.label} console so it doesn't keep billing.`);
+
+  const running = await pollUntilRunning(provider, { apiKey, instanceId, timeoutMs: provisionTimeoutMs, sleep, log, port: SERVE_PORT });
+  if (!running.host || !running.port) {
+    throw new GpuProvisionError(`${provider.label} marked instance ${instanceId} running but did not report a reachable address. It is still running and billing — terminate it in the ${provider.label} console if you don't intend to retry.`);
+  }
+  log(`  reachable at ${running.host}:${running.port} — waiting for the inference server (first boot downloads the weights; be patient)…`);
+
+  const ready = await pollVllmReady({ host: running.host, port: running.port, apiKey: serveKey, model, timeoutMs: readyTimeoutMs, sleep, log, fetchImpl });
+
+  return {
+    computeStyle: 'container',
+    role: 'inference',
+    provider: { name: provider.id, instanceId, gpuTypeId, image },
+    host: running.host,
+    port: running.port,
+    model,
+    models: ready.models,
+    apiKey: serveKey,
+    apiKeySha256: crypto.createHash('sha256').update(serveKey).digest('hex'),
   };
 }
 

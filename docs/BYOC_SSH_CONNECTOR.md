@@ -262,3 +262,44 @@ what a provider's default single-GPU request returns.
 
 Ship 1 immediately (it's independent and the audit calls it critical); 2–3 are
 the MVP of "you pick the infra"; 4–5 make it a product.
+
+## The serve rail — open weights on a rented GPU
+
+`sovereign byoc gpu serve <runpod|vastai> --gpu-type <id> --model <huggingface-id>`
+rents a container-style GPU running **vLLM's OpenAI-compatible server** with
+the open weights you choose — for the models too big to sit next to you
+(frontier-scale MoE releases). It is rail 1.5's machinery pointed at an
+inference image instead of a SovereignAI image, and it inherits rail 1.5's
+honesty notes wholesale:
+
+- **Unverified against live provider infrastructure** — same warning, same
+  advice: cheapest workable GPU first, provider console open.
+- **The API key transits this CLI** (container-style instances give us no
+  host to generate it on). Only its hash is stored; the key is shown once.
+- **Billing runs until destroyed** — and first boot downloads the weights,
+  which for big models takes many minutes *while billing*. The plan says so
+  before you confirm; `sovereign byoc destroy <name>` terminates it.
+- **The provider maps the port to the internet.** The API key is the only
+  protection — put TLS in front before sharing the endpoint.
+- **Weights license is between you and the publisher.** Open weights are
+  not automatically open license; the plan reminds you before provisioning.
+
+Options: `--image` (default `vllm/vllm-openai:latest`), `--disk-gb`
+(default 60 — size for the weights), `--vllm-arg …` (repeatable
+passthrough, e.g. `--vllm-arg --max-model-len --vllm-arg 32768`),
+`--hf-token-env HF_TOKEN` (forward a Hugging Face token for gated repos;
+never stored), and `--wire` (write the endpoint + key into the
+OpenAI-compatible provider slot, only if that slot isn't already enabled
+elsewhere).
+
+On a **VM-style** provider (Lambda), serve yourself in two commands — this
+rail deliberately doesn't pretend to automate what it can't test:
+
+```bash
+ssh ubuntu@<box> docker run -d --gpus all -p 8000:8000 \
+  -e VLLM_API_KEY=<key you generate on the box> \
+  vllm/vllm-openai --model <huggingface-id>
+```
+
+`sovereign byoc status <name>` reports serve instances (role: inference)
+through the provider's API; `list` shows them alongside app instances.

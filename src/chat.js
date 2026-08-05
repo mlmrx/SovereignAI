@@ -26,6 +26,14 @@ export async function handleChat({ store, config, body, sse, signal }) {
   const history = trimHistory(store.listMessages(conversation.id), config.limits.historyChars);
   store.addMessage({ conversation_id: conversation.id, role: 'user', content: message });
 
+  // Weight provenance: resolve which exact weights will answer, in parallel
+  // with the stream. Ollama exposes a digest; other providers don't — NULL
+  // then, reported as unknown rather than guessed.
+  let modelDigest = null;
+  const digestPromise = resolveModelDigest(provider, providerCfg, model)
+    .then((digest) => (modelDigest = digest))
+    .catch(() => null);
+
   const { system, sources, memories } = await buildSystemPrompt({ store, config, persona, query: message });
 
   sse.send('meta', {
@@ -78,12 +86,14 @@ export async function handleChat({ store, config, body, sse, signal }) {
     sse.send('delta', { text });
   }
 
+  await digestPromise; // resolved or null by now; never throws
   const saved = persistAssistant();
   sse.send('done', {
     conversationId: conversation.id,
     messageId: saved?.id ?? null,
     usage,
     stopReason,
+    modelDigest,
   });
   sse.end();
 
@@ -108,12 +118,29 @@ export async function handleChat({ store, config, body, sse, signal }) {
       content,
       provider: provider.id,
       model,
+      model_digest: modelDigest,
       tokens_in: usage.input_tokens ?? null,
       tokens_out: usage.output_tokens ?? null,
     });
     store.touchConversation(conversation.id);
     return saved;
   }
+}
+
+// One digest lookup per (endpoint, model) per minute — never blocks the
+// stream, never fails the chat, returns null when the provider has no
+// notion of a weight digest.
+const digestCache = new Map();
+const DIGEST_TTL_MS = 60_000;
+async function resolveModelDigest(provider, cfg, model) {
+  if (provider.id !== 'ollama' || !model) return null;
+  const key = `${cfg?.baseUrl ?? ''}\0${model}`;
+  const cached = digestCache.get(key);
+  if (cached && Date.now() - cached.at < DIGEST_TTL_MS) return cached.digest;
+  const models = await provider.listModels(cfg);
+  const digest = models.find((m) => m.id === model)?.digest ?? null;
+  digestCache.set(key, { digest, at: Date.now() });
+  return digest;
 }
 
 function resolvePersona(store, personaId, config) {
