@@ -7,18 +7,30 @@
 <meta name="description" content="One AI that runs on your machine, thinks with models you choose, remembers with receipts, and proves you can leave. Open source, zero dependencies, no cloud required." />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
 <style>
-/* SovereignAI landing — the thesis is ownership, so the page argues it.
-   Voice (serif) carries the argument; Machinery (mono) labels and counts.
-   One accent: Claude terracotta. Two themes, both designed. */
+/* SovereignAI landing — the thesis is ownership, so the page argues it —
+   and choosing your own look is part of the argument. Three named themes,
+   one virtue each, picked by the viewer and remembered on their device:
+
+     Cielo   (default) — the open sky: azure, cumulus cream, navy silhouette,
+                          a sand path. Openness.
+     Bottega           — the Florentine workshop: warm parchment, terracotta,
+                          ink. Craft and ownership.
+     Notte             — lights out, doors locked: warm charcoal, terracotta
+                          embers. Sovereignty.
+
+   Auto follows the OS: light → Cielo, dark → Notte. Legacy stored values
+   "light"/"dark" alias to Bottega/Notte so nothing anyone chose is lost. */
 :root {
-  --ground: #faf9f5; --raise: #f0eee6; --sink: #e9e6dc; --edge: #e0dccf;
-  --ink: #1f1e1d; --ink-2: #423f3a; --dim: #6e6a60;
-  --terra: #a6522a; --terra-hot: #8a4220; --terra-lit: #c15f3c;
-  --glow: rgba(166, 82, 42, 0.16);
-  --line: rgba(166, 82, 42, 0.24);
-  --ok: #5a7d3c; --warn: #a6552a;
-  --on-terra: #faf9f5;
-  --grain: rgba(31, 30, 29, 0.02);
+  /* Cielo */
+  --ground: #eef5fa; --raise: #f8f3e7; --sink: #e1ecf5; --edge: #c6dbea;
+  --ink: #0e2a45; --ink-2: #2b4d6e; --dim: #58758f;
+  --terra: #0f70b8; --terra-hot: #0a5a96; --terra-lit: #2f9be0;
+  --glow: rgba(15, 112, 184, 0.16);
+  --line: rgba(15, 112, 184, 0.22);
+  --ok: #3f7d52; --warn: #a6752a;
+  --on-terra: #f6fbff;
+  --grain: rgba(14, 42, 69, 0.025);
+  --hero-sky: linear-gradient(180deg, rgba(47, 155, 224, 0.20) 0%, rgba(246, 239, 221, 0.30) 62%, rgba(238, 245, 250, 0) 100%);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -30,23 +42,35 @@
     --ok: #8fa870; --warn: #d99a6f;
     --on-terra: #1f1e1d;
     --grain: rgba(255, 255, 255, 0.014);
+    --hero-sky: none;
   }
 }
-:root[data-theme="dark"] {
+:root[data-theme="cielo"] {
+  --ground: #eef5fa; --raise: #f8f3e7; --sink: #e1ecf5; --edge: #c6dbea;
+  --ink: #0e2a45; --ink-2: #2b4d6e; --dim: #58758f;
+  --terra: #0f70b8; --terra-hot: #0a5a96; --terra-lit: #2f9be0;
+  --glow: rgba(15, 112, 184, 0.16); --line: rgba(15, 112, 184, 0.22);
+  --ok: #3f7d52; --warn: #a6752a; --on-terra: #f6fbff;
+  --grain: rgba(14, 42, 69, 0.025);
+  --hero-sky: linear-gradient(180deg, rgba(47, 155, 224, 0.20) 0%, rgba(246, 239, 221, 0.30) 62%, rgba(238, 245, 250, 0) 100%);
+}
+:root[data-theme="notte"], :root[data-theme="dark"] {
   --ground: #171615; --raise: #1f1e1d; --sink: #262624; --edge: #34322f;
   --ink: #edeae1; --ink-2: #c9c4ba; --dim: #a6a198;
   --terra: #d97757; --terra-hot: #e8926f; --terra-lit: #e8926f;
   --glow: rgba(217, 119, 87, 0.22); --line: rgba(217, 119, 87, 0.20);
   --ok: #8fa870; --warn: #d99a6f; --on-terra: #1f1e1d;
   --grain: rgba(255, 255, 255, 0.014);
+  --hero-sky: none;
 }
-:root[data-theme="light"] {
+:root[data-theme="bottega"], :root[data-theme="light"] {
   --ground: #faf9f5; --raise: #f0eee6; --sink: #e9e6dc; --edge: #e0dccf;
   --ink: #1f1e1d; --ink-2: #423f3a; --dim: #6e6a60;
   --terra: #a6522a; --terra-hot: #8a4220; --terra-lit: #c15f3c;
   --glow: rgba(166, 82, 42, 0.16); --line: rgba(166, 82, 42, 0.24);
   --ok: #5a7d3c; --warn: #a6552a; --on-terra: #faf9f5;
   --grain: rgba(31, 30, 29, 0.02);
+  --hero-sky: linear-gradient(180deg, rgba(166, 82, 42, 0.05) 0%, rgba(250, 249, 245, 0) 60%);
 }
 
 * { box-sizing: border-box; }
@@ -91,10 +115,17 @@ button { font: inherit; cursor: pointer; }
 .bar .join:hover { background: var(--terra); color: var(--on-terra); }
 .theme-btn { background: none; border: 1px solid var(--line); border-radius: 999px; color: var(--dim); font-size: 0.62rem; letter-spacing: 0.1em; padding: 3px 10px; }
 .theme-btn:hover { color: var(--terra); border-color: var(--terra); }
+.theme-pick { position: relative; }
+.theme-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; min-width: 250px; padding: 6px; border: 1px solid var(--edge); border-radius: 12px; background: var(--raise); box-shadow: 0 18px 50px rgba(0,0,0,.18); }
+.theme-menu button { display: flex; align-items: baseline; gap: 9px; width: 100%; text-align: left; padding: 8px 10px; border: 0; border-radius: 8px; background: none; color: var(--ink); font-size: 0.8rem; }
+.theme-menu button:hover, .theme-menu button.on { background: var(--sink); color: var(--terra-hot); }
+.theme-menu small { color: var(--dim); font-size: 0.68rem; }
+.theme-menu .sw { flex: 0 0 auto; width: 11px; height: 11px; border-radius: 50%; border: 1px solid var(--edge); transform: translateY(1px); }
+.theme-menu .sw.auto { background: linear-gradient(90deg, #2f9be0 50%, #1f1e1d 50%); }
 @media (max-width: 720px) { .bar nav .navlink { display: none; } }
 
 /* ---------- hero: the contradiction, stated ---------- */
-.hero { padding: clamp(60px, 12vh, 130px) 0 clamp(40px, 8vh, 80px); position: relative; overflow: hidden; min-height: 460px; }
+.hero { padding: clamp(60px, 12vh, 130px) 0 clamp(40px, 8vh, 80px); position: relative; overflow: hidden; min-height: 460px; background: var(--hero-sky); }
 .hero-grid { position: absolute; inset: 0; z-index: 0; opacity: 0.5; width: 100%; height: 100%; }
 .hero-inner { position: relative; z-index: 1; max-width: 760px; }
 .hero h1 {
@@ -271,7 +302,15 @@ footer { border-top: 1px solid var(--line); padding: 40px 0 60px; }
       <a class="navlink" href="#exit">The exit path</a>
       <a class="navlink" href="#install">Install</a>
       <a class="join" href="#waitlist">Stay close</a>
-      <button class="theme-btn" id="theme-btn" type="button" aria-label="Cycle color theme">theme</button>
+      <div class="theme-pick">
+        <button class="theme-btn" id="theme-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Choose a color theme">theme</button>
+        <div class="theme-menu" id="theme-menu" hidden role="menu" aria-label="Color themes — yours to choose, remembered only on this device">
+          <button type="button" role="menuitem" data-theme-pick="auto"><span class="sw auto" aria-hidden="true"></span>Auto <small>follow this device</small></button>
+          <button type="button" role="menuitem" data-theme-pick="cielo"><span class="sw" style="background:#2f9be0" aria-hidden="true"></span>Cielo <small>the open sky · openness</small></button>
+          <button type="button" role="menuitem" data-theme-pick="bottega"><span class="sw" style="background:#a6522a" aria-hidden="true"></span>Bottega <small>the workshop · ownership</small></button>
+          <button type="button" role="menuitem" data-theme-pick="notte"><span class="sw" style="background:#26211f" aria-hidden="true"></span>Notte <small>lights out · sovereignty</small></button>
+        </div>
+      </div>
     </nav>
   </div>
 </header>
@@ -491,6 +530,8 @@ footer { border-top: 1px solid var(--line); padding: 40px 0 60px; }
     <p class="honesty">We deliberately don't claim SOC 2, HIPAA, or "zero-knowledge" until controls actually support
       those words. What we claim today — local-first, zero dependencies, memory with receipts, a verified export — is
       auditable in the code and in the public sovereignty ledger, where an unknown is marked unknown.</p>
+    <p class="honesty">Colophon: three themes, in the tradition of the Florentine workshops — Cielo for openness,
+      Bottega for ownership, Notte for sovereignty. Your choice is remembered on your device and nowhere else.</p>
   </div>
 </footer>
 

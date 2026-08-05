@@ -38,6 +38,13 @@ test('the landing page carries the brand and both themes', () => {
   assert.match(html, /prefers-color-scheme: dark/);
   assert.match(html, /data-theme="dark"/);
   assert.match(html, /prefers-reduced-motion/);
+  // Named themes: viewer-chosen, one virtue each, legacy values still honored.
+  for (const theme of ['cielo', 'bottega', 'notte']) {
+    assert.match(html, new RegExp(`data-theme="${theme}"`), `missing ${theme} token block`);
+    assert.match(html, new RegExp(`data-theme-pick="${theme}"`), `missing ${theme} picker option`);
+  }
+  assert.match(script, /LEGACY = \{ dark: 'notte', light: 'bottega' \}/, 'stored legacy themes must migrate, not reset');
+  assert.match(html, /remembered on your device and nowhere else/i, 'the picker must state its privacy');
   // value props and the exit-path moat are the strategic spine of the page
   assert.match(html, /sovereignty ledger|What you get/i);
   assert.match(html, /exit path/i);
