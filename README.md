@@ -1,6 +1,9 @@
 # SovereignAI
 
-**Your private AI command center.** Bring your preferred model, durable memory, and personal knowledge into one workspace you can inspect, move, and run yourself. Name it, shape its behavior, add your documents, and use Model Studio to create an inspectable, portable recipe for a named model on your configured Ollama endpoint. Zero runtime dependencies. MIT licensed.
+**Your private AI command center.** Bring your preferred model, durable memory, and personal knowledge into one workspace you can inspect, move, and run yourself.
+
+> **Why this exists:** [You are the most fragmented database on earth](docs/WHY.md) — and the reassembled you is only safe on hardware you control.
+> **What "sovereign" means here, audited:** [The Sovereignty Ledger](docs/SOVEREIGNTY.md) — every layer, its status, its compromise, your exit. Name it, shape its behavior, add your documents, and use Model Studio to create an inspectable, portable recipe for a named model on your configured Ollama endpoint. Zero runtime dependencies. MIT licensed.
 
 ```bash
 node bin/sovereign.js start

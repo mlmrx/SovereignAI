@@ -740,7 +740,8 @@
           <section id="memory-settings" class="settings-section" aria-labelledby="memory-settings-heading">
             <div class="settings-heading"><h2 id="memory-settings-heading">Memory behavior</h2><p>Control whether conversations can automatically create durable notes.</p></div>
             <div class="settings-card option-card">
-              <label class="check-row"><input type="checkbox" id="cfg-auto-memory" /><span><strong>Learn durable facts automatically</strong><small>After each exchange, the active model makes one extra call to propose stable memories. With remote providers, that call is remote too.</small></span></label>
+              <label class="check-row"><input type="checkbox" id="cfg-auto-memory" /><span><strong>Learn durable facts automatically</strong><small>After each exchange, the active model makes one extra call to propose stable memories. With remote providers, that call is remote too — unless restricted below.</small></span></label>
+              <label class="check-row"><input type="checkbox" id="cfg-extract-local-only" /><span><strong>Cognition stays home</strong><small>Only models on local endpoints may write long-term memory. Chat can still use remote providers, but auto-learning skips remote exchanges and distillation refuses remote models outright.</small></span></label>
             </div>
             <div class="settings-heading secondary"><h3>Knowledge embeddings</h3><p>Semantic retrieval improves meaning-based search. Keyword search remains available without it.</p></div>
             <div class="settings-card">

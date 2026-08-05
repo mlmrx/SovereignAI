@@ -35,7 +35,7 @@ export const DEFAULT_CONFIG = {
   // Embeddings power semantic knowledge search. Falls back to keyword (BM25) search when unavailable.
   embeddings: { provider: 'ollama', model: 'nomic-embed-text' },
   // Auto memory: distill durable facts from conversations into long-term memory (extra model call per exchange).
-  memory: { autoExtract: false },
+  memory: { autoExtract: false, extractLocalOnly: false },
   // Fine-tuning uses an optional user-operated HTTP trainer. Dataset content is
   // never sent there until a project snapshot is explicitly approved.
   training: {
@@ -287,8 +287,14 @@ function normalizeEmbeddings(value) {
 
 function normalizeMemory(value) {
   assertPlainObject(value, 'memory');
-  assertKnownKeys(value, new Set(['autoExtract']), 'memory');
-  return { autoExtract: booleanValue(value.autoExtract, 'memory.autoExtract') };
+  assertKnownKeys(value, new Set(['autoExtract', 'extractLocalOnly']), 'memory');
+  return {
+    autoExtract: booleanValue(value.autoExtract, 'memory.autoExtract'),
+    // Cognition stays home: when true, the model calls that WRITE long-term
+    // memory (auto-extract, distillation) are refused unless the provider
+    // endpoint is local — even when chat itself uses a remote provider.
+    extractLocalOnly: booleanValue(value.extractLocalOnly, 'memory.extractLocalOnly'),
+  };
 }
 
 function normalizeTraining(value) {

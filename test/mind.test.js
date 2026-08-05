@@ -135,6 +135,8 @@ test('POST /api/distill streams per-conversation progress and stays idempotent',
     const memory = store.listMemories().find((m) => m.content === 'Builds SovereignAI on Windows');
     assert.equal(memory.origin, 'distilled');
     assert.equal(memory.source_conversation_id, convo.id);
+    assert.equal(memory.author_provider, 'openai', 'machine-written memories must name their authoring provider');
+    assert.equal(memory.author_model, 'mock-model', 'machine-written memories must name their authoring model');
 
     // Second run: everything already swept — no model calls, immediate done.
     const second = await readSse(
@@ -174,6 +176,62 @@ test('POST /api/distill reports a provider failure without marking the failed co
   } finally {
     await isolated.close();
     await new Promise((resolve) => provider.close(resolve));
+  }
+});
+
+test('cognition stays home: distillation refuses remote memory-writers; config round-trips the switch', async () => {
+  const isolated = await startTempApp({
+    embeddings: { provider: 'ollama', model: '' },
+    defaults: { provider: 'anthropic', model: 'claude-sonnet-5' },
+    providers: { ollama: { enabled: false }, anthropic: { enabled: true, apiKey: 'sk-ant-test' } },
+    memory: { autoExtract: false, extractLocalOnly: true },
+  });
+  try {
+    const { store } = isolated.app;
+    seedImportedConversation(store, { externalId: 'ext-local-1', title: 'Should not reach Anthropic' });
+    const events = await readSse(
+      await fetch(`${isolated.base}/api/distill`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
+    );
+    const failure = events.at(-1);
+    assert.equal(failure.event, 'error');
+    assert.match(failure.data.message, /extractLocalOnly.*not a local endpoint/s);
+    assert.equal(store.listDistillableConversations().length, 1, 'nothing may be marked distilled');
+    assert.equal(store.listMemories().length, 0, 'no memory may be written by a remote model');
+
+    const updated = await fetch(`${isolated.base}/api/config`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ memory: { autoExtract: true, extractLocalOnly: false } }),
+    });
+    assert.equal(updated.status, 200);
+    const config = await updated.json();
+    assert.equal(config.memory.extractLocalOnly, false);
+    assert.equal(config.memory.autoExtract, true);
+  } finally {
+    await isolated.close();
+  }
+});
+
+test('cognition stays home: auto-extract silently skips remote providers', async () => {
+  const { autoExtractMemories } = await import('../src/memory-extract.js');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sovereign-extract-'));
+  const { openDb } = await import('../src/db.js');
+  const store = openDb(dir);
+  try {
+    await autoExtractMemories({
+      store,
+      config: {
+        defaults: { provider: 'anthropic', model: 'claude-sonnet-5' },
+        providers: { anthropic: { enabled: true, apiKey: 'sk-ant-test', baseUrl: 'https://api.anthropic.com' } },
+        memory: { autoExtract: true, extractLocalOnly: true },
+      },
+      userMessage: 'I am the founder of SovereignAI.',
+      assistantReply: 'Understood.',
+    });
+    assert.equal(store.listMemories().length, 0, 'no extraction call may run against a remote provider');
+  } finally {
+    store.close();
+    fs.rmSync(dir, { recursive: true, force: true });
   }
 });
 

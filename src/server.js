@@ -1030,6 +1030,7 @@ export function createApp(rootDir, { env = process.env } = {}) {
           created_at: memory.created_at,
           updated_at: memory.updated_at,
           origin: memory.origin,
+          author: memory.author_provider ? { provider: memory.author_provider, model: memory.author_model } : null,
           source: memory.source_conversation_id
             ? { conversationId: memory.source_conversation_id, title: conversation?.title ?? null, deleted: !conversation }
             : null,

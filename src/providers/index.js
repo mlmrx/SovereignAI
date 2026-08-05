@@ -10,6 +10,24 @@ export function getProvider(id) {
   return provider;
 }
 
+/**
+ * Whether a provider's endpoint stays on this machine (or this Compose
+ * stack). Anthropic is remote by definition. For endpoint providers the
+ * host list mirrors what the UI badges as "Local" — loopback plus the
+ * Docker-internal names our own compose file uses.
+ */
+export function isLocalProviderEndpoint(providerId, cfg) {
+  if (providerId === 'anthropic') return false;
+  try {
+    const host = new URL(cfg?.baseUrl ?? '').hostname.toLowerCase().replace(/\.$/, '');
+    return (
+      ['localhost', '::1', '[::1]', '0.0.0.0', 'host.docker.internal', 'ollama'].includes(host) || host.startsWith('127.')
+    );
+  } catch {
+    return false;
+  }
+}
+
 /** Status summary for all providers (configured + reachable). */
 export async function providerStatus(config) {
   const results = [];

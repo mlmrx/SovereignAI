@@ -110,6 +110,38 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$GITHUB_REF_NAME" dist/sovereign-v* --clobber
 
+  checksums:
+    # Runs after every asset is attached: one SHA256SUMS.txt over all of them,
+    # optionally minisign-signed. Verification instructions live in
+    # docs/OPERATIONS.md#verifying-release-downloads.
+    needs: [artifacts, binaries]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir assets && cd assets
+          gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY"
+      - name: Write SHA256SUMS.txt
+        run: cd assets && sha256sum * > ../SHA256SUMS.txt && cat ../SHA256SUMS.txt
+      - name: Sign checksums (when MINISIGN_SECRET_KEY secret exists)
+        env:
+          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+        run: |
+          if [ -z "$MINISIGN_SECRET_KEY" ]; then echo "MINISIGN_SECRET_KEY not set — publishing unsigned checksums"; exit 0; fi
+          sudo apt-get update -q && sudo apt-get install -y -q minisign
+          printf '%s\n' "$MINISIGN_SECRET_KEY" > minisign.key
+          minisign -S -s minisign.key -W -m SHA256SUMS.txt -t "SovereignAI $GITHUB_REF_NAME"
+          rm -f minisign.key
+      - name: Upload checksums (and signature if created)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          files="SHA256SUMS.txt"
+          [ -f SHA256SUMS.txt.minisig ] && files="$files SHA256SUMS.txt.minisig"
+          gh release upload "$GITHUB_REF_NAME" $files --clobber --repo "$GITHUB_REPOSITORY"
+
   docker:
     needs: test
     runs-on: ubuntu-latest

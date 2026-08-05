@@ -80,7 +80,12 @@ test('pre-provenance rows keep NULL origin instead of a fabricated one', (t) => 
 test('provenance round-trips through export/import; v0.4-shaped rows still validate', (t) => {
   const source = tempStore(t);
   const convo = source.createConversation({ title: 'Origin chat' });
-  source.addMemory('Distilled fact from history', { origin: 'distilled', sourceConversationId: convo.id });
+  source.addMemory('Distilled fact from history', {
+    origin: 'distilled',
+    sourceConversationId: convo.id,
+    authorProvider: 'ollama',
+    authorModel: 'llama3.1',
+  });
   const exported = source.exportAll();
 
   const target = tempStore(t);
@@ -88,6 +93,8 @@ test('provenance round-trips through export/import; v0.4-shaped rows still valid
   const memory = target.listMemories().find((m) => m.content === 'Distilled fact from history');
   assert.equal(memory.origin, 'distilled');
   assert.equal(memory.source_conversation_id, convo.id);
+  assert.equal(memory.author_provider, 'ollama');
+  assert.equal(memory.author_model, 'llama3.1');
 
   // A v0.4 export knows nothing about the new fields — it must import cleanly.
   const counts = target.importAll({

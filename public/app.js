@@ -1236,6 +1236,7 @@ function memoryProvenance(memory) {
   else if (memory.origin === 'extracted') notes.push('auto-extracted from a chat');
   else if (memory.origin === 'distilled') notes.push('distilled from imported history');
   else notes.push('recorded before provenance tracking');
+  if (memory.author_provider) notes.push(`written by ${memory.author_provider}/${memory.author_model || 'default model'}`);
   if (memory.updated_at) notes.push(`edited ${formatDate(memory.updated_at, { relative: true })}`);
   return ` · ${notes.map(escapeHtml).join(' · ')}`;
 }
@@ -1313,6 +1314,7 @@ async function loadSettings() {
   $('#cfg-default-model').value = state.config.defaults?.model || '';
   $('#cfg-embed-model').value = state.config.embeddings?.model || '';
   $('#cfg-auto-memory').checked = Boolean(state.config.memory?.autoExtract);
+  $('#cfg-extract-local-only').checked = Boolean(state.config.memory?.extractLocalOnly);
   renderPersonaEditor();
   state.settingsLoaded = true;
   markSettingsDirty(false);
@@ -2053,7 +2055,7 @@ $('#settings-save').addEventListener('click', async () => {
     },
     defaults: { provider: $('#cfg-default-provider').value, model: $('#cfg-default-model').value.trim() },
     embeddings: { provider: 'ollama', model: $('#cfg-embed-model').value.trim() },
-    memory: { autoExtract: $('#cfg-auto-memory').checked },
+    memory: { autoExtract: $('#cfg-auto-memory').checked, extractLocalOnly: $('#cfg-extract-local-only').checked },
   };
   try {
     if (update.defaults.provider !== 'anthropic' && !update.defaults.model) {
@@ -2343,6 +2345,7 @@ function renderMindLedger(recent) {
       if (memory.source) {
         receipts.push(memory.source.deleted ? 'from a since-deleted conversation' : `from “${memory.source.title || 'Untitled conversation'}”`);
       }
+      if (memory.author) receipts.push(`written by ${memory.author.provider}/${memory.author.model || 'default model'}`);
       if (memory.updated_at) receipts.push(`edited ${formatDate(memory.updated_at, { relative: true })}`);
       return `<li class="mind-ledger-item ${escapeHtml(memory.origin ?? 'untracked')}">
         <span class="mind-ledger-content">${escapeHtml(memory.content)}</span>

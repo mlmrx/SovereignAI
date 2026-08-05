@@ -1,4 +1,4 @@
-import { getProvider } from './providers/index.js';
+import { getProvider, isLocalProviderEndpoint } from './providers/index.js';
 
 /**
  * Auto memory extraction (opt-in): after a chat exchange, ask the model to
@@ -17,6 +17,10 @@ export async function autoExtractMemories({
   const provider = getProvider(providerId);
   const cfg = config.providers[providerId];
   if (!provider.isConfigured(cfg)) return;
+  // Cognition stays home: with extractLocalOnly on, a remote provider may
+  // chat, but it may not WRITE memory. Skipping (not erroring) is this
+  // fire-and-forget path's contract; the Mind view surfaces the policy.
+  if (config.memory?.extractLocalOnly && !isLocalProviderEndpoint(providerId, cfg)) return;
 
   const existing = store.listMemories().slice(-30).map((m) => `- ${m.content}`).join('\n').slice(0, 3000) || '(none)';
   const system =
@@ -28,10 +32,11 @@ export async function autoExtractMemories({
     `Already known:\n${existing}\n\nExchange:\nUser: ${userMessage.slice(0, 2000)}\n` +
     `Assistant: ${assistantReply.slice(0, 1500)}\n\nNew durable facts:`;
 
+  const effectiveModel = model || (providerId === config.defaults.provider ? config.defaults.model : undefined);
   let out = '';
   const stream = provider.chatStream({
     cfg,
-    model: model || (providerId === config.defaults.provider ? config.defaults.model : undefined),
+    model: effectiveModel,
     system,
     messages: [{ role: 'user', content: prompt }],
     maxTokens: 1024,
@@ -44,7 +49,12 @@ export async function autoExtractMemories({
   const known = new Set(store.listMemories().map((m) => m.content.toLowerCase()));
   for (const fact of facts) {
     if (!known.has(fact.toLowerCase())) {
-      store.addMemory(fact, { origin: 'extracted', sourceConversationId: conversationId });
+      store.addMemory(fact, {
+        origin: 'extracted',
+        sourceConversationId: conversationId,
+        authorProvider: providerId,
+        authorModel: effectiveModel || null,
+      });
     }
   }
 }
@@ -70,6 +80,14 @@ export async function distillConversationMemories({
   if (!provider.isConfigured(cfg)) {
     throw new Error(`Provider "${providerId}" is not configured; configure it in Settings or pass a different provider`);
   }
+  // Deliberate foreground operation → fail loudly, never silently downgrade.
+  if (config.memory?.extractLocalOnly && !isLocalProviderEndpoint(providerId, cfg)) {
+    throw new Error(
+      `memory.extractLocalOnly is enabled and provider "${providerId}" is not a local endpoint — ` +
+        'distillation writes long-term memory and is restricted to models running on hardware you control. ' +
+        'Point the default provider at a local endpoint, or disable the restriction in Settings.'
+    );
+  }
 
   const transcript = boundedTranscript(messages);
   if (!transcript) return [];
@@ -82,10 +100,11 @@ export async function distillConversationMemories({
     'already known. Output one fact per line, each starting with "- ". If there is nothing durable, output exactly: NONE';
   const prompt = `Already known:\n${existing}\n\nImported conversation${conversation.title ? ` "${conversation.title.slice(0, 200)}"` : ''}:\n${transcript}\n\nNew durable facts:`;
 
+  const effectiveModel = model || (providerId === config.defaults.provider ? config.defaults.model : undefined);
   let out = '';
   const stream = provider.chatStream({
     cfg,
-    model: model || (providerId === config.defaults.provider ? config.defaults.model : undefined),
+    model: effectiveModel,
     system,
     messages: [{ role: 'user', content: prompt }],
     maxTokens: 1024,
@@ -100,7 +119,12 @@ export async function distillConversationMemories({
   const added = [];
   for (const fact of facts) {
     if (known.has(fact.toLowerCase())) continue;
-    store.addMemory(fact, { origin: 'distilled', sourceConversationId: conversation.id });
+    store.addMemory(fact, {
+      origin: 'distilled',
+      sourceConversationId: conversation.id,
+      authorProvider: providerId,
+      authorModel: effectiveModel || null,
+    });
     known.add(fact.toLowerCase());
     added.push(fact);
   }

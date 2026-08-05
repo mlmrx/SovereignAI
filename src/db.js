@@ -44,7 +44,9 @@ CREATE TABLE IF NOT EXISTS memories (
   created_at TEXT NOT NULL,
   origin TEXT,
   source_conversation_id TEXT,
-  updated_at TEXT
+  updated_at TEXT,
+  author_provider TEXT,
+  author_model TEXT
 );
 CREATE TABLE IF NOT EXISTS documents (
   id TEXT PRIMARY KEY,
@@ -175,6 +177,10 @@ export function openDb(dataDir) {
   ensureColumn(db, 'memories', 'origin', 'TEXT');
   ensureColumn(db, 'memories', 'source_conversation_id', 'TEXT');
   ensureColumn(db, 'memories', 'updated_at', 'TEXT');
+  // Which model wrote a machine-authored memory (v0.5.x). NULL on manual
+  // rows (the author is the human) and on rows that predate tracking.
+  ensureColumn(db, 'memories', 'author_provider', 'TEXT');
+  ensureColumn(db, 'memories', 'author_model', 'TEXT');
   // When an imported conversation was last swept for durable memories
   // ("sovereign distill") — set even when the sweep found nothing, so
   // re-running distillation is idempotent instead of re-billing every chat.
@@ -491,7 +497,7 @@ export class Store {
       .reverse();
   }
 
-  addMemory(content, { origin = 'manual', sourceConversationId = null } = {}) {
+  addMemory(content, { origin = 'manual', sourceConversationId = null, authorProvider = null, authorModel = null } = {}) {
     if (!MEMORY_ORIGINS.has(origin)) throw new Error(`Unknown memory origin "${origin}"`);
     const row = {
       id: newId(),
@@ -500,11 +506,13 @@ export class Store {
       origin,
       source_conversation_id: sourceConversationId,
       updated_at: null,
+      author_provider: authorProvider,
+      author_model: authorModel,
     };
     this.db
       .prepare(
-        `INSERT INTO memories (id, content, created_at, origin, source_conversation_id, updated_at)
-         VALUES (:id, :content, :created_at, :origin, :source_conversation_id, :updated_at)`
+        `INSERT INTO memories (id, content, created_at, origin, source_conversation_id, updated_at, author_provider, author_model)
+         VALUES (:id, :content, :created_at, :origin, :source_conversation_id, :updated_at, :author_provider, :author_model)`
       )
       .run(row);
     return row;
@@ -913,7 +921,7 @@ export class Store {
       conversations: 'INSERT OR REPLACE INTO conversations (id, persona_id, title, created_at, updated_at, external_id, source_platform, distilled_at) VALUES (:id, :persona_id, :title, :created_at, :updated_at, :external_id, :source_platform, :distilled_at)',
       messages: 'INSERT OR REPLACE INTO messages (id, conversation_id, role, content, provider, model, tokens_in, tokens_out, created_at) VALUES (:id, :conversation_id, :role, :content, :provider, :model, :tokens_in, :tokens_out, :created_at)',
       memories:
-        'INSERT OR REPLACE INTO memories (id, content, created_at, origin, source_conversation_id, updated_at) VALUES (:id, :content, :created_at, :origin, :source_conversation_id, :updated_at)',
+        'INSERT OR REPLACE INTO memories (id, content, created_at, origin, source_conversation_id, updated_at, author_provider, author_model) VALUES (:id, :content, :created_at, :origin, :source_conversation_id, :updated_at, :author_provider, :author_model)',
       documents: 'INSERT OR REPLACE INTO documents (id, name, size, chunk_count, embedded, created_at) VALUES (:id, :name, :size, :chunk_count, :embedded, :created_at)',
       chunks: 'INSERT OR REPLACE INTO chunks (id, document_id, idx, content, embedding) VALUES (:id, :document_id, :idx, :content, :embedding)',
       model_recipes: `INSERT OR REPLACE INTO model_recipes
@@ -1211,6 +1219,8 @@ function normalizeMemory(row) {
     // may have been deleted since — the historical pointer is still true.
     source_conversation_id: nullableText(row.source_conversation_id, 'source_conversation_id', 512),
     updated_at: nullableTimestamp(row.updated_at, 'updated_at'),
+    author_provider: nullableText(row.author_provider, 'author_provider', 64),
+    author_model: nullableText(row.author_model, 'author_model', 2048),
   };
 }
 

@@ -117,7 +117,7 @@ strings. Ids are opaque strings unique within their table.
 `id, conversation_id, role (user|assistant|system), content, provider (null), model (null), tokens_in (null), tokens_out (null), created_at`
 
 ### memories
-`id, content, created_at, origin (null), source_conversation_id (null), updated_at (null)`
+`id, content, created_at, origin (null), source_conversation_id (null), updated_at (null), author_provider (null), author_model (null)`
 
 - `origin` — how the memory entered the system: `"manual"` (recorded by the
   owner), `"extracted"` (auto-extracted from a live chat), `"distilled"`
@@ -127,6 +127,9 @@ strings. Ids are opaque strings unique within their table.
 - `source_conversation_id` — provenance pointer, not a live foreign key: the
   conversation may since have been deleted and the pointer stays truthful.
 - `updated_at` — last edit; `null` = never edited since tracking began.
+- `author_provider` / `author_model` — which model wrote a machine-authored
+  memory (`extracted`/`distilled` origins). `null` on manual rows (the author
+  is the human) and on rows predating tracking.
 
 ### documents
 `id, name, size, chunk_count, embedded (0|1), created_at`

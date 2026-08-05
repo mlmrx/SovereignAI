@@ -38,6 +38,31 @@ content and are created with owner-only permissions on POSIX systems when
 written by the `sovereign export` CLI. Browser downloads follow the browser and
 operating system's download permissions.
 
+## Verifying release downloads
+
+Every release since v0.5.x attaches `SHA256SUMS.txt` covering all assets.
+After downloading a binary or extension artifact:
+
+```bash
+sha256sum --check --ignore-missing SHA256SUMS.txt      # Linux
+shasum -a 256 --check --ignore-missing SHA256SUMS.txt  # macOS
+# Windows PowerShell: compare Get-FileHash <file> against the entry in SHA256SUMS.txt
+```
+
+When the maintainer has configured a signing key, the release also carries
+`SHA256SUMS.txt.minisig`; verify with the published public key:
+
+```bash
+minisign -V -P <public key from README> -m SHA256SUMS.txt
+```
+
+Checksums prove the file you got is the file CI produced; the signature
+additionally proves who produced it. The strongest path needs neither:
+**clone the repository and run from source** — `git clone`, read the code
+(there are no runtime dependencies to audit around), `node bin/sovereign.js
+start`. That path involves trusting only Node.js and this repository's
+history.
+
 Since v0.5, exports carry a checksum manifest ([format spec](EXPORT_FORMAT.md)):
 `sovereign verify <file>` checks an archive without importing it, and
 `sovereign import` refuses an archive whose contents no longer match — delete
