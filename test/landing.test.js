@@ -6,7 +6,7 @@ import vm from 'node:vm';
 
 const root = path.resolve(import.meta.dirname, '..');
 const html = fs.readFileSync(path.join(root, 'public', 'land.html'), 'utf8');
-const script = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));
+const script = fs.readFileSync(path.join(root, 'public', 'land.js'), 'utf8');
 
 test('the landing page parses, has unique ids, and resolves every selector it uses', () => {
   assert.doesNotThrow(() => new vm.Script(script, { filename: 'public/land.html' }));

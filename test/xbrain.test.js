@@ -10,7 +10,13 @@ const surfaces = {
   ledger: fs.readFileSync(path.join(root, 'public', 'xbrain-ledger.html'), 'utf8'),
   atlas: fs.readFileSync(path.join(root, 'public', 'xbrain-atlas.html'), 'utf8'),
 };
-const scriptOf = (html) => html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));
+// Bundles are external files (CSP: script-src 'self' forbids inline) — load
+// the file each page actually references.
+const scriptOf = (html) => {
+  const src = html.match(/<script src="([^"]+)"><\/script>/)?.[1];
+  assert.ok(src, 'every surface must load its bundle via <script src> (inline scripts are blocked by CSP)');
+  return fs.readFileSync(path.join(root, 'public', src), 'utf8');
+};
 
 test('every XBrain surface has unique ids, resolvable selectors, and a parsing bundle', () => {
   for (const [name, html] of Object.entries(surfaces)) {
@@ -52,7 +58,7 @@ test('Dialogue keeps the cognition-loop contracts wired', () => {
   assert.match(script, /'POST', '\/api\/memories', \{ content \}/, 'keep chip must use the memories contract');
   assert.match(script, /meta\.memories/, 'memory ignition must be driven by reported recall, not guesses');
   for (const primitive of ['function ignite', 'function addCell', 'data-face="recall"', 'data-face="trace"', 'keep-chip']) {
-    assert.ok(surfaces.dialogue.includes(primitive), `missing primitive: ${primitive}`);
+    assert.ok(surfaces.dialogue.includes(primitive) || script.includes(primitive), `missing primitive: ${primitive}`);
   }
   assert.match(script, /const safe = esc\(text\);/, 'the voice renders escaped-first markdown');
 });

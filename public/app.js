@@ -475,7 +475,7 @@ function renderDashboard() {
   $('#readiness-kicker').textContent = providerReady ? `${runtime.label} is ready` : 'One step from ready';
   $('#readiness-title').textContent = providerReady ? 'Ask anything. It answers from what you own.' : 'Your data is home. Now pick its brain.';
   $('#readiness-copy').textContent = providerReady
-    ? `${activePersona()?.name || 'Your AI'} grounds answers in ${counts.documents || 0} document${counts.documents === 1 ? '' : 's'} you indexed and ${counts.memories || 0} memor${counts.memories === 1 ? 'y' : 'ies'} that show their receipts — and nothing here can't leave with you.`
+    ? `${activePersona()?.name || 'Your AI'} answers from ${counts.documents || 0} document${counts.documents === 1 ? '' : 's'} you indexed and ${counts.memories || 0} memor${counts.memories === 1 ? 'y' : 'ies'} that show their receipts. All of it stays on this machine — and all of it leaves with you whenever you ask.`
     : 'Everything you add stays on this machine either way. Choose local weights you own, or rent a frontier model on your terms — the dial is yours, in Settings.';
 
   const checklist = [

@@ -6,7 +6,7 @@ import vm from 'node:vm';
 
 const root = path.resolve(import.meta.dirname, '..');
 const html = fs.readFileSync(path.join(root, 'public', 'guide.html'), 'utf8');
-const script = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));
+const script = fs.readFileSync(path.join(root, 'public', 'guide.js'), 'utf8');
 
 test('the guide parses, has unique ids, and resolves every selector it uses', () => {
   assert.doesNotThrow(() => new vm.Script(script, { filename: 'public/guide.html' }));
@@ -34,11 +34,14 @@ test('waypoint progress is evidence from the live workspace, not decoration', ()
 });
 
 test('the guide covers the whole platform and shares the design covenants', () => {
+  // The page's working surface is markup plus its external bundle (CSP
+  // forbids inline scripts; waypoints render from guide.js).
+  const page = html + script;
   for (const anchor of ['/#/chat', '/#/knowledge', '/#/memory', '/#/settings', '/#/finetune', '/xbrain.html', '/xbrain-ledger.html', '/xbrain-atlas.html']) {
-    assert.ok(html.includes(`href="${anchor}"`), `guide must link to ${anchor}`);
+    assert.ok(page.includes(`href="${anchor}"`), `guide must link to ${anchor}`);
   }
   for (const command of ['sovereign start', 'sovereign doctor', 'sovereign mcp', 'sovereign export', 'ollama pull nomic-embed-text', 'sovereign start --lan']) {
-    assert.ok(html.includes(command), `guide must teach ${command}`);
+    assert.ok(page.includes(command), `guide must teach ${command}`);
   }
   assert.match(html, /prefers-color-scheme: dark/);
   assert.match(html, /data-theme="dark"/);
