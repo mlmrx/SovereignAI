@@ -216,6 +216,7 @@ The suite includes 130+ core, UI-contract, integration, API, security, config, p
 - [x] Cognition sovereignty: machine-written memories name their authoring model, the "cognition stays home" switch, checksummed (optionally minisign-signed) releases, and the public [Sovereignty Ledger](docs/SOVEREIGNTY.md)
 - [x] Life Import rail #1 — email ([details](docs/LIFE_IMPORT.md)): zero-dep mbox scanning into evidence-backed life records, with the subscription audit and renewals radar in the Mind view
 - [x] Open-weights rails: `byoc gpu serve` (rented GPU running vLLM with the open weights you choose, OpenAI-compat wire-in), weight-digest receipts on every local answer, and weight-license disclosure in the Hugging Face browser
+- [x] The starter shelf + the cognition role: curated small models by job (with licenses, dated curation, and fit badges for your machine), and `memory.extractionModel` — a small local model that owns what gets learned about you while chat uses anything
 - [ ] Life Import rail #2 — bank/card statements (CSV/OFX), extending the same audit with authoritative amounts
 
 ## License

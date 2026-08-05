@@ -28,6 +28,7 @@ import {
 } from './model-recipes.js';
 import { HfCatalogError, searchGgufModels, listGgufFiles } from './hf-catalog.js';
 import { buildModelRecommendation } from './model-recommendation.js';
+import { shelfWithFit } from './model-shelf.js';
 import { ChatImportError, importChatExport, supportedPlatforms as supportedChatPlatforms } from './chat-import/index.js';
 import { buildExport, isEncryptedExport, verifyExportManifest } from './portability.js';
 import { buildPortfolio } from './portfolio.js';
@@ -314,6 +315,12 @@ export function createApp(rootDir, { env = process.env } = {}) {
   // Heuristic guidance: what model size/quant should run comfortably here,
   // and whether the workspace's training investment is worth an actual LoRA
   // run yet. See model-recommendation.js for the (pure, unit-tested) rules.
+  // The curated small-model starter shelf, sized against this machine.
+  route('GET', '/api/model-shelf', async () => shelfWithFit({
+    totalMemoryBytes: os.totalmem(),
+    endpointLocal: loopbackUrl(config.providers.ollama.baseUrl),
+  }));
+
   route('GET', '/api/model-recommendation', async () => {
     const documents = store.listDocuments();
     const counts = store.getCounts();

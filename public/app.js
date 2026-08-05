@@ -1317,6 +1317,7 @@ async function loadSettings() {
   $('#cfg-embed-model').value = state.config.embeddings?.model || '';
   $('#cfg-auto-memory').checked = Boolean(state.config.memory?.autoExtract);
   $('#cfg-extract-local-only').checked = Boolean(state.config.memory?.extractLocalOnly);
+  $('#cfg-extraction-model').value = state.config.memory?.extractionModel || '';
   renderPersonaEditor();
   state.settingsLoaded = true;
   markSettingsDirty(false);
@@ -1986,6 +1987,63 @@ function applyHfBase(base, license = '') {
   toast(`Base model set to ${base}`, { type: 'success' });
 }
 
+/* The starter shelf: curated small models by job, sized for this machine. */
+let shelfLoaded = false;
+async function loadModelShelf() {
+  if (shelfLoaded) return;
+  shelfLoaded = true;
+  const host = $('#model-shelf-body');
+  try {
+    const shelf = await api.get('/api/model-shelf');
+    $('#model-shelf-note').textContent = `Curated ${shelf.curatedAt}. ${shelf.note}`;
+    const FIT = { fits: ['fits here', 'ok'], tight: ['tight fit', 'warn'], 'too-big': ['needs more RAM', 'bad'] };
+    host.innerHTML = shelf.roles.map((group) => `
+      <div class="shelf-group">
+        <h4>${escapeHtml(group.label)}</h4>
+        <p class="shelf-job">${escapeHtml(group.job)}</p>
+        ${group.models.map((model) => {
+          const fit = model.fit ? FIT[model.fit] : null;
+          const action = group.role === 'memory-cognition' ? 'Use for cognition' : group.role === 'embeddings' ? 'Use for search' : 'Use as base';
+          return `<div class="shelf-model">
+            <div><strong>${escapeHtml(model.base)}</strong>
+              <span class="shelf-meta">${model.paramsB}B · ~${model.approxGBAtQ4} GB at Q4${fit ? ` · <span class="shelf-fit ${fit[1]}">${fit[0]}</span>` : ''}</span>
+              <span class="shelf-meta">license: ${escapeHtml(model.license)}</span>
+              <span class="shelf-why">${escapeHtml(model.why)}</span></div>
+            <button class="btn small shelf-apply" type="button" data-role="${escapeHtml(group.role)}" data-base="${escapeHtml(model.base)}">${action}</button>
+          </div>`;
+        }).join('')}
+      </div>`).join('');
+    $$('.shelf-apply', host).forEach((button) => button.addEventListener('click', () => applyShelfModel(button.dataset.role, button.dataset.base)));
+  } catch (error) {
+    host.innerHTML = `<p class="model-studio-status">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+async function applyShelfModel(role, base) {
+  try {
+    if (role === 'memory-cognition') {
+      const updated = await api.send('PUT', '/api/config', { memory: { ...state.config.memory, extractionModel: base } });
+      state.config = updated;
+      $('#cfg-extraction-model') && ($('#cfg-extraction-model').value = base);
+      toast(`Cognition model set to ${base} — memory-writing now runs it on your default provider. Pull it first: ollama pull ${base}`, { type: 'success' });
+      return;
+    }
+    if (role === 'embeddings') {
+      const updated = await api.send('PUT', '/api/config', { embeddings: { model: base } });
+      state.config = updated;
+      toast(`Embedding model set to ${base}. Pull it first: ollama pull ${base}`, { type: 'success' });
+      return;
+    }
+    applyHfBase(base);
+  } catch (error) {
+    toast(error.message, { type: 'error', title: 'Could not apply' });
+  }
+}
+
+$('.model-shelf')?.addEventListener('toggle', (event) => {
+  if (event.target.open) loadModelShelf().catch(() => {});
+}, true);
+
 async function searchHfModels() {
   const query = $('#model-hf-query').value.trim();
   if (!query) {
@@ -2068,7 +2126,7 @@ $('#settings-save').addEventListener('click', async () => {
     },
     defaults: { provider: $('#cfg-default-provider').value, model: $('#cfg-default-model').value.trim() },
     embeddings: { provider: 'ollama', model: $('#cfg-embed-model').value.trim() },
-    memory: { autoExtract: $('#cfg-auto-memory').checked, extractLocalOnly: $('#cfg-extract-local-only').checked },
+    memory: { autoExtract: $('#cfg-auto-memory').checked, extractLocalOnly: $('#cfg-extract-local-only').checked, extractionModel: $('#cfg-extraction-model').value.trim() },
   };
   try {
     if (update.defaults.provider !== 'anthropic' && !update.defaults.model) {

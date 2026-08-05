@@ -670,6 +670,13 @@
                   <label>Ollama artifact name<input id="model-artifact-name" maxlength="593" autocomplete="off" placeholder="e.g. atlas-research:latest" required /></label>
                   <label class="span-2">Base model<input id="model-base" maxlength="2048" list="ollama-model-options" autocomplete="off" placeholder="e.g. llama3.1:latest or hf.co/owner/repo:Q4_K_M" required /></label>
                   <datalist id="ollama-model-options"></datalist>
+                  <details class="model-advanced model-shelf span-2">
+                    <summary><span><strong>Starter shelf: curated small models by job</strong><small>Dated picks with licenses and fit for this machine — chat, cognition, reasoning, coding, embeddings</small></span><svg class="icon"><use href="#i-chevron"/></svg></summary>
+                    <div class="model-advanced-body">
+                      <div id="model-shelf-body" aria-live="polite"><p class="model-studio-status">Loading the shelf…</p></div>
+                      <p id="model-shelf-note" class="model-studio-status"></p>
+                    </div>
+                  </details>
                   <details class="model-advanced model-hf-browse span-2">
                     <summary><span><strong>Browse open weights on Hugging Face</strong><small>Search public GGUF repos and fill in the base model above</small></span><svg class="icon"><use href="#i-chevron"/></svg></summary>
                     <div class="model-advanced-body">
@@ -748,6 +755,8 @@
             <div class="settings-card option-card">
               <label class="check-row"><input type="checkbox" id="cfg-auto-memory" /><span><strong>Learn durable facts automatically</strong><small>After each exchange, the active model makes one extra call to propose stable memories. With remote providers, that call is remote too — unless restricted below.</small></span></label>
               <label class="check-row"><input type="checkbox" id="cfg-extract-local-only" /><span><strong>Cognition stays home</strong><small>Only models on local endpoints may write long-term memory. Chat can still use remote providers, but auto-learning skips remote exchanges and distillation refuses remote models outright.</small></span></label>
+              <label>Cognition model (optional)<input id="cfg-extraction-model" placeholder="e.g. qwen3:4b" maxlength="2048" /></label>
+              <p class="field-note">When set, memory-writing calls (auto-learning, distillation) always run this model on your default provider — a small local model can own what gets learned about you while chat uses anything. See the starter shelf in Model Studio for picks.</p>
             </div>
             <div class="settings-heading secondary"><h3>Knowledge embeddings</h3><p>Semantic retrieval improves meaning-based search. Keyword search remains available without it.</p></div>
             <div class="settings-card">

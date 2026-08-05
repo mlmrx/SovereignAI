@@ -14,6 +14,12 @@ export async function autoExtractMemories({
   assistantReply,
   conversationId = null,
 }) {
+  // The cognition role: a dedicated extraction model (usually small + local)
+  // owns memory-writing regardless of which model handled the chat.
+  if (config.memory?.extractionModel) {
+    providerId = config.defaults.provider;
+    model = config.memory.extractionModel;
+  }
   const provider = getProvider(providerId);
   const cfg = config.providers[providerId];
   if (!provider.isConfigured(cfg)) return;
@@ -75,6 +81,10 @@ export async function distillConversationMemories({
   messages,
   signal,
 }) {
+  if (config.memory?.extractionModel) {
+    providerId = config.defaults.provider;
+    model = config.memory.extractionModel;
+  }
   const provider = getProvider(providerId);
   const cfg = config.providers[providerId];
   if (!provider.isConfigured(cfg)) {

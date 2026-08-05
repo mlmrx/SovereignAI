@@ -35,7 +35,7 @@ export const DEFAULT_CONFIG = {
   // Embeddings power semantic knowledge search. Falls back to keyword (BM25) search when unavailable.
   embeddings: { provider: 'ollama', model: 'nomic-embed-text' },
   // Auto memory: distill durable facts from conversations into long-term memory (extra model call per exchange).
-  memory: { autoExtract: false, extractLocalOnly: false },
+  memory: { autoExtract: false, extractLocalOnly: false, extractionModel: '' },
   // Fine-tuning uses an optional user-operated HTTP trainer. Dataset content is
   // never sent there until a project snapshot is explicitly approved.
   training: {
@@ -287,13 +287,20 @@ function normalizeEmbeddings(value) {
 
 function normalizeMemory(value) {
   assertPlainObject(value, 'memory');
-  assertKnownKeys(value, new Set(['autoExtract', 'extractLocalOnly']), 'memory');
+  assertKnownKeys(value, new Set(['autoExtract', 'extractLocalOnly', 'extractionModel']), 'memory');
+  const extractionModel = value.extractionModel === undefined ? '' : String(value.extractionModel).trim();
+  if (extractionModel.length > 2048) fail('memory.extractionModel must be at most 2048 characters');
+  if (/[\r\n\0]/.test(extractionModel)) fail('memory.extractionModel must be a single-line model name');
   return {
     autoExtract: booleanValue(value.autoExtract, 'memory.autoExtract'),
     // Cognition stays home: when true, the model calls that WRITE long-term
     // memory (auto-extract, distillation) are refused unless the provider
     // endpoint is local — even when chat itself uses a remote provider.
     extractLocalOnly: booleanValue(value.extractLocalOnly, 'memory.extractLocalOnly'),
+    // The cognition role: when set, memory-writing calls always run on the
+    // default provider with THIS model — a small local model can own what
+    // gets learned about you while chat uses anything.
+    extractionModel,
   };
 }
 
