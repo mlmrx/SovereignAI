@@ -45,6 +45,11 @@ Commands:
                    (chatgpt, claude, gemini, or generic — auto-detected if
                    --from is omitted). Re-running the same file is safe;
                    already-imported conversations are skipped, not duplicated.
+  import-email <file.mbox> [--limit N] [--dry-run]
+                   Life Import rail #1: scan a Google Takeout / standard mbox
+                   for receipts, subscriptions, renewals, and bookings —
+                   pattern matching on your machine, no model calls, bodies
+                   never stored (only the matched excerpt). --dry-run previews.
   distill [--limit N] [--redo]
                    Sweep imported conversations for durable memories using
                    your configured model (one model call per conversation;
@@ -120,6 +125,11 @@ try {
     case 'distill': {
       if (wantsHelp(args)) console.log(HELP);
       else await distillCommand(args);
+      break;
+    }
+    case 'import-email': {
+      if (wantsHelp(args)) console.log(HELP);
+      else await importEmailCommand(args);
       break;
     }
     case 'byoc': {
@@ -392,6 +402,44 @@ async function runDistillation(store, config, { limit, redo = false } = {}) {
     console.log(`  ✓ [${done}/${conversations.length}] ${label} — ${facts.length ? `${facts.length} new memor${facts.length === 1 ? 'y' : 'ies'}` : 'nothing durable'}`);
   }
   console.log(`Done: ${added} new memor${added === 1 ? 'y' : 'ies'} distilled from ${done} conversation${done === 1 ? '' : 's'}. Review them in the Memory view.`);
+}
+
+async function importEmailCommand(argv) {
+  const flags = { _: [], dryRun: false };
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === '--dry-run') flags.dryRun = true;
+    else if (arg === '--limit') {
+      const value = argv[++i];
+      if (!/^\d+$/.test(value ?? '') || Number(value) < 1) throw new CliError('--limit requires a positive integer');
+      flags.limit = Number(value);
+    } else if (arg.startsWith('--')) throw new CliError(`Unknown import-email option: ${arg}`);
+    else flags._.push(arg);
+  }
+  if (flags._.length !== 1) throw new CliError('Usage: sovereign import-email <file.mbox> [--limit N] [--dry-run]');
+  const file = flags._[0];
+  if (!fs.existsSync(file)) throw new CliError(`File not found: ${file}`);
+
+  const { createApp } = await import('../src/server.js');
+  const { importEmailExport } = await import('../src/life/email-scan.js');
+  const { store } = createApp(rootDir);
+  try {
+    console.log(`Scanning ${file} for life records — pattern matching only, on this machine; email bodies are not stored.`);
+    if (flags.dryRun) console.log('Dry run: nothing will be written.');
+    const totals = await importEmailExport(store, fs.createReadStream(file), {
+      limit: flags.limit,
+      dryRun: flags.dryRun,
+      onProgress: (progress) => console.log(`  …${progress.scanned} messages scanned, ${progress.added} records so far`),
+    });
+    const kinds = Object.entries(totals.byKind).map(([kind, count]) => `${count} ${kind}${count === 1 ? '' : 's'}`).join(', ') || 'none';
+    console.log(`Scanned ${totals.scanned} messages: ${kinds}${flags.dryRun ? ' (dry run — not stored)' : ''}.`);
+    if (totals.skipped) console.log(`Skipped ${totals.skipped} record${totals.skipped === 1 ? '' : 's'} already imported.`);
+    if (!flags.dryRun && totals.added) {
+      console.log('Review them in the Mind view: subscription audit and renewals radar are live. Heuristics can be wrong — every record shows its evidence.');
+    }
+  } finally {
+    store.close();
+  }
 }
 
 async function exportPassphrase({ confirm }) {

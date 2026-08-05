@@ -2300,8 +2300,9 @@ const ORIGIN_LABELS = {
 };
 
 async function loadMind() {
-  const mind = await api.get('/api/mind');
+  const [mind, life] = await Promise.all([api.get('/api/mind'), api.get('/api/life')]);
   state.mind = mind;
+  renderMindLife(life);
   $('#mind-subtitle').textContent = `Every durable fact ${mind.name ? `${mind.name} keeps` : 'your AI keeps'}, where it came from, and where it can go next.`;
   $('#mind-count-total').textContent = mind.memories.total;
   $('#mind-count-manual').textContent = mind.memories.manual;
@@ -2370,6 +2371,43 @@ function renderMindImports(imports) {
   if (imports.undistilled) {
     $('#mind-distill-btn-label').textContent = `Distill ${imports.undistilled} conversation${imports.undistilled === 1 ? '' : 's'} into memory`;
   }
+}
+
+function renderMindLife(life) {
+  const host = $('#mind-life-body');
+  if (!life.counts.total) {
+    host.innerHTML =
+      '<p class="mind-note">No life records yet. Scan your email archive for receipts, subscriptions, renewals, and bookings:</p>' +
+      '<p class="mind-life-cmd"><code>sovereign import-email your-takeout.mbox</code></p>' +
+      '<p class="mind-note">Get the file from Google Takeout (Mail → mbox) or any standard mail export.</p>';
+    return;
+  }
+  const parts = [];
+  const kinds = ['receipt', 'subscription', 'renewal', 'booking']
+    .filter((kind) => life.counts[kind])
+    .map((kind) => `${life.counts[kind]} ${kind}${life.counts[kind] === 1 ? '' : 's'}`)
+    .join(' · ');
+  parts.push(`<p class="mind-life-summary">${escapeHtml(kinds)}</p>`);
+
+  if (life.audit.recurring.length) {
+    parts.push(`<h3>Subscription audit${life.audit.estimatedMonthly ? ` — est. ${escapeHtml(String(life.audit.estimatedMonthly))}/mo` : ''}</h3>`);
+    parts.push(`<ul class="mind-life-list">${life.audit.recurring.slice(0, 6).map((item) => `
+      <li><strong>${escapeHtml(item.merchant)}</strong> — ${escapeHtml(item.cadence)}${item.amount ? `, ${escapeHtml(String(item.amount))} ${escapeHtml(item.currency ?? '')}` : ''}
+      <span class="mind-life-meta">seen ${item.occurrences}×, last ${item.daysSinceLastSeen} day${item.daysSinceLastSeen === 1 ? '' : 's'} ago</span></li>`).join('')}</ul>`);
+  }
+  if (life.renewals.upcoming.length) {
+    parts.push('<h3>Renewals radar — next 90 days</h3>');
+    parts.push(`<ul class="mind-life-list">${life.renewals.upcoming.slice(0, 6).map((item) => `
+      <li><strong>${escapeHtml(item.merchant)}</strong> — ${item.daysAway <= 0 ? 'due now' : `in ${item.daysAway} day${item.daysAway === 1 ? '' : 's'}`}${item.amount ? ` (${escapeHtml(String(item.amount))} ${escapeHtml(item.currency ?? '')})` : ''}
+      <span class="mind-life-meta">${escapeHtml(item.subject)}</span></li>`).join('')}</ul>`);
+  }
+  if (life.renewals.undated) {
+    parts.push(`<p class="mind-note">${life.renewals.undated} renewal notice${life.renewals.undated === 1 ? '' : 's'} without a readable date — check the Memory of the original email.</p>`);
+  }
+  if (!life.audit.recurring.length && !life.renewals.upcoming.length) {
+    parts.push('<p class="mind-note">Records found, but no recurring pattern or upcoming renewal detected yet — that can be honest good news.</p>');
+  }
+  host.innerHTML = parts.join('');
 }
 
 /* Shared streaming distill runner: feeds any status element + feed list. */

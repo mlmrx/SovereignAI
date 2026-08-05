@@ -1433,3 +1433,12 @@ textarea { resize: vertical; line-height: 1.5; }
   .mind-grid { grid-template-columns: 1fr; }
   .mind-tiles { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Life signals (Life Import rail #1) */
+.mind-beta { margin-left: 8px; padding: 2px 8px; border: 1px solid var(--accent-border); border-radius: 999px; color: var(--accent-bright); font-size: 10px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; vertical-align: middle; }
+.mind-life-summary { margin: 8px 0 4px; color: var(--text-soft); font-size: 12.5px; font-weight: 650; }
+.mind-life-cmd { margin: 10px 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); overflow-x: auto; }
+.mind-life h3, .mind-life-body h3 { margin: 14px 0 8px; font-size: 13px; }
+.mind-life-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.mind-life-list li { display: grid; gap: 2px; padding: 9px 12px; border: 1px solid var(--border); border-left: 3px solid var(--accent-border); border-radius: 10px; background: var(--bg); font-size: 12.5px; overflow-wrap: anywhere; }
+.mind-life-meta { color: var(--muted); font-size: 11px; }

@@ -48,6 +48,25 @@ CREATE TABLE IF NOT EXISTS memories (
   author_provider TEXT,
   author_model TEXT
 );
+CREATE TABLE IF NOT EXISTS life_records (
+  id TEXT PRIMARY KEY,
+  kind TEXT NOT NULL,
+  merchant TEXT NOT NULL DEFAULT '',
+  amount REAL,
+  currency TEXT,
+  occurred_at TEXT,
+  renews_at TEXT,
+  confidence TEXT NOT NULL DEFAULT 'medium',
+  source_platform TEXT NOT NULL DEFAULT 'email',
+  external_id TEXT,
+  subject TEXT NOT NULL DEFAULT '',
+  sender TEXT NOT NULL DEFAULT '',
+  excerpt TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_life_records_external
+  ON life_records(source_platform, external_id, kind) WHERE external_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_life_records_kind ON life_records(kind, occurred_at);
 CREATE TABLE IF NOT EXISTS documents (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -209,6 +228,10 @@ function tightenPermissions(target, mode) {
  * backfilled to 'manual', which would be fabricated provenance.
  */
 export const MEMORY_ORIGINS = new Set(['manual', 'extracted', 'distilled']);
+
+/** Structured facts extracted from imported life data (Life Import rails). */
+export const LIFE_RECORD_KINDS = new Set(['receipt', 'subscription', 'renewal', 'booking']);
+export const LIFE_RECORD_CONFIDENCES = new Set(['high', 'medium']);
 
 function ensureColumn(db, table, column, definition) {
   const exists = db.prepare(`PRAGMA table_info(${table})`).all().some((row) => row.name === column);
@@ -525,6 +548,56 @@ export class Store {
 
   deleteMemory(id) {
     this.db.prepare('DELETE FROM memories WHERE id = ?').run(id);
+  }
+
+  // ---- Life records (extracted from imported life data, e.g. email) ----
+  findLifeRecordByExternal(sourcePlatform, externalId, kind) {
+    if (!externalId) return null;
+    return (
+      this.db
+        .prepare('SELECT * FROM life_records WHERE source_platform = ? AND external_id = ? AND kind = ?')
+        .get(sourcePlatform, externalId, kind) ?? null
+    );
+  }
+
+  addLifeRecord(record) {
+    if (!LIFE_RECORD_KINDS.has(record.kind)) throw new Error(`Unknown life record kind "${record.kind}"`);
+    if (!LIFE_RECORD_CONFIDENCES.has(record.confidence ?? 'medium')) {
+      throw new Error(`Unknown life record confidence "${record.confidence}"`);
+    }
+    const row = {
+      id: newId(),
+      kind: record.kind,
+      merchant: record.merchant ?? '',
+      amount: record.amount ?? null,
+      currency: record.currency ?? null,
+      occurred_at: record.occurredAt ?? null,
+      renews_at: record.renewsAt ?? null,
+      confidence: record.confidence ?? 'medium',
+      source_platform: record.sourcePlatform ?? 'email',
+      external_id: record.externalId ?? null,
+      subject: record.subject ?? '',
+      sender: record.sender ?? '',
+      excerpt: record.excerpt ?? '',
+      created_at: now(),
+    };
+    this.db
+      .prepare(
+        `INSERT INTO life_records (id, kind, merchant, amount, currency, occurred_at, renews_at, confidence, source_platform, external_id, subject, sender, excerpt, created_at)
+         VALUES (:id, :kind, :merchant, :amount, :currency, :occurred_at, :renews_at, :confidence, :source_platform, :external_id, :subject, :sender, :excerpt, :created_at)`
+      )
+      .run(row);
+    return row;
+  }
+
+  listLifeRecords({ kind } = {}) {
+    return kind
+      ? this.db.prepare('SELECT * FROM life_records WHERE kind = ? ORDER BY occurred_at, rowid').all(kind)
+      : this.db.prepare('SELECT * FROM life_records ORDER BY occurred_at, rowid').all();
+  }
+
+  deleteLifeRecord(id) {
+    this.db.prepare('DELETE FROM life_records WHERE id = ?').run(id);
   }
 
   // ---- Documents & chunks (knowledge base) ----
@@ -905,6 +978,7 @@ export class Store {
       conversations: this.listConversations(),
       messages: this.db.prepare('SELECT * FROM messages ORDER BY created_at, rowid').all(),
       memories: this.listMemories(),
+      life_records: this.db.prepare('SELECT * FROM life_records ORDER BY created_at, rowid').all(),
       documents: this.listDocuments(),
       chunks: this.db.prepare('SELECT * FROM chunks').all(),
       model_recipes: this.listModelRecipes(),
@@ -922,6 +996,8 @@ export class Store {
       messages: 'INSERT OR REPLACE INTO messages (id, conversation_id, role, content, provider, model, tokens_in, tokens_out, created_at) VALUES (:id, :conversation_id, :role, :content, :provider, :model, :tokens_in, :tokens_out, :created_at)',
       memories:
         'INSERT OR REPLACE INTO memories (id, content, created_at, origin, source_conversation_id, updated_at, author_provider, author_model) VALUES (:id, :content, :created_at, :origin, :source_conversation_id, :updated_at, :author_provider, :author_model)',
+      life_records:
+        'INSERT OR REPLACE INTO life_records (id, kind, merchant, amount, currency, occurred_at, renews_at, confidence, source_platform, external_id, subject, sender, excerpt, created_at) VALUES (:id, :kind, :merchant, :amount, :currency, :occurred_at, :renews_at, :confidence, :source_platform, :external_id, :subject, :sender, :excerpt, :created_at)',
       documents: 'INSERT OR REPLACE INTO documents (id, name, size, chunk_count, embedded, created_at) VALUES (:id, :name, :size, :chunk_count, :embedded, :created_at)',
       chunks: 'INSERT OR REPLACE INTO chunks (id, document_id, idx, content, embedding) VALUES (:id, :document_id, :idx, :content, :embedding)',
       model_recipes: `INSERT OR REPLACE INTO model_recipes
@@ -1021,6 +1097,7 @@ const IMPORT_NORMALIZERS = {
   conversations: normalizeConversation,
   messages: normalizeMessage,
   memories: normalizeMemory,
+  life_records: normalizeLifeRecord,
   documents: normalizeDocument,
   chunks: normalizeChunk,
   model_recipes: normalizeModelRecipeRow,
@@ -1221,6 +1298,31 @@ function normalizeMemory(row) {
     updated_at: nullableTimestamp(row.updated_at, 'updated_at'),
     author_provider: nullableText(row.author_provider, 'author_provider', 64),
     author_model: nullableText(row.author_model, 'author_model', 2048),
+  };
+}
+
+function normalizeLifeRecord(row) {
+  const kind = requiredText(row.kind, 'kind', 32);
+  if (!LIFE_RECORD_KINDS.has(kind)) throw new Error(`kind must be one of ${[...LIFE_RECORD_KINDS].join(', ')}`);
+  const confidence = row.confidence === undefined ? 'medium' : requiredText(row.confidence, 'confidence', 16);
+  if (!LIFE_RECORD_CONFIDENCES.has(confidence)) {
+    throw new Error(`confidence must be one of ${[...LIFE_RECORD_CONFIDENCES].join(', ')}`);
+  }
+  return {
+    id: requiredId(row.id, 'id'),
+    kind,
+    merchant: optionalNullableText(row.merchant, '', 'merchant', 512) ?? '',
+    amount: nullableNumber(row.amount, 'amount'),
+    currency: nullableText(row.currency, 'currency', 16),
+    occurred_at: nullableTimestamp(row.occurred_at, 'occurred_at'),
+    renews_at: nullableTimestamp(row.renews_at, 'renews_at'),
+    confidence,
+    source_platform: optionalNullableText(row.source_platform, 'email', 'source_platform', 64) ?? 'email',
+    external_id: nullableText(row.external_id, 'external_id', 998),
+    subject: optionalNullableText(row.subject, '', 'subject', 2048) ?? '',
+    sender: optionalNullableText(row.sender, '', 'sender', 1024) ?? '',
+    excerpt: optionalNullableText(row.excerpt, '', 'excerpt', 4096) ?? '',
+    created_at: timestamp(row.created_at, 'created_at'),
   };
 }
 

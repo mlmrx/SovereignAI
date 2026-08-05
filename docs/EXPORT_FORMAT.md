@@ -34,6 +34,7 @@ Format names are versioned independently of the app: this page describes
     "conversations": [],
     "messages": [],
     "memories": [],
+    "life_records": [],
     "documents": [],
     "chunks": [],
     "model_recipes": [],
@@ -47,7 +48,7 @@ Format names are versioned independently of the app: this page describes
 
 - `sovereignai` — version of the app that wrote the archive.
 - `format` — envelope identifier; bump suffix on breaking change.
-- `data` — one array of row objects per table. All eleven keys are optional on
+- `data` — one array of row objects per table. All twelve keys are optional on
   import; present tables are validated and upserted by `id`.
 - Exports written before v0.5 have no `format` or `manifest` key; importers
   MUST accept their absence.
@@ -130,6 +131,16 @@ strings. Ids are opaque strings unique within their table.
 - `author_provider` / `author_model` — which model wrote a machine-authored
   memory (`extracted`/`distilled` origins). `null` on manual rows (the author
   is the human) and on rows predating tracking.
+
+### life_records
+`id, kind (receipt|subscription|renewal|booking), merchant, amount (null), currency (null), occurred_at (null), renews_at (null), confidence (high|medium), source_platform, external_id (null), subject, sender, excerpt, created_at`
+
+- Structured facts extracted from imported life data (Life Import rails;
+  rail #1 is email). `external_id` is the source's stable id — the email
+  Message-ID — making re-imports idempotent per (platform, message, kind).
+- `excerpt` is the evidence the record was built from (subject + matched
+  lines, ≤400 chars). Full source bodies are deliberately never stored.
+- Heuristic output: `confidence` is part of the data, not UI decoration.
 
 ### documents
 `id, name, size, chunk_count, embedded (0|1), created_at`

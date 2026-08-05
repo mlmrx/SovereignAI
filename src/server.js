@@ -32,6 +32,7 @@ import { ChatImportError, importChatExport, supportedPlatforms as supportedChatP
 import { buildExport, isEncryptedExport, verifyExportManifest } from './portability.js';
 import { buildPortfolio } from './portfolio.js';
 import { handleDistill } from './distill.js';
+import { subscriptionAudit, upcomingRenewals } from './life/insights.js';
 import {
   TRAINING_DATASET_SCHEMA,
   TrainingValidationError,
@@ -1048,6 +1049,23 @@ export function createApp(rootDir, { env = process.env } = {}) {
       },
       documents: { count: documents.length, embedded: documents.filter((doc) => doc.embedded).length },
     };
+  });
+
+  // Life Import showcases: the joins over extracted life records. Heuristic
+  // output — the UI labels it as detected-by-pattern, with evidence attached.
+  route('GET', '/api/life', async () => {
+    const records = store.listLifeRecords();
+    const counts = { total: records.length };
+    for (const record of records) counts[record.kind] = (counts[record.kind] ?? 0) + 1;
+    return {
+      counts,
+      audit: subscriptionAudit(records),
+      renewals: upcomingRenewals(records),
+    };
+  });
+  route('DELETE', '/api/life/records/:id', async ({ params }) => {
+    store.deleteLifeRecord(params.id);
+    return { ok: true };
   });
 
   const server = http.createServer(async (req, res) => {

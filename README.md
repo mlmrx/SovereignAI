@@ -46,6 +46,7 @@ Training is disabled by default and has no hosted fallback. The workflow never c
 
 - **The first five minutes** — after setup, drop your ChatGPT or Claude export into the **Arrival** door: it's parsed on your machine, your AI distills who you are from it in front of you, and greets you knowing your name, projects, and preferences — every remembered fact naming the conversation it came from. No export handy? Skip it; the door stays open in the Mind view.
 - **The Mind view** — the new landing surface: a control room for the context layer you own. What your AI knows (counted by provenance: added by you, learned from chats, distilled from imports), the latest entries with receipts, imported-history state with one-click distillation, and every outbound door — portfolio, MCP, editors, verified export.
+- **Life signals (rail #1: email)** — `sovereign import-email your-takeout.mbox` scans your mail archive on your machine (no model calls, bodies never stored, no logins — you bring the export) for receipts, subscriptions, renewals, and bookings. The Mind view then answers the questions no single vendor can: **what am I paying for monthly** (subscription audit with estimated total) and **what renews in the next 90 days** (renewals radar). Every record keeps the evidence it was built from. [How it works and what it refuses to do](docs/LIFE_IMPORT.md).
 - **The Sovereign Path (`/guide.html`)** — an interactive, self-verifying guide: ten waypoints from first launch to full ownership, each with a live check against your own workspace's API. It turns terracotta when your instance can prove you've been there — progress as evidence, not decoration.
 - **Command center** — see provider readiness, workspace counts, recent conversations, and context-aware workflows at a glance.
 - **Context you can trust** — every chat shows its active persona, model, local/remote data path, memory state, and knowledge state.
@@ -120,6 +121,7 @@ sovereign import <file>    # restore from an export (verifies checksums, decrypt
 sovereign verify <file>    # check an archive against its manifest without importing
 sovereign portfolio [file] # your Personal Context Portfolio as pasteable markdown
 sovereign import-chat <file> [--from platform] [--distill]   # bring in chat history from another AI platform
+sovereign import-email <file.mbox> [--dry-run]   # Life Import rail #1: receipts, subscriptions, renewals, bookings
 sovereign distill          # sweep imported conversations for durable memories (opt-in, one model call each)
 sovereign byoc <action>    # deploy + manage instances on a Docker host YOU own, over SSH
 ```
@@ -209,6 +211,9 @@ The suite includes 130+ core, UI-contract, integration, API, security, config, p
 - [x] Personal Context Portfolio: memories + personas + knowledge inventory as one pasteable markdown seed crystal (`sovereign portfolio`, `GET /api/portfolio`)
 - [x] Opt-in memory distillation over imported chat history (`sovereign distill`, `import-chat --distill`) — idempotent, provenance-tagged, costs printed up front
 - [x] The first five minutes: Arrival (import → live distillation → provenance-grounded reveal), the Mind control-room view as the landing surface, and streamed distillation (`POST /api/distill`) in the web UI
+- [x] Cognition sovereignty: machine-written memories name their authoring model, the "cognition stays home" switch, checksummed (optionally minisign-signed) releases, and the public [Sovereignty Ledger](docs/SOVEREIGNTY.md)
+- [x] Life Import rail #1 — email ([details](docs/LIFE_IMPORT.md)): zero-dep mbox scanning into evidence-backed life records, with the subscription audit and renewals radar in the Mind view
+- [ ] Life Import rail #2 — bank/card statements (CSV/OFX), extending the same audit with authoritative amounts
 
 ## License
 
