@@ -218,3 +218,5 @@ The suite includes 130+ core, UI-contract, integration, API, security, config, p
 ## License
 
 [MIT](LICENSE) — free to use, modify, and distribute. Your AI should be yours; so should the code that runs it.
+
+That's a covenant, not a current status: the self-hosted core — everything an individual needs to own all twelve layers — stays MIT **permanently**, and the [licensing policy](docs/LICENSING.md) says so in writing, including exactly how the commercial path works (by addition: a managed edition and organization features — never by clawing back what's free). The code is anyone's; the [name is not](TRADEMARKS.md). Contributions ship under the [DCO](CONTRIBUTING.md) — no CLA, deliberately, because a CLA exists to enable the relicensing we've promised not to do.
