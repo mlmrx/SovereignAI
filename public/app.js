@@ -473,13 +473,13 @@ function renderDashboard() {
   $('#readiness-score').textContent = `${score}%`;
   $('#readiness-ring').style.strokeDashoffset = String(100 - score);
   $('#readiness-kicker').textContent = providerReady ? `${runtime.label} is ready` : 'One step from ready';
-  $('#readiness-title').textContent = providerReady ? 'Your context is ready when you are.' : 'Connect a model to unlock your workspace.';
+  $('#readiness-title').textContent = providerReady ? 'Ask anything. It answers from what you own.' : 'Your data is home. Now pick its brain.';
   $('#readiness-copy').textContent = providerReady
-    ? `Chat with ${activePersona()?.name || 'your AI'}, ground answers in ${counts.documents || 0} documents, and stay in control of every saved memory.`
-    : 'Your knowledge and memory are already local. Configure a provider to start reasoning over them.';
+    ? `${activePersona()?.name || 'Your AI'} grounds answers in ${counts.documents || 0} document${counts.documents === 1 ? '' : 's'} you indexed and ${counts.memories || 0} memor${counts.memories === 1 ? 'y' : 'ies'} that show their receipts — and nothing here can't leave with you.`
+    : 'Everything you add stays on this machine either way. Choose local weights you own, or rent a frontier model on your terms — the dial is yours, in Settings.';
 
   const checklist = [
-    { done: providerReady, label: 'Intelligence connected', note: providerReady ? runtime.label : 'Choose a local or remote provider', action: 'settings', actionLabel: providerReady ? 'Review' : 'Connect' },
+    { done: providerReady, label: 'Intelligence connected', note: providerReady ? runtime.label : 'Local weights you own, or a rented frontier — your dial', action: 'settings', actionLabel: providerReady ? 'Review' : 'Connect' },
     { done: hasDocuments, label: 'Knowledge added', note: hasDocuments ? `${counts.documents} document${counts.documents === 1 ? '' : 's'} indexed` : 'Ground answers in your files', action: 'knowledge', actionLabel: hasDocuments ? 'Open' : 'Add' },
     { done: hasMemories, label: 'Durable memory', note: hasMemories ? `${counts.memories} memory note${counts.memories === 1 ? '' : 's'} under your control` : 'Add preferences or stable context', action: 'memory', actionLabel: hasMemories ? 'Review' : 'Add' },
   ];
