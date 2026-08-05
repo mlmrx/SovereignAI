@@ -132,6 +132,42 @@ button { font: inherit; cursor: pointer; }
   .contra-cell + .contra-cell { border-left: none; border-top: 1px solid var(--line); }
 }
 
+/* ---------- hero intro orchestration ----------
+   Headline is plain HTML: fully visible with no JS. The intro classes only
+   exist while the shard-convergence act plays, then hand back the stage. */
+body.intro-live .hero-inner { opacity: 0; transform: translateY(10px); }
+body.intro-done .hero-inner { opacity: 1; transform: none; transition: opacity 700ms ease, transform 700ms ease; }
+@media (prefers-reduced-motion: reduce) {
+  body.intro-live .hero-inner, body.intro-done .hero-inner { opacity: 1; transform: none; transition: none; }
+}
+
+/* ---------- the three proofs ---------- */
+.proofs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 900px) { .proofs { grid-template-columns: 1fr; } }
+.pframe { background: #191817; border: 1px solid #3a3835; border-radius: 14px; padding: 20px 20px 16px; color: #d9d4c9; display: flex; flex-direction: column; gap: 10px; }
+.ptitle { margin: 0; font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--terra-lit, #e8926f); }
+.prow { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; border: 1px solid #3a3835; border-left: 3px solid #d97757; border-radius: 9px; padding: 9px 11px; margin: 0 0 8px; font-size: 0.8rem; transition: opacity 420ms ease, transform 420ms ease; }
+.prow.gone { opacity: 0; transform: translateX(22px); }
+.ptext { display: block; line-height: 1.45; }
+.preceipt { display: block; margin-top: 3px; font-size: 0.65rem; color: #8f897e; }
+.strike { background: none; border: 1px solid #3a3835; border-radius: 7px; color: #8f897e; font-size: 0.65rem; padding: 4px 10px; white-space: nowrap; }
+.strike:hover { border-color: #c4685a; color: #c4685a; }
+.pledger-empty { margin: 4px 0; font-size: 0.78rem; color: #8aa87e; }
+.pstatus { margin: 0; font-size: 0.72rem; color: #8f897e; min-height: 2.2em; }
+.pcells { display: flex; flex-wrap: wrap; gap: 5px; min-height: 18px; }
+.pcell { width: 12px; height: 12px; border-radius: 3px 6px 3px 6px; background: rgba(217,119,87,.35); border: 1px solid #d97757; animation: pcell-pop 400ms ease; }
+@keyframes pcell-pop { from { transform: scale(.2); } 60% { transform: scale(1.3); } to { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .pcell { animation: none; } .prow, .prow.gone { transition: none; } }
+.pgreet { margin: 0; min-height: 2.6em; font-size: 0.82rem; font-style: italic; color: #e6e1d6; border-left: 3px solid #d97757; padding: 4px 10px; background: rgba(217,119,87,.08); border-radius: 0 8px 8px 0; }
+.pgreet:empty { border-color: transparent; background: transparent; }
+.pterm { margin: 0; min-height: 9.5em; font-size: 0.72rem; line-height: 1.7; white-space: pre-wrap; word-break: break-word; font-family: inherit; }
+.pcmd { color: #e8926f; font-weight: 700; } .pok { color: #8aa87e; } .pdim { color: #8f897e; }
+.p-play { align-self: flex-start; background: rgba(217,119,87,.12); border: 1px solid #d97757; border-radius: 9px; color: #e8926f; font-size: 0.78rem; font-weight: 650; padding: 8px 16px; }
+.p-play:hover { background: #d97757; color: #1f1e1d; }
+.p-play[disabled] { opacity: .45; }
+.pnote { margin: 2px 0 0; font-size: 0.68rem; color: #8f897e; line-height: 1.55; }
+.pnote code { color: #b8b2a7; }
+
 /* ---------- the full ownership map ---------- */
 .fullmap { margin-top: clamp(26px, 4vw, 40px); }
 .fullmap-title { font-size: 0.82rem; color: var(--dim); letter-spacing: 0.03em; margin: 0 0 14px; max-width: 62ch; }
@@ -230,6 +266,7 @@ footer { border-top: 1px solid var(--line); padding: 40px 0 60px; }
       SovereignAI
     </a>
     <nav>
+      <a class="navlink" href="#proof">Proof</a>
       <a class="navlink" href="#value">The layers</a>
       <a class="navlink" href="#exit">The exit path</a>
       <a class="navlink" href="#install">Install</a>
@@ -270,6 +307,43 @@ footer { border-top: 1px solid var(--line); padding: 40px 0 60px; }
         <p>Runs on <b>your</b> hardware. One file, zero dependencies, readable code. The database sits in a folder
           you can copy; everything exports into one checksummed file whenever you want it. Ownership isn't a slogan
           here; it's an <b>exit path we test</b>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- the three proofs: operate it, right here -->
+<section class="band" id="proof">
+  <div class="wrap">
+    <div class="band-head">
+      <p class="eyebrow">Operate it, right here</p>
+      <h2 class="serif">Don't take our word. Press the buttons.</h2>
+      <p>Three of the product's core gestures, replayed on this page exactly as they behave after install.
+        No servers were contacted in the making of these moments.</p>
+    </div>
+    <div class="proofs">
+      <div class="pframe">
+        <p class="ptitle">⬡ Strike a memory</p>
+        <div id="proof-ledger">
+          <div class="prow"><span><span class="ptext">Prefers Friday demos with the whole team</span><span class="preceipt">added by you · Jul 9</span></span><button class="strike" type="button">strike</button></div>
+          <div class="prow"><span><span class="ptext">Ships on Windows, tests against WSL</span><span class="preceipt">auto-extracted · written by ollama/llama3.1</span></span><button class="strike" type="button">strike</button></div>
+          <div class="prow"><span><span class="ptext">Drinks too much espresso</span><span class="preceipt">recorded before provenance tracking</span></span><button class="strike" type="button">strike</button></div>
+        </div>
+        <p class="pnote">Watch the bytes zero out. In the product, <code>secure_delete</code> does this to the real ones. Deletion is deletion.</p>
+      </div>
+      <div class="pframe">
+        <p class="ptitle">⬡ The first five minutes</p>
+        <p class="pstatus" id="proof-arrival-status" aria-live="polite">chatgpt-export.zip ready — parsed on your machine, nothing leaves it.</p>
+        <div class="pcells" id="proof-arrival-cells" aria-hidden="true"></div>
+        <p class="pgreet" id="proof-arrival-greet" aria-live="polite"></p>
+        <button class="p-play" id="proof-arrival-play" type="button">▶ Drop the export</button>
+        <p class="pnote">Import → distill → a greeting grounded only in what was actually learned. Your AI knows you before lunch.</p>
+      </div>
+      <div class="pframe">
+        <p class="ptitle">⬡ The exit ritual</p>
+        <pre class="pterm" id="proof-exit-term"><span class="pdim">The whole workspace, checksummed, yours.</span></pre>
+        <button class="p-play" id="proof-exit-play" type="button">▶ Run the drill</button>
+        <p class="pnote">Export, verify, leave — the drill every claim on this page answers to.</p>
       </div>
     </div>
   </div>
