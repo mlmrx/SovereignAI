@@ -83,7 +83,10 @@ function extractTextOps(stream) {
   if (!/BT/.test(stream)) return '';
   let out = '';
   // string ops: (..) Tj | (..) ' | (..) " | [ .. ] TJ ; line moves: Td TD T* start new lines
-  const opRe = /\(((?:\\.|[^\\()])*)\)\s*(Tj|'|")|\[((?:\\.|[^\]])*)\]\s*TJ|(T\*|T[dD])(?![A-Za-z])/g;
+  // The TJ-array class MUST exclude backslash so it is disjoint from the
+  // `\\.` escape alternative — otherwise a run of backslashes with no closing
+  // `]` partitions exponentially and hangs on a tiny crafted PDF (ReDoS).
+  const opRe = /\(((?:\\.|[^\\()])*)\)\s*(Tj|'|")|\[((?:\\.|[^\\\]])*)\]\s*TJ|(T\*|T[dD])(?![A-Za-z])/g;
   let m;
   while ((m = opRe.exec(stream)) !== null) {
     if (m[4]) {

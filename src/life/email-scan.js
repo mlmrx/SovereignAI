@@ -35,7 +35,7 @@ const MAIL_SUBDOMAINS = /^(mail|email|e|mailer|marketing|news|newsletter|notify|
 
 /** Scan one parsed email; returns zero or more life-record candidates. */
 export function scanEmail(message) {
-  const subject = message.subject ?? '';
+  const subject = (message.subject ?? '').slice(0, 1000); // bound: subject can carry a full unfolded header
   const text = (message.text ?? '').slice(0, 4000);
   const haystack = `${subject}\n${text}`;
   const records = [];
@@ -183,8 +183,8 @@ function merchantFrom(from) {
   if (name && !NOREPLY.test(name) && !name.includes('@')) return name.slice(0, 120);
   const domain = (from?.address ?? '').split('@')[1] ?? '';
   if (!domain) return name.slice(0, 120) || 'Unknown sender';
-  let host = domain.toLowerCase();
-  while (MAIL_SUBDOMAINS.test(host)) host = host.replace(MAIL_SUBDOMAINS, '');
+  let host = domain.toLowerCase().slice(0, 253); // DNS name max; also bounds the strip loop below
+  for (let i = 0; i < 12 && MAIL_SUBDOMAINS.test(host); i++) host = host.replace(MAIL_SUBDOMAINS, '');
   const labels = host.split('.');
   const base = labels.length > 1 ? labels[labels.length - 2] : labels[0];
   return base ? base[0].toUpperCase() + base.slice(1) : 'Unknown sender';

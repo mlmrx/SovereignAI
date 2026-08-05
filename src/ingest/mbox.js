@@ -65,6 +65,14 @@ export async function* iterateMboxMessages(source, { maxMessageBytes = MAX_MESSA
       start = newline + 1;
     }
     carry = Buffer.from(carry.subarray(start));
+    // A stream with no (or very sparse) newlines must not accumulate without
+    // bound — the per-message cap only fires once a line is terminated. Flush
+    // an oversized unterminated remainder as a truncated line so RSS stays
+    // bounded instead of OOMing on a newline-free file.
+    if (carry.length > maxMessageBytes) {
+      yield* handleLine(carry);
+      carry = Buffer.alloc(0);
+    }
   }
   if (carry.length) yield* handleLine(carry);
   yield* flush();
@@ -132,8 +140,14 @@ export function decodeEncodedWords(value) {
   });
 }
 
-function parseAddress(value) {
-  const angled = value.match(/<([^<>]+@[^<>]+)>/);
+function parseAddress(rawValue) {
+  // Cap the header value before matching: real addresses are short, and an
+  // adversarial multi-kilobyte From header would drive the two adjacent
+  // unbounded runs in these patterns into quadratic backtracking (ReDoS).
+  // 998 is the RFC 2822 line-length limit. Also exclude '@' from the first
+  // class so the boundary is unambiguous.
+  const value = String(rawValue).slice(0, 998);
+  const angled = value.match(/<([^<>@]+@[^<>]+)>/);
   if (angled) {
     const name = value.replace(angled[0], '').trim().replace(/^"|"$/g, '').trim();
     return { name, address: angled[1].trim().toLowerCase() };
@@ -255,7 +269,11 @@ function decodeCharset(bytes, charset) {
   }
 }
 
-function stripHtml(html) {
+function stripHtml(rawHtml) {
+  // Bound the input: the style/script strip is a lazy match that rescans on
+  // unterminated tags, and a decoded HTML part can be message-sized before the
+  // caller's final slice. Capping here keeps every regex below fast.
+  const html = rawHtml.length > MAX_TEXT_CHARS ? rawHtml.slice(0, MAX_TEXT_CHARS) : rawHtml;
   return html
     .replace(/<(style|script)[\s\S]*?<\/\1>/gi, ' ')
     .replace(/<br\s*\/?>/gi, '\n')

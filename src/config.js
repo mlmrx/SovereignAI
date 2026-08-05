@@ -369,7 +369,11 @@ export function ssrfBlockedReason(hostname) {
   // IMDS hostnames some clouds resolve by name, plus the canonical metadata IPs.
   if (host === 'metadata.google.internal' || host === 'metadata') return 'a cloud metadata endpoint';
 
-  const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  // Resolve an IPv4-mapped IPv6 address to its embedded IPv4 first, so the
+  // link-local check below cannot be bypassed by writing the metadata IP as
+  // [::ffff:169.254.169.254] — which WHATWG normalizes to ::ffff:a9fe:a9fe.
+  const embedded = embeddedMappedIpv4(host);
+  const v4 = (embedded || host).match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
   if (v4) {
     const octets = v4.slice(1).map(Number);
     if (octets.some((n) => n > 255)) return null; // not a real IPv4 literal; leave to DNS
@@ -381,6 +385,21 @@ export function ssrfBlockedReason(hostname) {
   // IPv6 link-local (fe80::/10) and the metadata mapping fd00:ec2::254.
   if (host.startsWith('fe80:') || host.startsWith('fe80::') || host === 'fd00:ec2::254') {
     return 'a link-local / cloud metadata address';
+  }
+  return null;
+}
+
+// Extract the embedded IPv4 from an ::ffff:… IPv4-mapped IPv6 host, in either
+// the dotted (::ffff:169.254.169.254) or hex (::ffff:a9fe:a9fe) form WHATWG may
+// produce. Returns a dotted-quad string, or null if not a mapped address.
+function embeddedMappedIpv4(host) {
+  const dotted = host.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i);
+  if (dotted) return dotted[1];
+  const hex = host.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
+  if (hex) {
+    const hi = parseInt(hex[1], 16);
+    const lo = parseInt(hex[2], 16);
+    return `${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`;
   }
   return null;
 }

@@ -208,7 +208,11 @@ export function dockerRunCommand({ name, bind, port, imageRef }) {
     `--env-file "$HOME/${remoteDir(name)}/env"`,
     `-p ${address}:${Number(port)}:4321`,
     `-v ${volumeName(name)}:/state`,
-    imageRef,
+    // Quote like the docker pull/build paths do: the ref is the operator's raw
+    // --image flag, and this function must not depend on docker's own
+    // reference validation to stay injection-safe if a future caller reaches
+    // it without the pull gate.
+    shq(imageRef),
   ].join(' ');
 }
 
