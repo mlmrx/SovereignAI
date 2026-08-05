@@ -31,6 +31,13 @@ test('the waitlist form captures interest and never silently drops a lead', () =
   assert.match(script, /mailto:/, 'must fall back to email so interest is never lost');
   assert.match(script, /fetch\(window\.WAITLIST_ENDPOINT/, 'a configured endpoint must receive a POST');
   assert.match(script, /\/\^\[\^\\s@\]\+@/, 'email must be validated before submit');
+  // CSP forbids inline scripts, so window globals can never be set on the
+  // served page — configuration must come from markup the script reads.
+  assert.match(html, /meta name="waitlist-endpoint"/, 'endpoint must be configurable without inline JS');
+  assert.match(html, /meta name="waitlist-email"/, 'fallback address must be configurable without inline JS');
+  assert.match(script, /meta\[name="waitlist-endpoint"\]/, 'script must read the endpoint from markup');
+  assert.doesNotMatch(html + script, /sovereignai\.app/, 'never point leads at a domain we do not own');
+  assert.match(script, /not in the queue until/i, 'the mailto fallback must not overclaim success');
 });
 
 test('the landing page carries the brand and both themes', () => {

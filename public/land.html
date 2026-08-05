@@ -6,6 +6,12 @@
 <title>SovereignAI — sovereign AI, you own every layer</title>
 <meta name="description" content="One AI that runs on your machine, thinks with models you choose, remembers with receipts, and proves you can leave. Open source, zero dependencies, no cloud required." />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<!-- Waitlist wiring (CSP forbids inline scripts, so configuration lives here):
+     set content of waitlist-endpoint to any URL accepting a JSON POST
+     (Formspree, Basin, a Cloudflare Worker) and submissions post there.
+     Empty endpoint = mailto fallback to waitlist-email. -->
+<meta name="waitlist-endpoint" content="" />
+<meta name="waitlist-email" content="hr@unifydynamics.com" />
 <style>
 /* SovereignAI landing — the thesis is ownership, so the page argues it —
    and choosing your own look is part of the argument. Three named themes,

@@ -327,25 +327,27 @@ const PROPS = [
 })();
 
 /* ------- waitlist submission -------
-   Wired to be real the instant you deploy. Set window.WAITLIST_ENDPOINT (a URL
-   that accepts a POST JSON body) — e.g. a Formspree/Basin/Cloudflare Worker —
-   and submissions post there. With no endpoint set, it falls back to opening a
-   pre-filled email so no interest is ever silently dropped. */
-window.WAITLIST_ENDPOINT = window.WAITLIST_ENDPOINT || '';
-window.WAITLIST_EMAIL = window.WAITLIST_EMAIL || 'hello@sovereignai.app';
+   Configuration comes from <meta> tags in land.html (this page's CSP forbids
+   inline scripts, so window globals could never actually be set in
+   production). waitlist-endpoint = any URL accepting a JSON POST
+   (Formspree/Basin/a Worker); empty = mailto fallback to waitlist-email so
+   no interest is silently dropped. */
+window.WAITLIST_ENDPOINT = document.querySelector('meta[name="waitlist-endpoint"]')?.content?.trim() || '';
+window.WAITLIST_EMAIL = document.querySelector('meta[name="waitlist-email"]')?.content?.trim() || 'hr@unifydynamics.com';
 (() => {
   const form = $('#wl-form');
   const errorEl = $('#wl-error');
   const submitBtn = $('#wl-submit');
 
   function showDone(via) {
+    const address = window.WAITLIST_EMAIL;
     form.innerHTML = `
       <div class="wl-done">
         <div class="big" aria-hidden="true">⬡</div>
-        <h3>You're on the path.</h3>
+        <h3>${via === 'mail' ? 'One more step.' : "You're on the list."}</h3>
         <p>${via === 'mail'
-          ? 'Your email app opened with a pre-filled note — send it and you’re in the queue.'
-          : 'We’ve got your request. Watch your inbox as instances open up.'}</p>
+          ? `Your email app should have opened with a pre-filled note — <b>send it</b> and you're on the list. If nothing opened, just email <a href="mailto:${address}">${address}</a> directly. You're not in the queue until that mail is sent — we'd rather say so than pretend.`
+          : 'We received your request. Watch your inbox as the managed edition opens up.'}</p>
       </div>`;
   }
 
