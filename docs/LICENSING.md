@@ -67,22 +67,6 @@ an individual need it to own their own AI?* If yes, it's here, free, under
 the FSL. If it only matters when someone else runs it for you or when an
 organization manages many people, it may be commercial.
 
-## Why we moved off MIT — recorded honestly
-
-The first draft of this policy promised "MIT forever." We reversed that
-decision before the first public release — no public artifact ever shipped
-under MIT, so no grant was broken — for one reason: **MIT gives a
-hyperscaler the right to take the finished product and sell it as a hosted
-service without funding a line of its development.** The trademark (our
-original defense) forces such a fork to rename itself, but a renamed clone
-with a marketing budget is still a clone. The FSL closes that gap for the
-two years in which each release is commercially alive, and then hands the
-code to the commons anyway.
-
-What survives from the original covenant — and is now *stronger* than a
-promise, because it is license text: every release becomes MIT, on a date
-you can compute, whether or not we still exist to keep our word.
-
 ## Why not the others
 
 - **AGPL / dual licensing** — genuinely open source, and we respect teams
@@ -96,8 +80,12 @@ you can compute, whether or not we still exist to keep our word.
 - **SSPL / Elastic License** — never convert to open source. A product
   whose sovereignty ledger tells users to demand auditable exits should not
   ship a license whose own exit clause is "trust us."
-- **Staying MIT** — see above. The name-only defense assumed trust cannot
-  be bought; the last decade of hosted-fork history says otherwise.
+- **Plain MIT / permissive** — hands a hyperscaler the right to sell the
+  finished product as a hosted service without funding a line of its
+  development. A trademark forces such a fork to rename itself, but a
+  renamed clone with a marketing budget is still a clone. The FSL closes
+  that gap for the two years each release is commercially alive — and then
+  hands the code to the commons anyway.
 
 ## Contributions
 
