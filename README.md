@@ -41,6 +41,8 @@ Training is disabled by default and has no hosted fallback. The workflow never c
 
 ## Useful from the first conversation
 
+- **The first five minutes** — after setup, drop your ChatGPT or Claude export into the **Arrival** door: it's parsed on your machine, your AI distills who you are from it in front of you, and greets you knowing your name, projects, and preferences — every remembered fact naming the conversation it came from. No export handy? Skip it; the door stays open in the Mind view.
+- **The Mind view** — the new landing surface: a control room for the context layer you own. What your AI knows (counted by provenance: added by you, learned from chats, distilled from imports), the latest entries with receipts, imported-history state with one-click distillation, and every outbound door — portfolio, MCP, editors, verified export.
 - **The Sovereign Path (`/guide.html`)** — an interactive, self-verifying guide: ten waypoints from first launch to full ownership, each with a live check against your own workspace's API. It turns terracotta when your instance can prove you've been there — progress as evidence, not decoration.
 - **Command center** — see provider readiness, workspace counts, recent conversations, and context-aware workflows at a glance.
 - **Context you can trust** — every chat shows its active persona, model, local/remote data path, memory state, and knowledge state.
@@ -163,7 +165,7 @@ Decision records: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## API (localhost)
 
-`POST /api/chat` (SSE) · `POST /api/ask` (JSON) · CRUD and build routes under `/api/model-recipes` · `POST /api/create-model` (legacy direct Ollama build) · `POST /api/documents` (text or base64 PDF/DOCX) · `GET /api/search?q=` · CRUD for `personas` / `conversations` / `memories` · `GET /api/export` / `POST /api/import` (manifest-verified) · `GET /api/portfolio` · `GET /api/providers` · `GET /api/models` · `GET/PUT /api/config`
+`POST /api/chat` (SSE) · `POST /api/ask` (JSON) · `POST /api/distill` (SSE memory distillation over imported history) · `GET /api/mind` (provenance counts, receipts, import state) · CRUD and build routes under `/api/model-recipes` · `POST /api/create-model` (legacy direct Ollama build) · `POST /api/documents` (text or base64 PDF/DOCX) · `GET /api/search?q=` · CRUD for `personas` / `conversations` / `memories` · `GET /api/export` / `POST /api/import` (manifest-verified) · `GET /api/portfolio` · `GET /api/providers` · `GET /api/models` · `GET/PUT /api/config`
 
 Fine-tuning routes live under `/api/training`: project/source/example curation, immutable dataset locking/export, trainer capabilities, run submit/refresh/cancel, evaluation decisions, and digest-gated Ollama persona assignment. Dataset bytes are sent only by the run-submission route after endpoint-bound consent.
 
@@ -203,6 +205,7 @@ The suite includes 130+ core, UI-contract, integration, API, security, config, p
 - [x] Verified, portable exports: per-table checksums and an archive digest in a [documented open format](docs/EXPORT_FORMAT.md), `sovereign verify`, and optional passphrase encryption (AES-256-GCM, scrypt)
 - [x] Personal Context Portfolio: memories + personas + knowledge inventory as one pasteable markdown seed crystal (`sovereign portfolio`, `GET /api/portfolio`)
 - [x] Opt-in memory distillation over imported chat history (`sovereign distill`, `import-chat --distill`) — idempotent, provenance-tagged, costs printed up front
+- [x] The first five minutes: Arrival (import → live distillation → provenance-grounded reveal), the Mind control-room view as the landing surface, and streamed distillation (`POST /api/distill`) in the web UI
 
 ## License
 

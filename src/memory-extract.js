@@ -63,6 +63,7 @@ export async function distillConversationMemories({
   model,
   conversation,
   messages,
+  signal,
 }) {
   const provider = getProvider(providerId);
   const cfg = config.providers[providerId];
@@ -88,6 +89,7 @@ export async function distillConversationMemories({
     system,
     messages: [{ role: 'user', content: prompt }],
     maxTokens: 1024,
+    signal,
   });
   for await (const part of stream) {
     if (part.type === 'delta') out += part.text;

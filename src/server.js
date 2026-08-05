@@ -31,6 +31,7 @@ import { buildModelRecommendation } from './model-recommendation.js';
 import { ChatImportError, importChatExport, supportedPlatforms as supportedChatPlatforms } from './chat-import/index.js';
 import { buildExport, isEncryptedExport, verifyExportManifest } from './portability.js';
 import { buildPortfolio } from './portfolio.js';
+import { handleDistill } from './distill.js';
 import {
   TRAINING_DATASET_SCHEMA,
   TrainingValidationError,
@@ -1013,6 +1014,41 @@ export function createApp(rootDir, { env = process.env } = {}) {
   // personas, knowledge inventory) as one pasteable markdown document.
   route('GET', '/api/portfolio', async () => buildPortfolio(store, config, VERSION));
 
+  // Everything the Mind view (control room) shows in one call. Only facts the
+  // server can actually know — no fabricated "connection status" for MCP or
+  // extension surfaces, which connect through their own processes.
+  route('GET', '/api/mind', async () => {
+    const memories = store.memoryOriginCounts();
+    const recent = store
+      .listRecentMemories(12)
+      .reverse()
+      .map((memory) => {
+        const conversation = memory.source_conversation_id ? store.getConversation(memory.source_conversation_id) : null;
+        return {
+          id: memory.id,
+          content: memory.content,
+          created_at: memory.created_at,
+          updated_at: memory.updated_at,
+          origin: memory.origin,
+          source: memory.source_conversation_id
+            ? { conversationId: memory.source_conversation_id, title: conversation?.title ?? null, deleted: !conversation }
+            : null,
+        };
+      });
+    const platforms = store.importPlatformStats();
+    const documents = store.listDocuments();
+    return {
+      name: config.name,
+      memories: { ...memories, recent },
+      imports: {
+        platforms,
+        conversations: platforms.reduce((sum, p) => sum + p.conversations, 0),
+        undistilled: platforms.reduce((sum, p) => sum + p.undistilled, 0),
+      },
+      documents: { count: documents.length, embedded: documents.filter((doc) => doc.embedded).length },
+    };
+  });
+
   const server = http.createServer(async (req, res) => {
     try {
       applySecurityHeaders(res, { hsts });
@@ -1028,8 +1064,14 @@ export function createApp(rootDir, { env = process.env } = {}) {
           return sendJson(res, 415, { error: 'Content-Type must be application/json' });
         }
 
-        // chat is special-cased: it streams SSE
-        if (req.method === 'POST' && url.pathname === '/api/chat') {
+        // chat and distill are special-cased: they stream SSE
+        const sseHandler =
+          req.method === 'POST' && url.pathname === '/api/chat'
+            ? handleChat
+            : req.method === 'POST' && url.pathname === '/api/distill'
+              ? handleDistill
+              : null;
+        if (sseHandler) {
           const body = await readJsonBody(req);
           const sse = sseStart(res);
           const abort = new AbortController();
@@ -1038,7 +1080,7 @@ export function createApp(rootDir, { env = process.env } = {}) {
           };
           res.once('close', onDisconnect);
           try {
-            await handleChat({ store, config, body, sse, signal: abort.signal });
+            await sseHandler({ store, config, body, sse, signal: abort.signal });
           } catch (err) {
             if (!abort.signal.aborted && !res.destroyed) {
               sse.send('error', { message: err.message });

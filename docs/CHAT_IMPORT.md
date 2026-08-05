@@ -112,6 +112,12 @@ sovereign distill --limit 20                 # bound a first run
 sovereign distill --redo                     # re-sweep everything (re-bills)
 ```
 
+The web UI runs the same sweep with live progress: the **Arrival** door
+(drop an export, watch memories ignite, get a greeting grounded in what was
+just learned) and the **Mind** view's distill button, both backed by
+`POST /api/distill` (SSE). The CLI remains the right tool for very large
+archives — the web upload is capped, and `--redo` is CLI-only.
+
 Each imported conversation gets one call to your configured default model,
 which extracts at most five durable facts (preferences, identity, projects,
 decisions). Facts land in Memory tagged `distilled` with a pointer to the

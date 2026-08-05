@@ -392,6 +392,32 @@ export class Store {
     return this.getConversation(row.id);
   }
 
+  /** Memory counts by provenance origin; NULL origins report as 'untracked'. */
+  memoryOriginCounts() {
+    const counts = { manual: 0, extracted: 0, distilled: 0, untracked: 0, total: 0 };
+    const rows = this.db
+      .prepare("SELECT COALESCE(origin, 'untracked') AS origin, COUNT(*) AS n FROM memories GROUP BY COALESCE(origin, 'untracked')")
+      .all();
+    for (const row of rows) {
+      if (row.origin in counts) counts[row.origin] = Number(row.n);
+      counts.total += Number(row.n);
+    }
+    return counts;
+  }
+
+  /** Per-platform imported-conversation counts and how many still await distillation. */
+  importPlatformStats() {
+    return this.db
+      .prepare(
+        `SELECT source_platform AS platform, COUNT(*) AS conversations,
+                SUM(CASE WHEN distilled_at IS NULL THEN 1 ELSE 0 END) AS undistilled
+         FROM conversations WHERE source_platform IS NOT NULL
+         GROUP BY source_platform ORDER BY conversations DESC`
+      )
+      .all()
+      .map((row) => ({ platform: row.platform, conversations: Number(row.conversations), undistilled: Number(row.undistilled) }));
+  }
+
   /** Imported conversations that have not yet been swept for durable memories. */
   listDistillableConversations({ redo = false } = {}) {
     const where = redo

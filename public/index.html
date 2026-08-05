@@ -68,6 +68,9 @@
     </button>
 
     <nav class="primary-nav" aria-label="Main">
+      <button class="nav-item" type="button" data-view="mind">
+        <svg class="icon"><use href="#i-spark"/></svg><span>Mind</span>
+      </button>
       <button class="nav-item active" type="button" data-view="home" aria-current="page">
         <svg class="icon"><use href="#i-home"/></svg><span>Command center</span>
       </button>
@@ -113,6 +116,71 @@
       <strong id="mobile-view-title">Command center</strong>
       <span id="mobile-runtime-badge" class="runtime-badge neutral">Checking</span>
     </header>
+
+    <!-- Mind: the context control room — what your AI knows, with receipts -->
+    <section id="view-mind" class="view" aria-labelledby="mind-title">
+      <header class="page-header mind-header">
+        <div>
+          <p class="eyebrow">The context layer you own</p>
+          <h1 id="mind-title">Your AI's mind</h1>
+          <p id="mind-subtitle" class="page-subtitle">Every durable fact, where it came from, and where it can go next.</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn" id="mind-portfolio-btn" type="button">
+            <svg class="icon"><use href="#i-download"/></svg>Portfolio
+          </button>
+          <button class="btn primary" id="mind-arrival-btn" type="button">
+            <svg class="icon"><use href="#i-upload"/></svg>Bring your history home
+          </button>
+        </div>
+      </header>
+
+      <div class="mind-grid">
+        <section class="panel mind-provenance" aria-labelledby="mind-provenance-title">
+          <h2 id="mind-provenance-title">What it knows</h2>
+          <div class="mind-tiles">
+            <div class="mind-tile"><strong id="mind-count-total">0</strong><span>durable memories</span></div>
+            <div class="mind-tile"><strong id="mind-count-manual">0</strong><span>added by you</span></div>
+            <div class="mind-tile"><strong id="mind-count-extracted">0</strong><span>learned from chats</span></div>
+            <div class="mind-tile"><strong id="mind-count-distilled">0</strong><span>distilled from imports</span></div>
+          </div>
+          <p id="mind-untracked-note" class="mind-note" hidden></p>
+          <div class="mind-ignition" id="mind-ignition" aria-hidden="true"></div>
+        </section>
+
+        <section class="panel mind-ledger" aria-labelledby="mind-ledger-title">
+          <div class="panel-head-row">
+            <h2 id="mind-ledger-title">Latest entries, with receipts</h2>
+            <button class="btn small ghost" id="mind-open-memory" type="button">Open memory</button>
+          </div>
+          <ol id="mind-ledger-list" class="mind-ledger-list"></ol>
+        </section>
+
+        <section class="panel mind-imports" aria-labelledby="mind-imports-title">
+          <h2 id="mind-imports-title">Imported history</h2>
+          <div id="mind-imports-body"></div>
+          <div id="mind-distill-progress" class="mind-distill-progress" hidden>
+            <p id="mind-distill-status" role="status" aria-live="polite"></p>
+            <ol id="mind-distill-feed" class="mind-distill-feed"></ol>
+          </div>
+          <button class="btn primary" id="mind-distill-btn" type="button" hidden>
+            <svg class="icon"><use href="#i-spark"/></svg><span id="mind-distill-btn-label">Distill</span>
+          </button>
+        </section>
+
+        <section class="panel mind-everywhere" aria-labelledby="mind-everywhere-title">
+          <h2 id="mind-everywhere-title">Where this mind can go</h2>
+          <p class="mind-note">Own the context, rent the intelligence — these surfaces read the same memory you see here.</p>
+          <ul class="mind-surface-list">
+            <li><strong>Portfolio</strong> — one markdown document of everything above, pasteable into any AI tool.</li>
+            <li><strong>MCP</strong> — Claude Desktop/Code, Codex, Cursor, Windsurf, Gemini CLI via <code>sovereign mcp</code>.</li>
+            <li><strong>Editors &amp; browser</strong> — VS Code, JetBrains, and browser extensions in <code>integrations/</code>.</li>
+            <li><strong>Verified export</strong> — checksummed archive from Settings, or <code>sovereign export --encrypt</code>.</li>
+          </ul>
+          <p class="mind-note">Knowledge base: <span id="mind-doc-count">0</span> documents indexed (<span id="mind-doc-embedded">0</span> with embeddings).</p>
+        </section>
+      </div>
+    </section>
 
     <!-- Command center -->
     <section id="view-home" class="view active" aria-labelledby="home-title">
@@ -725,6 +793,55 @@
       </div>
     </section>
   </main>
+
+  <!-- Arrival: bring your history home — import → distill → reveal -->
+  <div id="arrival" class="arrival hidden" role="dialog" aria-modal="true" aria-labelledby="arrival-title">
+    <div class="arrival-card">
+      <button class="icon-btn arrival-close" id="arrival-skip" type="button" aria-label="Close">
+        <svg class="icon"><use href="#i-x"/></svg>
+      </button>
+
+      <section id="arrival-stage-drop" class="arrival-stage active">
+        <p class="eyebrow">The first five minutes</p>
+        <h2 id="arrival-title">Bring your history home</h2>
+        <p class="arrival-copy">
+          Drop the export ZIP from ChatGPT or Claude (Gemini and a generic JSON format work too).
+          It is parsed <strong>on this machine</strong>, and your AI distills who you are from it —
+          every fact it keeps will name the conversation it came from.
+        </p>
+        <div id="arrival-drop" class="arrival-drop" tabindex="0" role="button" aria-label="Choose a chat export file">
+          <svg class="icon big" aria-hidden="true"><use href="#i-upload"/></svg>
+          <strong>Drop your export here</strong>
+          <span>or click to choose a file (.zip or .json)</span>
+        </div>
+        <input type="file" id="arrival-file" accept=".json,.zip,application/json,application/zip" hidden />
+        <p id="arrival-drop-error" class="form-error" role="alert" hidden></p>
+        <p class="arrival-footnote">
+          No export handy? <button class="link-btn" id="arrival-skip-link" type="button">Skip for now</button> —
+          this door stays open in the Mind view, and <code>sovereign import-chat</code> handles files over the upload limit.
+        </p>
+      </section>
+
+      <section id="arrival-stage-distill" class="arrival-stage" hidden>
+        <h2>Learning who you are</h2>
+        <p id="arrival-distill-status" role="status" aria-live="polite">Importing conversations…</p>
+        <div id="arrival-ignition" class="arrival-ignition" aria-hidden="true"></div>
+        <ol id="arrival-feed" class="arrival-feed" aria-live="polite" aria-relevant="additions"></ol>
+      </section>
+
+      <section id="arrival-stage-reveal" class="arrival-stage" hidden>
+        <h2 id="arrival-reveal-title">It knows you now</h2>
+        <p id="arrival-reveal-stats" class="arrival-copy"></p>
+        <blockquote id="arrival-greeting" class="arrival-greeting" hidden></blockquote>
+        <p id="arrival-reveal-note" class="arrival-footnote"></p>
+        <div class="arrival-actions">
+          <button class="btn primary" id="arrival-open-mind" type="button">See the ledger</button>
+          <button class="btn" id="arrival-open-chat" type="button">Start talking</button>
+          <button class="btn ghost" id="arrival-portfolio" type="button">Download portfolio</button>
+        </div>
+      </section>
+    </div>
+  </div>
 
   <!-- First-run setup wizard -->
   <div id="wizard" class="wizard hidden" role="dialog" aria-modal="true" aria-labelledby="wz-title">

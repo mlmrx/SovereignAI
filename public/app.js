@@ -2,7 +2,7 @@
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-const VIEW_TITLES = { home: 'Command center', chat: 'Chat', knowledge: 'Knowledge', memory: 'Memory', finetune: 'Fine-tuning', settings: 'Settings' };
+const VIEW_TITLES = { mind: 'Mind', home: 'Command center', chat: 'Chat', knowledge: 'Knowledge', memory: 'Memory', finetune: 'Fine-tuning', settings: 'Settings' };
 const MAX_UPLOAD_BYTES = 14 * 1024 * 1024;
 const MAX_MODEL_RECIPE_BYTES = 20 * 1024 * 1024;
 const MODEL_RECIPE_FORMAT = 'sovereignai.model-recipe';
@@ -354,7 +354,7 @@ document.addEventListener('keydown', (event) => {
 syncSidebarAccessibility();
 
 function routeFromHash() {
-  const match = location.hash.match(/^#\/(home|chat|knowledge|memory|finetune|settings)\/?$/);
+  const match = location.hash.match(/^#\/(mind|home|chat|knowledge|memory|finetune|settings)\/?$/);
   return match?.[1] || null;
 }
 
@@ -372,6 +372,7 @@ function showView(name, { updateHash = true, focus = false } = {}) {
   $('#mobile-view-title').textContent = VIEW_TITLES[name];
   if (updateHash && location.hash !== `#/${name}`) history.replaceState(null, '', `#/${name}`);
   closeSidebar();
+  if (name === 'mind') loadMind().catch(showLoadError);
   if (name === 'knowledge') loadDocuments().catch(showLoadError);
   if (name === 'memory') loadMemories().catch(showLoadError);
   if (name === 'finetune') setTimeout(() => window.SOVEREIGN_FINE_TUNE?.load().catch(showLoadError), 0);
@@ -2288,6 +2289,308 @@ async function refreshCounts() {
   renderDashboard();
 }
 
+/* Mind: the context control room — what the AI knows, with receipts */
+const ORIGIN_LABELS = {
+  manual: 'added by you',
+  extracted: 'learned from a chat',
+  distilled: 'distilled from imported history',
+  untracked: 'recorded before provenance tracking',
+};
+
+async function loadMind() {
+  const mind = await api.get('/api/mind');
+  state.mind = mind;
+  $('#mind-subtitle').textContent = `Every durable fact ${mind.name ? `${mind.name} keeps` : 'your AI keeps'}, where it came from, and where it can go next.`;
+  $('#mind-count-total').textContent = mind.memories.total;
+  $('#mind-count-manual').textContent = mind.memories.manual;
+  $('#mind-count-extracted').textContent = mind.memories.extracted;
+  $('#mind-count-distilled').textContent = mind.memories.distilled;
+  const untrackedNote = $('#mind-untracked-note');
+  untrackedNote.hidden = !mind.memories.untracked;
+  if (mind.memories.untracked) {
+    untrackedNote.textContent = `${mind.memories.untracked} memor${mind.memories.untracked === 1 ? 'y was' : 'ies were'} recorded before provenance tracking — origin honestly unknown.`;
+  }
+  renderMindIgnition(mind.memories);
+  renderMindLedger(mind.memories.recent);
+  renderMindImports(mind.imports);
+  $('#mind-doc-count').textContent = mind.documents.count;
+  $('#mind-doc-embedded').textContent = mind.documents.embedded;
+}
+
+/* One hex cell per memory (capped), colored by origin — data, not decoration. */
+function renderMindIgnition(memories) {
+  const host = $('#mind-ignition');
+  const cells = [];
+  const cap = 160;
+  for (const origin of ['manual', 'extracted', 'distilled', 'untracked']) {
+    for (let index = 0; index < Math.min(memories[origin], cap - cells.length); index++) {
+      cells.push(`<span class="mind-cell ${origin}"></span>`);
+    }
+  }
+  const overflow = memories.total - cells.length;
+  host.innerHTML = cells.join('') + (overflow > 0 ? `<span class="mind-cell-more">+${overflow}</span>` : '');
+}
+
+function renderMindLedger(recent) {
+  const host = $('#mind-ledger-list');
+  if (!recent.length) {
+    host.innerHTML = '<li class="panel-empty">Nothing yet. Add a memory, chat with auto-learning on, or bring your history home.</li>';
+    return;
+  }
+  host.innerHTML = recent
+    .map((memory) => {
+      const receipts = [ORIGIN_LABELS[memory.origin ?? 'untracked'] || ORIGIN_LABELS.untracked];
+      if (memory.source) {
+        receipts.push(memory.source.deleted ? 'from a since-deleted conversation' : `from “${memory.source.title || 'Untitled conversation'}”`);
+      }
+      if (memory.updated_at) receipts.push(`edited ${formatDate(memory.updated_at, { relative: true })}`);
+      return `<li class="mind-ledger-item ${escapeHtml(memory.origin ?? 'untracked')}">
+        <span class="mind-ledger-content">${escapeHtml(memory.content)}</span>
+        <span class="mind-ledger-receipt">${escapeHtml(receipts.join(' · '))} · ${formatDate(memory.created_at, { relative: true })}</span>
+      </li>`;
+    })
+    .join('');
+}
+
+function renderMindImports(imports) {
+  const host = $('#mind-imports-body');
+  const distillBtn = $('#mind-distill-btn');
+  if (!imports.conversations) {
+    host.innerHTML = '<p class="mind-note">No imported history yet. Your ChatGPT or Claude export can seed this mind in minutes.</p>';
+    distillBtn.hidden = true;
+    return;
+  }
+  host.innerHTML = `<ul class="mind-import-list">${imports.platforms
+    .map((platform) => `<li><strong>${escapeHtml(platform.platform)}</strong> — ${platform.conversations} conversation${platform.conversations === 1 ? '' : 's'}${platform.undistilled ? `, ${platform.undistilled} not yet distilled` : ', fully distilled'}</li>`)
+    .join('')}</ul>`;
+  distillBtn.hidden = !imports.undistilled;
+  if (imports.undistilled) {
+    $('#mind-distill-btn-label').textContent = `Distill ${imports.undistilled} conversation${imports.undistilled === 1 ? '' : 's'} into memory`;
+  }
+}
+
+/* Shared streaming distill runner: feeds any status element + feed list. */
+async function runDistillStream({ statusEl, feedEl, limit, onConversation, onDone }) {
+  const response = await fetch('/api/distill', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...SOVEREIGN_HEADERS() },
+    body: JSON.stringify(limit ? { limit } : {}),
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.error || response.statusText);
+  }
+  let result = { conversations: 0, memoriesAdded: 0, remaining: 0 };
+  for await (const packet of sseIterate(response.body)) {
+    if (packet.event === 'meta') {
+      statusEl.textContent = packet.data.total
+        ? `Distilling ${packet.data.total} conversation${packet.data.total === 1 ? '' : 's'} with ${packet.data.provider}/${packet.data.model || 'default model'} — one model call each.`
+        : 'Nothing left to distill.';
+    } else if (packet.event === 'conversation') {
+      const item = document.createElement('li');
+      const title = packet.data.title || 'Untitled conversation';
+      item.innerHTML = packet.data.facts.length
+        ? `<strong>${escapeHtml(title)}</strong> → ${packet.data.facts.map((fact) => escapeHtml(fact)).join(' · ')}`
+        : `<span class="quiet">${escapeHtml(title)} — nothing durable</span>`;
+      feedEl.appendChild(item);
+      feedEl.scrollTop = feedEl.scrollHeight;
+      statusEl.textContent = `Swept ${packet.data.index} of ${packet.data.total}…`;
+      onConversation?.(packet.data);
+    } else if (packet.event === 'done') {
+      result = packet.data;
+    } else if (packet.event === 'error') {
+      throw new Error(`${packet.data.message} (stopped after ${packet.data.completed} conversation${packet.data.completed === 1 ? '' : 's'}; finished ones stay done — run again to resume)`);
+    }
+  }
+  onDone?.(result);
+  return result;
+}
+
+async function downloadPortfolio() {
+  const portfolio = await api.get('/api/portfolio');
+  const blob = new Blob([portfolio.markdown], { type: 'text/markdown' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `sovereign-portfolio-${new Date().toISOString().slice(0, 10)}.md`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  toast('Portfolio downloaded. It contains personal context — treat it like a diary.', { type: 'success' });
+}
+
+$('#mind-portfolio-btn').addEventListener('click', () => downloadPortfolio().catch((error) => toast(error.message, { type: 'error', title: 'Portfolio failed' })));
+$('#mind-open-memory').addEventListener('click', () => showView('memory'));
+$('#mind-arrival-btn').addEventListener('click', () => openArrival());
+$('#mind-distill-btn').addEventListener('click', async () => {
+  const button = $('#mind-distill-btn');
+  const progress = $('#mind-distill-progress');
+  const feed = $('#mind-distill-feed');
+  button.disabled = true;
+  progress.hidden = false;
+  feed.replaceChildren();
+  try {
+    const result = await runDistillStream({ statusEl: $('#mind-distill-status'), feedEl: feed, limit: 500 });
+    $('#mind-distill-status').textContent = `Done: ${result.memoriesAdded} new memor${result.memoriesAdded === 1 ? 'y' : 'ies'} from ${result.conversations} conversation${result.conversations === 1 ? '' : 's'}.`;
+    await Promise.allSettled([loadMind(), loadMemories(), refreshCounts()]);
+  } catch (error) {
+    $('#mind-distill-status').textContent = error.message;
+    toast(error.message, { type: 'error', title: 'Distillation stopped' });
+  } finally {
+    button.disabled = false;
+  }
+});
+
+/* Arrival: drop an export → import → watch memories ignite → reveal */
+const ARRIVAL_SEEN_KEY = 'sovereign-arrival-seen';
+
+function arrivalStage(name) {
+  for (const stage of ['drop', 'distill', 'reveal']) {
+    const element = $(`#arrival-stage-${stage}`);
+    element.hidden = stage !== name;
+    element.classList.toggle('active', stage === name);
+  }
+}
+
+function openArrival() {
+  try { localStorage.setItem(ARRIVAL_SEEN_KEY, '1'); } catch { /* private browsing */ }
+  $('#arrival-drop-error').hidden = true;
+  arrivalStage('drop');
+  $('#arrival').classList.remove('hidden');
+  document.body.classList.add('wizard-open');
+  $('#arrival-drop').focus();
+}
+
+function closeArrival() {
+  $('#arrival').classList.add('hidden');
+  document.body.classList.remove('wizard-open');
+}
+
+function arrivalDropError(message) {
+  const error = $('#arrival-drop-error');
+  error.textContent = message;
+  error.hidden = false;
+}
+
+async function arrivalImport(file) {
+  if (!file) return;
+  if (file.size > MAX_UPLOAD_BYTES) {
+    arrivalDropError(`This export is larger than the ${formatBytes(MAX_UPLOAD_BYTES)} upload limit — run "sovereign import-chat ${file.name}" from the terminal instead; it reads straight from disk.`);
+    return;
+  }
+  arrivalStage('distill');
+  const status = $('#arrival-distill-status');
+  const feed = $('#arrival-feed');
+  const ignition = $('#arrival-ignition');
+  feed.replaceChildren();
+  ignition.replaceChildren();
+  let imported;
+  try {
+    status.textContent = `Importing ${file.name} — parsed on this machine, nothing leaves it…`;
+    const contentBase64 = await fileToBase64(file);
+    imported = await api.send('POST', '/api/chat-import', { contentBase64 });
+  } catch (error) {
+    arrivalStage('drop');
+    arrivalDropError(error.message);
+    return;
+  }
+
+  let ignited = 0;
+  const stats = {
+    imported: imported.imported,
+    skipped: imported.skipped,
+    platform: imported.platform,
+    memories: 0,
+    conversations: 0,
+  };
+  try {
+    const result = await runDistillStream({
+      statusEl: status,
+      feedEl: feed,
+      limit: 500,
+      onConversation: (data) => {
+        for (const fact of data.facts) {
+          if (ignited < 200) {
+            const cell = document.createElement('span');
+            cell.className = 'mind-cell distilled ignite';
+            cell.title = fact;
+            ignition.appendChild(cell);
+          }
+          ignited++;
+        }
+      },
+    });
+    stats.memories = result.memoriesAdded;
+    stats.conversations = result.conversations;
+  } catch (error) {
+    // Import succeeded even though distillation stopped — say exactly that.
+    arrivalReveal(stats, { distillError: error.message });
+    return;
+  }
+  arrivalReveal(stats);
+  Promise.allSettled([loadMind(), loadMemories(), refreshCounts(), loadConversations()]);
+}
+
+async function arrivalReveal(stats, { distillError } = {}) {
+  arrivalStage('reveal');
+  const pieces = [`Imported ${stats.imported} conversation${stats.imported === 1 ? '' : 's'} from ${stats.platform}${stats.skipped ? ` (${stats.skipped} already here)` : ''}.`];
+  if (stats.memories) pieces.push(`Distilled ${stats.memories} durable memor${stats.memories === 1 ? 'y' : 'ies'} — every one names the conversation it came from.`);
+  else if (!distillError) pieces.push('Nothing new was durable enough to keep — your AI does not pad its memory to look smart.');
+  $('#arrival-reveal-stats').textContent = pieces.join(' ');
+  $('#arrival-reveal-note').textContent = distillError
+    ? `Distillation stopped early: ${distillError}`
+    : 'Review, edit, or strike any of it — this memory answers to you.';
+
+  const greeting = $('#arrival-greeting');
+  greeting.hidden = true;
+  if (stats.memories) {
+    try {
+      const response = await api.send('POST', '/api/ask', {
+        message:
+          'In two or three warm sentences, greet me by name if you know it and mention two or three specific things you now remember about me. Do not invent anything not in your memory.',
+      });
+      if (response.answer) {
+        greeting.textContent = response.answer;
+        greeting.hidden = false;
+      }
+    } catch { /* The reveal stands on real stats; a greeting is a bonus, not a requirement. */ }
+  }
+}
+
+$('#arrival-skip').addEventListener('click', closeArrival);
+$('#arrival-skip-link').addEventListener('click', closeArrival);
+$('#arrival-open-mind').addEventListener('click', () => { closeArrival(); showView('mind'); });
+$('#arrival-open-chat').addEventListener('click', () => { closeArrival(); showView('chat'); });
+$('#arrival-portfolio').addEventListener('click', () => downloadPortfolio().catch((error) => toast(error.message, { type: 'error', title: 'Portfolio failed' })));
+$('#arrival-drop').addEventListener('click', () => $('#arrival-file').click());
+$('#arrival-drop').addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  $('#arrival-file').click();
+});
+$('#arrival-drop').addEventListener('dragover', (event) => {
+  event.preventDefault();
+  $('#arrival-drop').classList.add('over');
+});
+$('#arrival-drop').addEventListener('dragleave', () => $('#arrival-drop').classList.remove('over'));
+$('#arrival-drop').addEventListener('drop', (event) => {
+  event.preventDefault();
+  $('#arrival-drop').classList.remove('over');
+  arrivalImport(event.dataTransfer?.files?.[0]);
+});
+$('#arrival-file').addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  event.target.value = '';
+  arrivalImport(file);
+});
+
+function maybeAutoOpenArrival() {
+  let seen = false;
+  try { seen = Boolean(localStorage.getItem(ARRIVAL_SEEN_KEY)); } catch { seen = true; }
+  if (seen) return;
+  if (!state.status?.setupComplete) return;
+  if (state.memories.length || state.conversations.length) return;
+  openArrival();
+}
+
 window.SOVEREIGN_APP = {
   $, $$, api, escapeHtml, formatDate, toast, confirmAction, icon, state, showView,
   loadPersonas, updateRuntimeUI, renderDashboard, refreshCounts,
@@ -2321,10 +2624,11 @@ window.SOVEREIGN_APP = {
     renderDocuments();
     renderMemories();
     renderEmptyChat();
-    showView(routeFromHash(), { updateHash: true });
+    showView(routeFromHash() || 'mind', { updateHash: true });
     updateRuntimeUI();
     renderDashboard();
     checkProviders().catch(() => {});
+    maybeAutoOpenArrival();
   } catch (error) {
     $('#runtime-label').textContent = error.status === 401 ? 'Access token required' : 'Workspace unavailable';
     $('#runtime-detail').textContent = error.status === 401 ? 'Open the secure URL printed by SovereignAI' : error.message;
