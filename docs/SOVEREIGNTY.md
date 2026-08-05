@@ -24,6 +24,41 @@ compromise disclosed, every exit built before the door.*
 | **The model** | 🔴 Borrowed | Where inference runs (local Ollama / any OpenAI-compatible server / BYO-key Anthropic), which model, per persona | The weights are someone else's artifact — trained on unknown data with unknown priors, unauditable in practice. Ollama is a de-facto dependency with its own registry; any OpenAI-compatible local server (llama.cpp, vLLM) works without it | Models are swappable per persona in minutes; Model Studio recipes and fine-tuning lineage are portable data |
 | **Cognition (who writes your memory)** | 🟡 Conditional | Machine-written memories name their author model (`author_provider/author_model`). The **"cognition stays home"** switch restricts memory-writing model calls to local endpoints even when chat uses a remote provider | With the switch off and a remote chat provider, a third party's model is the lens deciding what is durable about you — disclosed at the point of use | Turn the switch on; or delete any machine-written memory — the ledger shows exactly which those are |
 
+## The ownership map — everything an individual owns here, as built
+
+The ledger above audits claims. This list enumerates the ownables: every
+layer a person holds in this product today, each named with the shipped
+mechanism that delivers it — not an aspiration.
+
+1. **Your hardware** — it runs where you decide: laptop, homelab, your VPS
+   (`sovereign byoc deploy`), even a rented GPU with the trade-offs printed
+   before provisioning.
+2. **Your runtime** — zero-dependency, MIT-licensed code; the single binary
+   embeds the same byte-identical files you can read in this repository.
+3. **Your data** — one SQLite folder you can copy, permissioned to you,
+   where deleted means zeroed (`secure_delete`), not soft-hidden.
+4. **Your AI's identity** — its name, personas, and system prompts are
+   records you edit and export, not settings a vendor hosts.
+5. **Your models** — local open weights, swappable per persona; Model
+   Studio recipes build named artifacts on the Ollama endpoint you control.
+6. **Your fine-tuning** — datasets you curated, consent you recorded,
+   adapters trained on a trainer you operate, lineage kept end to end.
+7. **Your memory** — every durable fact carries its origin, source
+   conversation, authoring model, and edit time. Receipts, not vibes.
+8. **Your cognition policy** — you decide which models may *write* memory
+   ("cognition stays home") and whether automatic learning runs at all.
+9. **Your knowledge** — documents parsed on your machine by dependency-free
+   parsers, into an index you can preview before any model sees it.
+10. **Your history** — conversations born here or imported from ChatGPT,
+    Claude, and Gemini, plus the life records mined from your own inbox —
+    every one carrying the evidence it was built from.
+11. **Your access** — localhost by default; your LAN/tailnet behind your
+    token; editors, browser, phone, and MCP clients all reading the same
+    store you own, none of them able to keep it from you.
+12. **Your exit** — the checksummed export in a documented open format,
+    optional passphrase encryption, the pasteable portfolio, BYOC
+    export-to-owner, and verifiable deletion. Tested, not promised.
+
 ## What we will not do
 
 - **Custody of your credentials** — no cloud connectors that hold your bank

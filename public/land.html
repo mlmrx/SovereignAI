@@ -132,6 +132,14 @@ button { font: inherit; cursor: pointer; }
   .contra-cell + .contra-cell { border-left: none; border-top: 1px solid var(--line); }
 }
 
+/* ---------- the full ownership map ---------- */
+.fullmap { margin-top: clamp(26px, 4vw, 40px); }
+.fullmap-title { font-size: 0.82rem; color: var(--dim); letter-spacing: 0.03em; margin: 0 0 14px; max-width: 62ch; }
+.fullmap-list { margin: 0; padding: 0; list-style: none; counter-reset: own; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px 26px; }
+.fullmap-list li { counter-increment: own; font-size: 0.8rem; color: var(--dim); line-height: 1.5; padding-left: 30px; position: relative; }
+.fullmap-list li::before { content: counter(own, decimal-leading-zero); position: absolute; left: 0; top: 1px; font-size: 0.66rem; color: var(--terra); letter-spacing: 0.06em; }
+.fullmap-list b { color: var(--ink); font-weight: 600; }
+
 /* ---------- section frame ---------- */
 section.band { padding: clamp(56px, 10vh, 110px) 0; }
 .band-head { max-width: 640px; margin-bottom: clamp(30px, 5vw, 52px); }
@@ -278,6 +286,24 @@ footer { border-top: 1px solid var(--line); padding: 40px 0 60px; }
         where an unknown is marked unknown, never rounded up.</p>
     </div>
     <div class="ledger" id="ledger"></div>
+
+    <div class="fullmap">
+      <p class="fullmap-title">The complete map — twelve things that are yours here, each one shipped, none of them a promise:</p>
+      <ol class="fullmap-list">
+        <li><b>your hardware</b> — laptop, homelab, your VPS, your call</li>
+        <li><b>your runtime</b> — zero-dependency code you can actually audit</li>
+        <li><b>your data</b> — one folder; deleted means zeroed</li>
+        <li><b>your AI's identity</b> — its name and personas are your records</li>
+        <li><b>your models</b> — local weights, swappable per persona</li>
+        <li><b>your fine-tuning</b> — your datasets, your consent, your trainer</li>
+        <li><b>your memory</b> — every fact with origin, source, and author</li>
+        <li><b>your cognition policy</b> — choose which models may write memory</li>
+        <li><b>your knowledge</b> — parsed on-machine, previewable retrieval</li>
+        <li><b>your history</b> — chats born here or imported, inbox included</li>
+        <li><b>your access</b> — every channel reads a store only you hold</li>
+        <li><b>your exit</b> — verified export, portfolio, provable deletion</li>
+      </ol>
+    </div>
   </div>
 </section>
 
