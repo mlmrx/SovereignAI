@@ -345,7 +345,7 @@ async function gpuServeCommand(rootDir, argv) {
   ⬡ ${record.name} is serving ${result.model} on ${provider.label} (instance ${result.provider.instanceId})
     Endpoint   ${baseUrl}  (OpenAI-compatible; server reports: ${result.models.join(', ')})
     API key    ${result.apiKey}
-               Shown once — only its hash is stored. ${provider.label} maps this port to the internet: the key is the only thing protecting the endpoint. Put TLS in front before sharing it.
+               Shown once${wired ? ' and written to your local config (0600) so this instance can use it' : ' — only its hash is stored here'}. ${provider.label} maps this port to the internet over plain HTTP: the key protects the endpoint AND crosses the network in the clear on every poll — put TLS in front before sharing it.
     ${wired
       ? `Wired      providers.openai now points at this endpoint. Pick "${result.models[0]}" as a model in Settings or on a persona.`
       : `Wire it    Settings → OpenAI-compatible: baseUrl ${baseUrl}, API key above — or re-run with --wire.`}

@@ -1,8 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { deepMerge } from './util.js';
+import { deepMerge, ssrfBlockedReason } from './util.js';
 
 export const VERSION = '0.5.0';
+
+// The SSRF guard lives in util.js (so safeFetch can reuse it without a
+// circular import); re-exported here to keep the config.js import path stable.
+export { ssrfBlockedReason } from './util.js';
 
 const PROVIDER_IDS = ['ollama', 'openai', 'anthropic'];
 const TOP_LEVEL_KEYS = new Set([
@@ -16,6 +20,7 @@ const TOP_LEVEL_KEYS = new Set([
   'memory',
   'training',
   'limits',
+  'trustedExtensionOrigins',
   'setupComplete',
 ]);
 
@@ -46,6 +51,10 @@ export const DEFAULT_CONFIG = {
     allowInsecurePrivateNetwork: false,
   },
   limits: { historyChars: 24000, ragChunks: 6, maxTokens: 32000 },
+  // Browser-extension origins (chrome-extension://<id> / moz-extension://<id>)
+  // trusted to call the no-token localhost API. Empty by default: an installed
+  // extension is not trusted just for existing — the operator pins its id here.
+  trustedExtensionOrigins: [],
   // Flipped by the first-run wizard; false shows the guided setup in the web UI.
   setupComplete: false,
 };
@@ -239,8 +248,22 @@ export function normalizeConfig(value) {
     memory: normalizeMemory(value.memory),
     training: normalizeTraining(value.training),
     limits: normalizeLimits(value.limits),
+    trustedExtensionOrigins: normalizeTrustedExtensionOrigins(value.trustedExtensionOrigins),
     setupComplete: booleanValue(value.setupComplete, 'setupComplete'),
   };
+}
+
+function normalizeTrustedExtensionOrigins(value) {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) fail('trustedExtensionOrigins must be an array of extension origins');
+  if (value.length > 32) fail('trustedExtensionOrigins allows at most 32 entries');
+  return value.map((entry, index) => {
+    const origin = stringValue(entry, `trustedExtensionOrigins[${index}]`, { min: 1, max: 2048, trim: true });
+    if (!/^(chrome-extension|moz-extension):\/\/[a-z0-9-]+\/?$/i.test(origin)) {
+      fail(`trustedExtensionOrigins[${index}] must be a chrome-extension:// or moz-extension:// origin`);
+    }
+    return origin.replace(/\/$/, '');
+  });
 }
 
 function normalizeProviders(value) {
@@ -357,52 +380,6 @@ function urlValue(value, label) {
   return raw.replace(/\/+$/, '');
 }
 
-// SSRF guard for user-supplied outbound URLs (provider/trainer endpoints the
-// server fetches). Cloud metadata and link-local addresses are always blocked
-// — they are never a legitimate model endpoint and are the classic pivot for
-// stealing instance credentials. Loopback and normal LAN/private hosts remain
-// allowed: a local or on-LAN Ollama box is the common, intended case. Returns a
-// human reason string when blocked, or null when allowed.
-export function ssrfBlockedReason(hostname) {
-  const host = String(hostname).toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
-
-  // IMDS hostnames some clouds resolve by name, plus the canonical metadata IPs.
-  if (host === 'metadata.google.internal' || host === 'metadata') return 'a cloud metadata endpoint';
-
-  // Resolve an IPv4-mapped IPv6 address to its embedded IPv4 first, so the
-  // link-local check below cannot be bypassed by writing the metadata IP as
-  // [::ffff:169.254.169.254] — which WHATWG normalizes to ::ffff:a9fe:a9fe.
-  const embedded = embeddedMappedIpv4(host);
-  const v4 = (embedded || host).match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-  if (v4) {
-    const octets = v4.slice(1).map(Number);
-    if (octets.some((n) => n > 255)) return null; // not a real IPv4 literal; leave to DNS
-    const [a, b] = octets;
-    // 169.254.0.0/16 — link-local, which is where 169.254.169.254 (IMDS) lives.
-    if (a === 169 && b === 254) return 'a link-local / cloud metadata address';
-  }
-
-  // IPv6 link-local (fe80::/10) and the metadata mapping fd00:ec2::254.
-  if (host.startsWith('fe80:') || host.startsWith('fe80::') || host === 'fd00:ec2::254') {
-    return 'a link-local / cloud metadata address';
-  }
-  return null;
-}
-
-// Extract the embedded IPv4 from an ::ffff:… IPv4-mapped IPv6 host, in either
-// the dotted (::ffff:169.254.169.254) or hex (::ffff:a9fe:a9fe) form WHATWG may
-// produce. Returns a dotted-quad string, or null if not a mapped address.
-function embeddedMappedIpv4(host) {
-  const dotted = host.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i);
-  if (dotted) return dotted[1];
-  const hex = host.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
-  if (hex) {
-    const hi = parseInt(hex[1], 16);
-    const lo = parseInt(hex[2], 16);
-    return `${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`;
-  }
-  return null;
-}
 
 function nullableSecret(value, label) {
   if (value === null || value === '') return null;

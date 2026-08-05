@@ -1383,9 +1383,28 @@ function apiAccessError(req, config) {
   const remote = req.socket.remoteAddress ?? '';
   const isLocal = remote === '127.0.0.1' || remote === '::1' || remote === '::ffff:127.0.0.1';
   if (!isLocal) return { status: 403, message: 'Remote API access requires a configured bearer token' };
+  // Tokenless mode authenticates by loopback source address — but a same-host
+  // reverse proxy connects from loopback too, so any forwarding marker means
+  // the request actually crossed a proxy and is NOT genuinely local. Refuse it
+  // and tell the operator to configure a token (see docs: exposing SovereignAI
+  // anywhere but the local machine requires --lan / a bearer token).
+  if (hasForwardingHeader(req.headers)) {
+    return { status: 403, message: 'This request was proxied; exposing the API beyond localhost requires a bearer token (run with --lan).' };
+  }
   if (!trustedLoopbackHost(req.headers.host)) return { status: 403, message: 'Untrusted Host header' };
-  if (!safeBrowserOrigin(req.headers.origin, req.headers.host)) return { status: 403, message: 'Cross-origin API access denied' };
+  if (!safeBrowserOrigin(req.headers.origin, req.headers.host, config)) return { status: 403, message: 'Cross-origin API access denied' };
   return null;
+}
+
+function hasForwardingHeader(headers) {
+  return Boolean(
+    headers['x-forwarded-for'] ||
+      headers['x-forwarded-host'] ||
+      headers['x-forwarded-proto'] ||
+      headers['x-real-ip'] ||
+      headers.forwarded ||
+      headers['via']
+  );
 }
 
 function matchesBearer(header, token) {
@@ -1405,12 +1424,19 @@ function trustedLoopbackHost(host) {
   }
 }
 
-function safeBrowserOrigin(origin, host) {
+function safeBrowserOrigin(origin, host, config) {
   if (origin === undefined) return true; // CLI, IDE, MCP bridge, and other non-browser clients
   if (typeof origin !== 'string' || typeof host !== 'string') return false;
   try {
     const parsed = new URL(origin);
-    if (parsed.protocol === 'chrome-extension:' || parsed.protocol === 'moz-extension:') return true;
+    if (parsed.protocol === 'chrome-extension:' || parsed.protocol === 'moz-extension:') {
+      // Do NOT trust every extension: any installed extension with a localhost
+      // permission could otherwise read/export the whole datastore over the
+      // no-token API. Accept only extension origins the operator explicitly
+      // allowlisted (config.trustedExtensionOrigins); default none.
+      const allowed = Array.isArray(config?.trustedExtensionOrigins) ? config.trustedExtensionOrigins : [];
+      return allowed.includes(origin);
+    }
     return (parsed.protocol === 'http:' || parsed.protocol === 'https:') && parsed.host.toLowerCase() === host.toLowerCase();
   } catch {
     return false;

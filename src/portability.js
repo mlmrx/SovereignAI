@@ -105,16 +105,18 @@ export function verifyExportManifest(parsed) {
 // a cloud backup. It deliberately does NOT encrypt the live database, and it
 // does not change what a BYOC host operator can read while an instance runs.
 
-const SCRYPT = { N: 16384, r: 8, p: 1 }; // 16 MiB derivation — within Node's default maxmem
+const SCRYPT = { N: 1 << 17, r: 8, p: 1 }; // 128 MiB derivation — raises offline brute-force cost on a stolen archive
+const SCRYPT_MAXMEM = 256 * 1024 * 1024;
 const SCRYPT_BOUNDS = { maxN: 1 << 20, maxR: 32, maxP: 16 }; // refuse absurd params from untrusted files
+const MIN_PASSPHRASE = 12;
 
 export function encryptExport(plaintextJson, passphrase) {
-  if (typeof passphrase !== 'string' || passphrase.length < 8) {
-    throw new PortabilityError('Passphrase must be at least 8 characters');
+  if (typeof passphrase !== 'string' || passphrase.length < MIN_PASSPHRASE) {
+    throw new PortabilityError(`Passphrase must be at least ${MIN_PASSPHRASE} characters — a short one is brute-forceable if the archive is stolen`);
   }
   const salt = crypto.randomBytes(16);
   const iv = crypto.randomBytes(12);
-  const key = crypto.scryptSync(passphrase, salt, 32, SCRYPT);
+  const key = crypto.scryptSync(passphrase, salt, 32, { ...SCRYPT, maxmem: SCRYPT_MAXMEM });
   const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
   const ciphertext = Buffer.concat([cipher.update(plaintextJson, 'utf8'), cipher.final()]);
   return {
@@ -140,7 +142,11 @@ export function decryptExport(parsed, passphrase) {
   if (
     !Number.isSafeInteger(N) || N < 2 || (N & (N - 1)) !== 0 || N > SCRYPT_BOUNDS.maxN ||
     !Number.isSafeInteger(r) || r < 1 || r > SCRYPT_BOUNDS.maxR ||
-    !Number.isSafeInteger(p) || p < 1 || p > SCRYPT_BOUNDS.maxP
+    !Number.isSafeInteger(p) || p < 1 || p > SCRYPT_BOUNDS.maxP ||
+    // Reject any combination whose working set would exceed our maxmem, so a
+    // crafted file fails as a clean PortabilityError instead of a raw throw
+    // from scryptSync (128 * N * r bytes is scrypt's memory lower bound).
+    128 * N * r > SCRYPT_MAXMEM
   ) {
     throw new PortabilityError('Encrypted export declares out-of-bounds scrypt parameters; refusing to derive');
   }
@@ -148,10 +154,10 @@ export function decryptExport(parsed, passphrase) {
   const iv = fromBase64(cipher.iv, 'cipher.iv');
   const authTag = fromBase64(cipher.authTag, 'cipher.authTag');
   const ciphertext = fromBase64(parsed.ciphertext, 'ciphertext');
-  const key = crypto.scryptSync(passphrase, salt, 32, { N, r, p, maxmem: 256 * 1024 * 1024 });
-  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
-  decipher.setAuthTag(authTag);
   try {
+    const key = crypto.scryptSync(passphrase, salt, 32, { N, r, p, maxmem: SCRYPT_MAXMEM });
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(authTag);
     return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
   } catch {
     throw new PortabilityError('Decryption failed: wrong passphrase, or the file was modified');

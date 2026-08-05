@@ -24,7 +24,32 @@ immediately (commit 45f88a0); the rest are ranked recommendations below.
 Plus smaller hardening in the same commit: HTML-strip input bounded, email
 subject bounded before the pattern set, merchant subdomain-strip loop bounded.
 
-## Open recommendations (need a decision or a larger change)
+## Second pass — all recommendations resolved (commit pending, 295/295 tests green)
+
+Every recommendation below was subsequently implemented. Summary of what shipped:
+
+- **R1** — `safeFetch` now resolves the target host and refuses if any resolved
+  address is a blocked metadata/link-local IP (closes the DNS-name→IMDS pivot);
+  the guard moved to `util.js` to break the circular import. Residual live-DNS-
+  rebinding is documented, out of scope for the tricked-config threat model.
+- **R2** — tokenless mode now refuses any request carrying a forwarding header
+  (`X-Forwarded-*`, `Forwarded`, `X-Real-IP`, `Via`): a proxied request is not
+  genuinely local, so it must use a token.
+- **R3** — extension origins are no longer blanket-trusted; only origins in the
+  new `config.trustedExtensionOrigins` allowlist (default empty) are accepted.
+- **R4** — GPU health/readiness polls default to `safeFetch` (`redirect:'error'`),
+  so a MITM 302 can't exfiltrate the bearer; the CLI warning now says the token
+  crosses the network in cleartext *now*.
+- **R5** — RunPod key moved from the URL query string to an `Authorization`
+  header.
+- **R6** — export passphrase floor raised to 12 chars; scrypt cost raised to
+  N=2^17 with explicit `maxmem`.
+- **R7** — provider error bodies pass through `redactApiKeys` before surfacing.
+- **R8** — scrypt bounds now reject any `128·N·r` exceeding `maxmem` and
+  `scryptSync` runs inside the try/catch; `getProvider`/`getGpuProvider` use
+  `Object.hasOwn`; the `--wire` message states the key is written to config.
+
+Original write-ups retained below for the record.
 
 ### R1 — SSRF metadata pivot via DNS name (High, in cloud/BYOC only)
 `config.js ssrfBlockedReason` is a **string** blocklist that never resolves

@@ -5,9 +5,10 @@ import { anthropic } from './anthropic.js';
 export const providers = { ollama, openai, anthropic };
 
 export function getProvider(id) {
-  const provider = providers[id];
-  if (!provider) throw new Error(`Unknown provider: ${id}`);
-  return provider;
+  // Object.hasOwn, not a truthy lookup, so 'constructor'/'__proto__' can't
+  // resolve to an inherited value instead of failing cleanly.
+  if (typeof id !== 'string' || !Object.hasOwn(providers, id)) throw new Error(`Unknown provider: ${id}`);
+  return providers[id];
 }
 
 /**

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { byocDir } from './registry.js';
 import { createSshRunner } from './ssh.js';
 import { getGpuProvider } from './providers/index.js';
+import { safeFetch } from '../util.js';
 
 // Rail 1.5: provision a fresh GPU instance from a marketplace instead of
 // requiring the user to already own a box, then hand off to the SAME
@@ -62,7 +63,7 @@ async function pollUntilRunning(provider, { apiKey, instanceId, timeoutMs, sleep
 // Container-style: RunPod, Vast.ai
 // ---------------------------------------------------------------------------
 
-async function pollHttpHealth({ host, port, token, timeoutMs, sleep, log, fetchImpl = fetch }) {
+async function pollHttpHealth({ host, port, token, timeoutMs, sleep, log, fetchImpl = safeFetch }) {
   const deadline = Date.now() + timeoutMs;
   let lastError = 'no response yet';
   for (;;) {
@@ -103,7 +104,7 @@ export async function provisionContainer({
   sleep = defaultSleep,
   provisionTimeoutMs = DEFAULT_PROVISION_TIMEOUT_MS,
   readyTimeoutMs = DEFAULT_READY_TIMEOUT_MS,
-  fetchImpl = fetch,
+  fetchImpl = safeFetch,
 } = {}) {
   const provider = getGpuProvider(providerId);
   if (provider.computeStyle !== 'container') throw new GpuProvisionError(`${provider.label} is not a container-style provider`);
@@ -152,7 +153,7 @@ export async function provisionContainer({
 const SERVE_PORT = 8000;
 export const DEFAULT_SERVE_IMAGE = 'vllm/vllm-openai:latest';
 
-async function pollVllmReady({ host, port, apiKey, model, timeoutMs, sleep, log, fetchImpl = fetch }) {
+async function pollVllmReady({ host, port, apiKey, model, timeoutMs, sleep, log, fetchImpl = safeFetch }) {
   const deadline = Date.now() + timeoutMs;
   let lastError = 'no response yet';
   for (;;) {
@@ -203,7 +204,7 @@ export async function provisionServeContainer({
   sleep = defaultSleep,
   provisionTimeoutMs = DEFAULT_PROVISION_TIMEOUT_MS,
   readyTimeoutMs = 20 * 60_000, // weight download + load dominates; Kimi-class models are hundreds of GB
-  fetchImpl = fetch,
+  fetchImpl = safeFetch,
 } = {}) {
   const provider = getGpuProvider(providerId);
   if (provider.computeStyle !== 'container') {

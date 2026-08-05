@@ -102,6 +102,13 @@ test('tokenless localhost rejects unsafe browser origins, hosts, and simple-requ
   const badHost = await rawRequest(base + '/api/status', { headers: { host: 'attacker.example' } });
   assert.equal(badHost.status, 403);
 
+  // A forwarding header means the request crossed a (same-host) reverse proxy,
+  // so loopback-source auth can't be trusted: refuse in tokenless mode.
+  const proxied = await rawRequest(base + '/api/status', { headers: { 'x-forwarded-for': '203.0.113.9' } });
+  assert.equal(proxied.status, 403);
+  const viaProxy = await rawRequest(base + '/api/export', { headers: { forwarded: 'for=203.0.113.9' } });
+  assert.equal(viaProxy.status, 403);
+
   const simplePost = await fetch(base + '/api/memories', {
     method: 'POST',
     headers: { 'content-type': 'text/plain' },

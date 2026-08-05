@@ -152,7 +152,7 @@ test('encrypted export round-trips and rejects a wrong passphrase', () => {
   assert.ok(!JSON.stringify(envelope).includes('memories'), 'plaintext must not leak into the envelope');
   assert.equal(decryptExport(envelope, 'correct horse battery'), plaintext);
   assert.throws(() => decryptExport(envelope, 'wrong passphrase!'), PortabilityError);
-  assert.throws(() => encryptExport(plaintext, 'short'), /at least 8 characters/);
+  assert.throws(() => encryptExport(plaintext, 'short'), /at least 12 characters/);
 });
 
 test('decryption refuses out-of-bounds kdf parameters from untrusted files', () => {

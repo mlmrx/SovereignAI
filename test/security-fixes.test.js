@@ -1,7 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ssrfBlockedReason } from '../src/config.js';
+import http from 'node:http';
+import { ssrfBlockedReason, redactApiKeys, safeFetch } from '../src/util.js';
+import { normalizeConfig, DEFAULT_CONFIG } from '../src/config.js';
 import { dockerRunCommand } from '../src/byoc/connector.js';
+import { getProvider } from '../src/providers/index.js';
+import { getGpuProvider } from '../src/byoc/providers/index.js';
 import { extractPdf } from '../src/ingest/pdf.js';
 import { parseEmail } from '../src/ingest/mbox.js';
 
@@ -69,4 +73,49 @@ test('a normal address still parses correctly after the ReDoS hardening', () => 
   const parsed = parseEmail(raw);
   assert.equal(parsed.from.name, 'ACME Store');
   assert.equal(parsed.from.address, 'no-reply@mail.acme.com');
+});
+
+// ---- R1: safeFetch resolves and blocks metadata targets ----
+
+test('safeFetch refuses an IP literal metadata target and a name that resolves to one', async () => {
+  await assert.rejects(safeFetch('http://169.254.169.254/latest/meta-data/'), /Refusing to connect/);
+  await assert.rejects(safeFetch('http://[::ffff:169.254.169.254]/'), /Refusing to connect/);
+  // A hostname whose only sensible resolution is loopback still works (IP check skipped for names,
+  // resolution allowed) — proven by reaching a real local server through a DNS name.
+  const server = http.createServer((_req, res) => res.end('ok'));
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  try {
+    const res = await safeFetch(`http://localhost:${server.address().port}/`);
+    assert.equal(await res.text(), 'ok', 'a legitimate localhost name must still be reachable');
+  } finally {
+    await new Promise((r) => server.close(r));
+  }
+});
+
+// ---- R3: extension origins are allowlisted, not blanket-trusted ----
+
+test('trustedExtensionOrigins validates and only accepts extension origins', () => {
+  const ok = normalizeConfig({ ...DEFAULT_CONFIG, trustedExtensionOrigins: ['chrome-extension://abcdefghijklmnop'] });
+  assert.deepEqual(ok.trustedExtensionOrigins, ['chrome-extension://abcdefghijklmnop']);
+  assert.deepEqual(normalizeConfig(DEFAULT_CONFIG).trustedExtensionOrigins, [], 'default is empty — no extension trusted for existing');
+  assert.throws(() => normalizeConfig({ ...DEFAULT_CONFIG, trustedExtensionOrigins: ['http://evil.example'] }), /must be a chrome-extension/);
+});
+
+// ---- R7: provider error bodies are redacted before surfacing ----
+
+test('redactApiKeys strips keys and bearer tokens from surfaced text', () => {
+  assert.match(redactApiKeys('Incorrect API key provided: sk-ant-api03-ABCDEF123456'), /\[redacted-key\]/);
+  assert.doesNotMatch(redactApiKeys('bad key sk-proj-SECRETSECRET1234'), /SECRETSECRET/);
+  const bearer = redactApiKeys('header was Authorization: Bearer abcdef123456ghijkl');
+  assert.doesNotMatch(bearer, /abcdef123456ghijkl/, 'the bearer token must not survive');
+  assert.match(bearer, /redacted/);
+  assert.equal(redactApiKeys('plain error, no secrets here'), 'plain error, no secrets here');
+});
+
+// ---- R8: provider lookups fail cleanly on inherited prototype keys ----
+
+test('provider registries reject inherited prototype keys instead of resolving them', () => {
+  assert.throws(() => getProvider('constructor'), /Unknown provider/);
+  assert.throws(() => getProvider('toString'), /Unknown provider/);
+  assert.throws(() => getGpuProvider('constructor'), /Unknown GPU provider/);
 });

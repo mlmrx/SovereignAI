@@ -445,14 +445,14 @@ async function importEmailCommand(argv) {
 async function exportPassphrase({ confirm }) {
   const fromEnv = process.env.SOVEREIGN_EXPORT_PASSPHRASE;
   if (fromEnv !== undefined) {
-    if (fromEnv.length < 8) throw new CliError('SOVEREIGN_EXPORT_PASSPHRASE must be at least 8 characters');
+    if (fromEnv.length < 12) throw new CliError('SOVEREIGN_EXPORT_PASSPHRASE must be at least 12 characters');
     return fromEnv;
   }
   if (!process.stdin.isTTY) {
     throw new CliError('No terminal available to prompt for a passphrase; set SOVEREIGN_EXPORT_PASSPHRASE');
   }
-  const passphrase = await promptHidden('Passphrase (min 8 chars): ');
-  if (passphrase.length < 8) throw new CliError('Passphrase must be at least 8 characters');
+  const passphrase = await promptHidden('Passphrase (min 12 chars): ');
+  if (passphrase.length < 12) throw new CliError('Passphrase must be at least 12 characters');
   if (confirm) {
     const again = await promptHidden('Confirm passphrase: ');
     if (again !== passphrase) throw new CliError('Passphrases did not match');

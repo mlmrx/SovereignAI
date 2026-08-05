@@ -41,11 +41,13 @@ test('every provider declares a computeStyle and an authHint', () => {
 // RunPod (container-style, GraphQL)
 // ---------------------------------------------------------------------------
 
-test('runpod.listGpuTypes sends the api key as a query param and maps GraphQL fields', async () => {
+test('runpod.listGpuTypes sends the api key as an Authorization header, never in the URL, and maps GraphQL fields', async () => {
   let requestedUrl;
+  let authHeader;
   await withFetch(
     async (url, options) => {
       requestedUrl = url.toString();
+      authHeader = options.headers?.authorization;
       assert.equal(options.method, 'POST');
       const body = JSON.parse(options.body);
       assert.match(body.query, /gpuTypes/);
@@ -60,7 +62,10 @@ test('runpod.listGpuTypes sends the api key as a query param and maps GraphQL fi
       assert.deepEqual(offers[0], { id: 'NVIDIA GeForce RTX 4090', label: 'RTX 4090', vramGB: 24, priceHourlyUsd: 0.44, region: null });
     }
   );
-  assert.match(requestedUrl, /^https:\/\/api\.runpod\.io\/graphql\?api_key=rp_test$/);
+  // The key must ride in the header and never appear in the request line (logs).
+  assert.equal(requestedUrl, 'https://api.runpod.io/graphql');
+  assert.equal(authHeader, 'Bearer rp_test');
+  assert.doesNotMatch(requestedUrl, /rp_test/);
 });
 
 test('runpod.listGpuTypes requires an API key before making a network call', async () => {

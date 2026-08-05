@@ -1,4 +1,5 @@
 /** Streaming body parsers shared by providers. `body` is a fetch response body (async iterable). */
+import { redactApiKeys } from '../util.js';
 
 /** Parse an SSE stream into { event, data } objects (data JSON-parsed when possible). */
 export async function* sseEvents(body) {
@@ -73,6 +74,8 @@ export async function ensureOk(response, providerLabel) {
   } catch {
     /* ignore */
   }
-  const message = typeof detail === 'string' ? detail.slice(0, 500) : JSON.stringify(detail).slice(0, 500);
+  const raw = typeof detail === 'string' ? detail.slice(0, 500) : JSON.stringify(detail).slice(0, 500);
+  // Redact any key/token the upstream error body echoed before it reaches the client.
+  const message = redactApiKeys(raw);
   throw new Error(`${providerLabel} error (HTTP ${response.status})${message ? ': ' + message : ''}`);
 }

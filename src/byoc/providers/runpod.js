@@ -31,9 +31,15 @@ import { GpuProviderError, requireApiKey, fetchJson, instanceLabel } from './sha
 const GRAPHQL_URL = 'https://api.runpod.io/graphql';
 
 async function graphql(apiKey, query, variables) {
-  const url = new URL(GRAPHQL_URL);
-  url.searchParams.set('api_key', requireApiKey(apiKey, 'RunPod'));
-  const data = await fetchJson(url, { method: 'POST', body: { query, variables }, providerLabel: 'RunPod' });
+  // Send the key as a header, never in the URL query string, so it cannot
+  // land in proxy/CDN/access logs. RunPod's GraphQL endpoint accepts Bearer
+  // auth (same key as the documented REST API).
+  const data = await fetchJson(GRAPHQL_URL, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${requireApiKey(apiKey, 'RunPod')}` },
+    body: { query, variables },
+    providerLabel: 'RunPod',
+  });
   if (Array.isArray(data?.errors) && data.errors.length) {
     throw new GpuProviderError(`RunPod error: ${data.errors[0]?.message ?? 'unknown GraphQL error'}`, { status: 502 });
   }
