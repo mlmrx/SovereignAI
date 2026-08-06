@@ -255,13 +255,43 @@ body.intro-done .hero-inner { opacity: 1; transform: none; transition: opacity 7
 .pnote { margin: 2px 0 0; font-size: 0.68rem; color: #8f897e; line-height: 1.55; }
 .pnote code { color: #b8b2a7; }
 
-/* ---------- the full ownership map ---------- */
+/* ---------- the full ownership map: the estate, drawn ----------
+   Twelve is exactly the second ring of a honeycomb: you at the center,
+   your grounds around you, the twelve possessions as the outer districts.
+   The exit district's wall is dashed — permeable — with a wake leading to
+   a boat that's always waiting. Hover/focus lights district + legend. */
 .fullmap { margin-top: clamp(26px, 4vw, 40px); }
 .fullmap-title { font-size: 0.82rem; color: var(--dim); letter-spacing: 0.03em; margin: 0 0 14px; max-width: 62ch; }
-.fullmap-list { margin: 0; padding: 0; list-style: none; counter-reset: own; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px 26px; }
-.fullmap-list li { counter-increment: own; font-size: 0.8rem; color: var(--dim); line-height: 1.5; padding-left: 30px; position: relative; }
-.fullmap-list li::before { content: counter(own, decimal-leading-zero); position: absolute; left: 0; top: 1px; font-size: 0.66rem; color: var(--terra); letter-spacing: 0.06em; }
+.estate { display: grid; grid-template-columns: minmax(320px, 480px) 1fr; gap: clamp(22px, 4vw, 46px); align-items: center; }
+.estate svg { width: 100%; height: auto; display: block; }
+.estate-caption { margin: 6px 0 0; font-size: 0.76rem; color: var(--dim); font-style: italic; min-height: 2.6em; line-height: 1.5; text-align: center; }
+.estate-cell .plot { fill: var(--raise); stroke: var(--line); transition: fill 180ms ease, stroke 180ms ease; }
+.estate-cell.exit-cell .plot { stroke-dasharray: 6 4; }
+.estate-cell .ic path, .estate-cell .ic circle, .estate-cell .ic rect { fill: none; stroke: var(--terra); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.estate-cell .ic .fill { fill: var(--terra); stroke: none; }
+.estate-cell .num { fill: var(--terra); font-size: 9.5px; letter-spacing: 0.14em; }
+.estate-cell .lbl { fill: var(--ink); font-size: 11.5px; letter-spacing: 0.03em; }
+.estate-cell { cursor: default; outline: none; }
+.estate-cell:hover .plot, .estate-cell.lit .plot, .estate-cell:focus-visible .plot { fill: var(--glow); stroke: var(--terra); }
+.estate-ground { fill: none; stroke: var(--line); opacity: 0.55; }
+.estate-road { stroke: var(--line); stroke-dasharray: 2 5; }
+.estate-core .plot { fill: var(--terra); stroke: var(--terra); }
+.estate-core .mark { fill: none; stroke: var(--on-terra); stroke-width: 2; }
+.estate-core text { fill: var(--on-terra); font-size: 13px; font-style: italic; font-family: Charter, Georgia, serif; }
+.estate-sea { stroke: var(--dim); opacity: 0.5; fill: none; stroke-width: 1.6; stroke-linecap: round; }
+.estate-boat path { fill: none; stroke: var(--terra); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.estate-wake { stroke: var(--terra); opacity: 0.55; stroke-dasharray: 1 6; stroke-width: 2; fill: none; stroke-linecap: round; }
+.estate-compass { stroke: var(--dim); fill: none; opacity: 0.6; }
+.estate-compass text { fill: var(--dim); stroke: none; font-size: 9px; letter-spacing: 0; }
+.fullmap-list { margin: 0; padding: 0; list-style: none; counter-reset: own; display: grid; grid-template-columns: 1fr; gap: 7px 26px; align-content: center; }
+.fullmap-list li { counter-increment: own; font-size: 0.8rem; color: var(--dim); line-height: 1.5; padding: 2px 8px 2px 30px; position: relative; border-radius: 7px; transition: background 150ms ease; }
+.fullmap-list li::before { content: counter(own, decimal-leading-zero); position: absolute; left: 0; top: 3px; font-size: 0.66rem; color: var(--terra); letter-spacing: 0.06em; }
+.fullmap-list li:hover, .fullmap-list li.lit { background: var(--glow); color: var(--ink-2); }
 .fullmap-list b { color: var(--ink); font-weight: 600; }
+@media (max-width: 880px) {
+  .estate { grid-template-columns: 1fr; }
+  .fullmap-list { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+}
 
 /* ---------- section frame ---------- */
 section.band { padding: clamp(56px, 10vh, 110px) 0; }
@@ -271,6 +301,9 @@ section.band { padding: clamp(56px, 10vh, 110px) 0; }
 
 /* ---------- value props: the sovereignty ledger ---------- */
 .ledger { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+/* five cards in a 3-column grid leave a sixth empty slot, which would show
+   the gap color as a solid block — fill the remainder with page ground */
+.ledger::after { content: ""; background: var(--ground); }
 .prop { background: var(--ground); padding: 28px 26px; display: flex; flex-direction: column; gap: 12px; transition: background 200ms ease; }
 .prop:hover { background: var(--raise); }
 .prop .glyph { width: 34px; height: 39px; flex: 0 0 auto; }
@@ -603,20 +636,143 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
 
     <div class="fullmap">
       <p class="fullmap-title">The complete map — twelve things that are yours here, each one shipped, none of them a promise:</p>
-      <ol class="fullmap-list">
-        <li><b>your hardware</b> — laptop, homelab, your VPS, your call</li>
-        <li><b>your runtime</b> — zero-dependency code you can actually audit</li>
-        <li><b>your data</b> — one folder; deleted means zeroed</li>
-        <li><b>your AI's identity</b> — its name and personas are your records</li>
-        <li><b>your models</b> — local weights, swappable per persona</li>
-        <li><b>your fine-tuning</b> — your datasets, your consent, your trainer</li>
-        <li><b>your memory</b> — every fact with origin, source, and author</li>
-        <li><b>your cognition policy</b> — choose which models may write memory</li>
-        <li><b>your knowledge</b> — parsed on-machine, previewable retrieval</li>
-        <li><b>your history</b> — chats born here or imported, inbox included</li>
-        <li><b>your access</b> — every channel reads a store only you hold</li>
-        <li><b>your exit</b> — verified export, portfolio, provable deletion</li>
-      </ol>
+      <div class="estate">
+        <div>
+          <svg id="estate-map" viewBox="-292 -304 584 596" role="group" aria-label="Map of the sovereign estate: twelve districts arranged around one owner, with a boat waiting off the coast at the exit district">
+            <defs>
+              <path id="hexplot" d="M50.2 -29v58L0 58l-50.2 -29v-58L0 -58z"/>
+            </defs>
+            <!-- the world outside: open water -->
+            <g class="estate-sea" aria-hidden="true">
+              <path d="M-262 -196q6 -6 12 0t12 0"/>
+              <path d="M-238 -152q6 -6 12 0t12 0"/>
+              <path d="M236 150q6 -6 12 0t12 0"/>
+              <path d="M226 196q6 -6 12 0t12 0"/>
+            </g>
+            <!-- the compass -->
+            <g class="estate-compass" transform="translate(240,-244)" aria-hidden="true">
+              <circle r="14"/>
+              <path d="M0 -14V14M-14 0H14"/>
+              <path d="M-7 -7L7 7M-7 7L7 -7" opacity="0.4"/>
+              <text text-anchor="middle" y="-19">N</text>
+            </g>
+            <!-- the wake and the boat: the exit is real -->
+            <path class="estate-wake" d="M-138 -218Q-160 -238 -186 -252" aria-hidden="true"/>
+            <g class="estate-boat" transform="translate(-212,-264)" aria-hidden="true">
+              <path d="M-11 5h22l-5 6h-12z"/>
+              <path d="M1 5V-10"/>
+              <path d="M1 -10l11 11H1z"/>
+            </g>
+            <!-- roads: every district connects to the owner -->
+            <g class="estate-road" aria-hidden="true">
+              <path d="M0 0V-180M0 0L104 -180M0 0L156 -90M0 0H208M0 0L156 90M0 0L104 180M0 0V180M0 0L-104 180M0 0L-156 90M0 0H-208M0 0L-156 -90M0 0L-104 -180"/>
+            </g>
+            <!-- the grounds: the first ring is simply yours to walk -->
+            <g class="estate-ground" aria-hidden="true">
+              <use href="#hexplot" transform="translate(104,0) scale(0.94)"/>
+              <use href="#hexplot" transform="translate(52,-90) scale(0.94)"/>
+              <use href="#hexplot" transform="translate(-52,-90) scale(0.94)"/>
+              <use href="#hexplot" transform="translate(-104,0) scale(0.94)"/>
+              <use href="#hexplot" transform="translate(-52,90) scale(0.94)"/>
+              <use href="#hexplot" transform="translate(52,90) scale(0.94)"/>
+            </g>
+            <!-- the twelve districts -->
+            <g class="estate-cell" data-own="1" transform="translate(0,-180)" tabindex="0" role="img" aria-label="01, your hardware: laptop, homelab, your VPS, your call" data-desc="01 · your hardware — laptop, homelab, your VPS, your call.">
+              <use href="#hexplot" class="plot"/>
+              <text class="num" text-anchor="middle" y="-34">01</text>
+              <g class="ic" transform="translate(0,-6)"><rect x="-11" y="-9" width="22" height="14" rx="1.5"/><path d="M-15 9h30"/></g>
+              <text class="lbl" text-anchor="middle" y="38">hardware</text>
+            </g>
+            <g class="estate-cell" data-own="2" transform="translate(104,-180)" tabindex="0" role="img" aria-label="02, your runtime: zero-dependency code you can actually audit" data-desc="02 · your runtime — zero-dependency code you can actually audit.">
+              <use href="#hexplot" class="plot"/>
+              <text class="num" text-anchor="middle" y="-34">02</text>
+              <g class="ic" transform="translate(0,-6)"><path d="M-8 -9l-6 9 6 9"/><path d="M8 -9l6 9-6 9"/><path d="M3 -11L-3 11"/></g>
+              <text class="lbl" text-anchor="middle" y="38">runtime</text>
+            </g>
+            <g class="estate-cell" data-own="3" transform="translate(156,-90)" tabindex="0" role="img" aria-label="03, your data: one folder; deleted means zeroed" data-desc="03 · your data — one folder; deleted means zeroed.">
+              <use href="#hexplot" class="plot"/>
+              <text class="num" text-anchor="middle" y="-34">03</text>
+              <g class="ic" transform="translate(0,-6)"><path d="M-12 -7h8l3 4h13v14h-24z"/><circle cx="1" cy="4" r="2.4"/></g>
+              <text class="lbl" text-anchor="middle" y="38">data</text>
+            </g>
+            <g class="estate-cell" data-own="4" transform="translate(208,0)" tabindex="0" role="img" aria-label="04, your AI's identity: its name and personas are your records" data-desc="04 · your AI's identity — its name and personas are your records.">
+              <use href="#hexplot" class="plot"/>
+              <text class="num" text-anchor="middle" y="-34">04</text>
+              <g class="ic" transform="translate(0,-6)"><path d="M-9 -12V12"/><path d="M-9 -10H9l-4 5 4 5H-9"/></g>
+              <text class="lbl" text-anchor="middle" y="38">identity</text>
+            </g>
+            <g class="estate-cell" data-own="5" transform="translate(156,90)" tabindex="0" role="img" aria-label="05, your models: local weights, swappable per persona" data-desc="05 · your models — local weights, swappable per persona.">
+              <use href="#hexplot" class="plot"/>
+              <text class="num" text-anchor="middle" y="-34">05</text>
+              <g class="ic" transform="translate(0,-6)"><path d="M-9 -3a9 9 0 0 1 15-4"/><path d="M6 -11v4h-4"/><path d="M9 3a9 9 0 0 1-15 4"/><path d="M-6 11v-4h4"/></g>
+              <text class="lbl" text-anchor="middle" y="38">models</text>
+            </g>
+            <g class="estate-cell" data-own="6" transform="translate(104,180)" tabindex="0" role="img" aria-label="06, your fine-tuning: your datasets, your consent, your trainer" data-desc="06 · your fine-tuning — your datasets, your consent, your trainer.">
+              <use href="#hexplot" class="plot"/>
+              <text class="num" text-anchor="middle" y="-34">06</text>
+              <g class="ic" transform="translate(0,-6)"><path d="M-8 -10v20M0 -10v20M8 -10v20"/><circle cx="-8" cy="3" r="2.6" class="fill"/><circle cx="0" cy="-4" r="2.6" class="fill"/><circle cx="8" cy="6" r="2.6" class="fill"/></g>
+              <text class="lbl" text-anchor="middle" y="38">fine-tuning</text>
+            </g>
+            <g class="estate-cell" data-own="7" transform="translate(0,180)" tabindex="0" role="img" aria-label="07, your memory: every fact with origin, source, and author" data-desc="07 · your memory — every fact with origin, source, and author.">
+              <use href="#hexplot" class="plot"/>
+              <text class="num" text-anchor="middle" y="-34">07</text>
+              <g class="ic" transform="translate(0,-6)"><rect x="-8" y="-11" width="16" height="22" rx="2"/><path d="M-4 -3h8M-4 1h8M-4 5h5"/><circle cx="0" cy="-7" r="1.6" class="fill"/></g>
+              <text class="lbl" text-anchor="middle" y="38">memory</text>
+            </g>
+            <g class="estate-cell" data-own="8" transform="translate(-104,180)" tabindex="0" role="img" aria-label="08, your cognition policy: choose which models may write memory" data-desc="08 · your cognition policy — choose which models may write memory.">
+              <use href="#hexplot" class="plot"/>
+              <text class="num" text-anchor="middle" y="-34">08</text>
+              <g class="ic" transform="translate(0,-6)"><path d="M0 -12l10 4v7c0 5-4 8-10 11-6-3-10-6-10-11v-7z"/><circle cx="0" cy="-1" r="2.4"/><path d="M0 1.5V5"/></g>
+              <text class="lbl" text-anchor="middle" y="38">cognition</text>
+            </g>
+            <g class="estate-cell" data-own="9" transform="translate(-156,90)" tabindex="0" role="img" aria-label="09, your knowledge: parsed on-machine, previewable retrieval" data-desc="09 · your knowledge — parsed on-machine, previewable retrieval.">
+              <use href="#hexplot" class="plot"/>
+              <text class="num" text-anchor="middle" y="-34">09</text>
+              <g class="ic" transform="translate(0,-6)"><path d="M0 -8c-4-3-8-3-12-2v16c4-1 8-1 12 2 4-3 8-3 12-2v-16c-4-1-8-1-12 2z"/><path d="M0 -8v16"/></g>
+              <text class="lbl" text-anchor="middle" y="38">knowledge</text>
+            </g>
+            <g class="estate-cell" data-own="10" transform="translate(-208,0)" tabindex="0" role="img" aria-label="10, your history: chats born here or imported, inbox included" data-desc="10 · your history — chats born here or imported, inbox included.">
+              <use href="#hexplot" class="plot"/>
+              <text class="num" text-anchor="middle" y="-34">10</text>
+              <g class="ic" transform="translate(0,-6)"><circle cx="0" cy="0" r="10"/><path d="M0 -5v5l4 3"/></g>
+              <text class="lbl" text-anchor="middle" y="38">history</text>
+            </g>
+            <g class="estate-cell" data-own="11" transform="translate(-156,-90)" tabindex="0" role="img" aria-label="11, your access: every channel reads a store only you hold" data-desc="11 · your access — every channel reads a store only you hold.">
+              <use href="#hexplot" class="plot"/>
+              <text class="num" text-anchor="middle" y="-34">11</text>
+              <g class="ic" transform="translate(0,-6)"><circle cx="0" cy="0" r="2" class="fill"/><path d="M0 -2v-8M2 1l7 5M-2 1l-7 5"/><circle cx="0" cy="-11" r="2.2"/><circle cx="10" cy="7" r="2.2"/><circle cx="-10" cy="7" r="2.2"/></g>
+              <text class="lbl" text-anchor="middle" y="38">access</text>
+            </g>
+            <g class="estate-cell exit-cell" data-own="12" transform="translate(-104,-180)" tabindex="0" role="img" aria-label="12, your exit: verified export, portfolio, provable deletion. The wall here is drawn open, and the boat is always waiting" data-desc="12 · your exit — verified export, portfolio, provable deletion. The wall is drawn open; the boat is always waiting.">
+              <use href="#hexplot" class="plot"/>
+              <text class="num" text-anchor="middle" y="-34">12</text>
+              <g class="ic" transform="translate(0,-6)"><path d="M-8 -11h9v22"/><path d="M-8 -11l7 3v19l-7-3z"/><path d="M4 0h9m0 0-3-3m3 3-3 3"/></g>
+              <text class="lbl" text-anchor="middle" y="38">exit</text>
+            </g>
+            <!-- the owner -->
+            <g class="estate-core" aria-hidden="true">
+              <use href="#hexplot" class="plot" transform="scale(0.8)"/>
+              <path class="mark" d="M0 -22l10.4 6v12L0 2l-10.4 -6v-12z" transform="translate(0,-2)"/>
+              <text text-anchor="middle" y="26">you</text>
+            </g>
+          </svg>
+          <p class="estate-caption" id="estate-caption">Everything inside the wall is yours. Touch a district — or note the open wall at 12, where the boat is always waiting.</p>
+        </div>
+        <ol class="fullmap-list">
+          <li data-own="1"><b>your hardware</b> — laptop, homelab, your VPS, your call</li>
+          <li data-own="2"><b>your runtime</b> — zero-dependency code you can actually audit</li>
+          <li data-own="3"><b>your data</b> — one folder; deleted means zeroed</li>
+          <li data-own="4"><b>your AI's identity</b> — its name and personas are your records</li>
+          <li data-own="5"><b>your models</b> — local weights, swappable per persona</li>
+          <li data-own="6"><b>your fine-tuning</b> — your datasets, your consent, your trainer</li>
+          <li data-own="7"><b>your memory</b> — every fact with origin, source, and author</li>
+          <li data-own="8"><b>your cognition policy</b> — choose which models may write memory</li>
+          <li data-own="9"><b>your knowledge</b> — parsed on-machine, previewable retrieval</li>
+          <li data-own="10"><b>your history</b> — chats born here or imported, inbox included</li>
+          <li data-own="11"><b>your access</b> — every channel reads a store only you hold</li>
+          <li data-own="12"><b>your exit</b> — verified export, portfolio, provable deletion</li>
+        </ol>
+      </div>
     </div>
   </div>
 </section>

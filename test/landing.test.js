@@ -76,6 +76,20 @@ test('the first-week story: exactly ten moments, each visual and each backed by 
   assert.match(script, /REDUCE\.matches[\s\S]{0,80}return/, 'reduced motion must skip the reveal entirely');
 });
 
+test('the ownership map is drawn, not just listed: twelve districts around one owner', () => {
+  assert.match(html, /id="estate-map"/, 'the estate map exists');
+  assert.equal((html.match(/class="estate-cell/g) ?? []).length, 12, 'twelve districts on the map');
+  assert.equal((html.match(/data-own="/g) ?? []).length, 24, 'each district pairs with exactly one legend row');
+  assert.match(html, /estate-core/, 'the owner sits at the center');
+  assert.match(html, /estate-boat/, 'the boat waits off the coast — the exit is drawn, not promised');
+  assert.match(html, /id="estate-caption"/, 'the caption narrates the hovered district');
+  for (const label of ['>hardware<', '>runtime<', '>identity<', '>cognition<', '>exit<']) {
+    assert.ok(html.includes(label), `district label ${label} on the map`);
+  }
+  assert.match(script, /estate-map/, 'cross-highlighting is wired');
+  assert.match(script, /dataset\.own/, 'district and legend light together');
+});
+
 test('the landing page carries the brand and both themes', () => {
   assert.match(html, /%23d97757/, 'favicon uses the terracotta brand mark');
   assert.match(html, /prefers-color-scheme: dark/);

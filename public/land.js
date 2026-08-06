@@ -239,6 +239,33 @@ const PROPS = [
   loop();
 })();
 
+/* ------- the estate map: twelve districts, one owner -------
+   Hovering or focusing a district lights it and its legend line together,
+   and the caption tells that district's line. Pure enhancement: with no
+   JavaScript the map, its labels, and the full legend are simply visible. */
+(() => {
+  const map = document.querySelector('#estate-map');
+  const caption = document.querySelector('#estate-caption');
+  if (!map || !caption) return;
+  const restingCaption = caption.textContent;
+  const paired = document.querySelectorAll('[data-own]');
+  const sync = (index, lit) => {
+    let desc = null;
+    for (const el of paired) {
+      if (el.dataset.own !== index) continue;
+      el.classList.toggle('lit', lit);
+      if (el.dataset.desc) desc = el.dataset.desc;
+    }
+    caption.textContent = lit && desc ? desc : restingCaption;
+  };
+  for (const el of paired) {
+    el.addEventListener('mouseenter', () => sync(el.dataset.own, true));
+    el.addEventListener('mouseleave', () => sync(el.dataset.own, false));
+    el.addEventListener('focus', () => sync(el.dataset.own, true));
+    el.addEventListener('blur', () => sync(el.dataset.own, false));
+  }
+})();
+
 /* ------- the first week: moments surface as the reader reaches them -------
    Opt-in reveal: only when JS runs AND motion is allowed does body get
    .story-anim (which is what hides unseen moments) — so with no JavaScript,
