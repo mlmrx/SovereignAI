@@ -345,12 +345,12 @@ const PROPS = [
   }
 })();
 
-/* ------- waitlist submission -------
+/* ------- access requests: the one door in -------
    Configuration comes from <meta> tags in land.html (this page's CSP forbids
    inline scripts, so window globals could never actually be set in
    production). waitlist-endpoint = any URL accepting a JSON POST
    (Formspree/Basin/a Worker); empty = mailto fallback to waitlist-email so
-   no interest is silently dropped. */
+   no request is silently dropped. */
 window.WAITLIST_ENDPOINT = document.querySelector('meta[name="waitlist-endpoint"]')?.content?.trim() || '';
 window.WAITLIST_EMAIL = document.querySelector('meta[name="waitlist-email"]')?.content?.trim() || 'hr@unifydynamics.com';
 (() => {
@@ -358,15 +358,26 @@ window.WAITLIST_EMAIL = document.querySelector('meta[name="waitlist-email"]')?.c
   const errorEl = $('#wl-error');
   const submitBtn = $('#wl-submit');
 
+  // The work-email gate: personal-mail domains are declined with an
+  // explanation and a direct escape hatch — validate people, never lose them.
+  const FREE_MAIL = [
+    'gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com', 'rocketmail.com',
+    'outlook.com', 'hotmail.com', 'live.com', 'msn.com', 'aol.com',
+    'icloud.com', 'me.com', 'mac.com', 'proton.me', 'protonmail.com', 'pm.me',
+    'gmx.com', 'gmx.net', 'mail.com', 'mail.ru', 'yandex.com', 'yandex.ru',
+    'zoho.com', 'fastmail.com', 'hey.com', 'tutanota.com', 'tuta.io',
+    'qq.com', '163.com', '126.com', 'naver.com', 'rediffmail.com',
+  ];
+
   function showDone(via) {
     const address = window.WAITLIST_EMAIL;
     form.innerHTML = `
       <div class="wl-done">
         <div class="big" aria-hidden="true">⬡</div>
-        <h3>${via === 'mail' ? 'One more step.' : "You're on the list."}</h3>
+        <h3>${via === 'mail' ? 'One more step.' : 'Request received.'}</h3>
         <p>${via === 'mail'
-          ? `Your email app should have opened with a pre-filled note — <b>send it</b> and you're on the list. If nothing opened, just email <a href="mailto:${address}">${address}</a> directly. You're not in the queue until that mail is sent — we'd rather say so than pretend.`
-          : 'We received your request. Watch your inbox as the managed edition opens up.'}</p>
+          ? `Your email app should have opened with a pre-filled request — <b>send it</b> and it's in. If nothing opened, just email <a href="mailto:${address}">${address}</a> directly. You're not in the queue until that mail is sent — we'd rather say so than pretend.`
+          : 'A person reads every request. Watch your inbox for your access grant.'}</p>
       </div>`;
   }
 
@@ -375,13 +386,20 @@ window.WAITLIST_EMAIL = document.querySelector('meta[name="waitlist-email"]')?.c
     errorEl.textContent = '';
     const email = $('#wl-email').value.trim();
     const name = $('#wl-name').value.trim();
+    const company = $('#wl-company').value.trim();
     const use = $('#wl-use').value;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       errorEl.textContent = 'Please enter a valid email address.';
       $('#wl-email').focus();
       return;
     }
-    const payload = { email, name, use, source: 'landing', at: new Date().toISOString() };
+    const domain = email.split('@')[1].toLowerCase();
+    if (FREE_MAIL.includes(domain)) {
+      errorEl.innerHTML = `That looks like a personal address — please use your work email so we can verify the request. No work email? Email <a href="mailto:${window.WAITLIST_EMAIL}">${window.WAITLIST_EMAIL}</a> directly and make your case; a person reads it either way.`;
+      $('#wl-email').focus();
+      return;
+    }
+    const payload = { email, name, company, use, source: 'landing-access', at: new Date().toISOString() };
 
     if (window.WAITLIST_ENDPOINT) {
       submitBtn.disabled = true;
@@ -399,14 +417,14 @@ window.WAITLIST_EMAIL = document.querySelector('meta[name="waitlist-email"]')?.c
         // fall through to the mail fallback rather than lose the lead
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Keep me posted ⬡';
+        submitBtn.textContent = 'Request access ⬡';
       }
     }
 
-    // Fallback: never drop interest — open a pre-filled email.
-    const subject = encodeURIComponent('SovereignAI early access');
+    // Fallback: never drop a request — open a pre-filled email.
+    const subject = encodeURIComponent('SovereignAI access request');
     const body = encodeURIComponent(
-      `I'd like early access to SovereignAI.\n\nEmail: ${email}\nName: ${name || '—'}\nUse: ${use || '—'}\n`
+      `I'm requesting access to SovereignAI.\n\nWork email: ${email}\nName: ${name || '—'}\nCompany: ${company || '—'}\nUse: ${use || '—'}\n`
     );
     window.location.href = `mailto:${window.WAITLIST_EMAIL}?subject=${subject}&body=${body}`;
     showDone('mail');

@@ -40,6 +40,23 @@ test('the waitlist form captures interest and never silently drops a lead', () =
   assert.match(script, /not in the queue until/i, 'the mailto fallback must not overclaim success');
 });
 
+test('private early access: every path funnels to a work-email-validated access request', () => {
+  assert.match(html, /id="access"/, 'the access-request band exists');
+  // The repo is private: public links to it would 404 for every visitor.
+  assert.doesNotMatch(html, /github(?:usercontent)?\.com\/mlmrx/, 'no links to the private repo on the public page');
+  assert.match(html, /btn-primary" href="#access"/, 'the hero primary CTA leads to the access request');
+  assert.match(html, /class="join" href="#access"/, 'the nav CTA leads to the access request');
+  assert.match(html, /id="wl-company"/, 'company is captured (optional)');
+  // The work-email gate: personal domains are declined with an explanation
+  // and a direct escape hatch, so validation never silently drops a lead.
+  assert.match(script, /FREE_MAIL/, 'a personal-mail domain list gates the form');
+  for (const domain of ["'gmail.com'", "'outlook.com'", "'icloud.com'", "'proton.me'"]) {
+    assert.ok(script.includes(domain), `${domain} must be treated as personal`);
+  }
+  assert.match(script, /work email so we can verify/i, 'the decline explains itself');
+  assert.match(script, /No work email\?/i, 'personal-address requesters get a direct path, never a dead end');
+});
+
 test('the first-week story: exactly ten moments, each visual and each backed by a shipped receipt', () => {
   assert.match(html, /id="week"/, 'the story band exists');
   assert.equal((html.match(/class="moment"/g) ?? []).length, 10, 'the story tells exactly ten unlocks');

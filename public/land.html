@@ -362,7 +362,7 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
       <a class="navlink" href="#value">The layers</a>
       <a class="navlink" href="#exit">The exit path</a>
       <a class="navlink" href="#install">Install</a>
-      <a class="join" href="#waitlist">Stay close</a>
+      <a class="join" href="#access">Request access</a>
       <div class="theme-pick">
         <button class="theme-btn" id="theme-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Choose a color theme">theme</button>
         <div class="theme-menu" id="theme-menu" hidden role="menu" aria-label="Color themes — yours to choose, remembered only on this device">
@@ -385,7 +385,7 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
     <p class="lede">One AI that runs on your machine, thinks with models you choose, remembers with receipts,
       and proves you can leave. No cloud required. No account. Nothing to trust but code you can read.</p>
     <div class="hero-cta">
-      <a class="btn-primary" href="#install">Install in one minute <span aria-hidden="true">→</span></a>
+      <a class="btn-primary" href="#access">Request early access <span aria-hidden="true">→</span></a>
       <a class="btn-ghost" href="#week">Read your first week</a>
     </div>
     <p class="hero-note">⬡ Zero-dependency core · fair-source licensed, MIT after two years · your data never trains anyone's model.</p>
@@ -596,8 +596,8 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
       <p class="eyebrow">What you get</p>
       <h2 class="serif">Five layers. All yours.</h2>
       <p>Owning an AI means owning the stack it stands on. Each layer below is a concrete guarantee, audited claim by
-        claim in our public <a href="https://github.com/mlmrx/SovereignAI/blob/main/docs/SOVEREIGNTY.md">sovereignty ledger</a> —
-        where an unknown is marked unknown, never rounded up.</p>
+        claim in the sovereignty ledger that ships with the repo — where an unknown is marked unknown,
+        never rounded up.</p>
     </div>
     <div class="ledger" id="ledger"></div>
 
@@ -644,23 +644,25 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
 <section class="band" id="install">
   <div class="wrap">
     <div class="band-head">
-      <p class="eyebrow">Available today · free to self-host · fair-source licensed</p>
+      <p class="eyebrow">Private early access · fair-source licensed</p>
       <h2 class="serif">Three ways in. All of them yours.</h2>
-      <p>No waitlist for self-hosting — download it, run it, own it. First launch opens a guided setup;
-        drop in a ChatGPT or Claude export and your AI knows you within minutes.</p>
+      <p>We're in a gated early-access phase: <a href="#access">request access with your work email</a> and
+        we send the build, the docs, and your onboarding path. Once it's yours, first launch opens a guided
+        setup — drop in a ChatGPT or Claude export and your AI knows you within minutes. The gate is on the
+        door, not in the product: nothing you receive ever phones home to ask permission.</p>
     </div>
     <div class="tiers">
       <div class="tier feature">
         <span class="name">Single binary</span>
         <span class="who">No Node, no installer</span>
-        <p>One file for Windows, macOS, or Linux from <a href="https://github.com/mlmrx/SovereignAI/releases">GitHub Releases</a> —
-          runtime, app, and UI inside. Check it against the release's <code>SHA256SUMS.txt</code>, then run it.</p>
+        <p>One file for Windows, macOS, or Linux, delivered with your access grant — runtime, app, and UI
+          inside. Check it against the release's <code>SHA256SUMS.txt</code>, then run it.</p>
       </div>
       <div class="tier">
         <span class="name">One-line install</span>
         <span class="who">Script it</span>
-        <p><code>irm https://raw.githubusercontent.com/mlmrx/SovereignAI/main/scripts/install.ps1 | iex</code> on Windows,
-          or the <code>curl … | sh</code> equivalent on macOS and Linux. Docker Compose if you prefer containers.</p>
+        <p>A one-line installer — <code>irm … | iex</code> on Windows, <code>curl … | sh</code> on macOS and
+          Linux — with the exact command in your welcome note. Docker Compose if you prefer containers.</p>
       </div>
       <div class="tier">
         <span class="name">Any box you own</span>
@@ -669,22 +671,23 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
           and Docker — health-checked upgrades, export-to-owner, verifiable delete.</p>
       </div>
     </div>
-    <p class="tiers-note">Prefer reading before running? <a href="https://github.com/mlmrx/SovereignAI">Every line of the engine is public</a> —
-      zero runtime dependencies means the audit is actually finishable.</p>
+    <p class="tiers-note">Prefer reading before running? Say so in your <a href="#access">request</a> — source
+      access comes with the grant, and zero runtime dependencies means the audit is actually finishable.</p>
   </div>
 </section>
 
-<!-- waitlist -->
-<section class="waitlist" id="waitlist">
+<!-- access requests: the one door in, work-email validated -->
+<section class="waitlist" id="access">
   <div class="wrap band">
     <div class="wl-inner">
       <div class="wl-copy">
-        <p class="eyebrow" style="color: var(--on-terra); letter-spacing: 0.22em; opacity: 0.72;">Optional · self-hosting needs no permission</p>
-        <h2 class="serif">Want it run <em>for</em> you? That edition is coming.</h2>
-        <p>Everything above is free and yours today. A managed edition — we operate the instance, you keep the boundary,
-          the export, and the exit — is on the way for teams that want the sovereignty without the ops. Leave an address
-          and we'll tell you when it opens.</p>
-        <p class="small">No spam, no reselling your address. You can leave this list as easily as you can leave the product —
+        <p class="eyebrow" style="color: var(--on-terra); letter-spacing: 0.22em; opacity: 0.72;">Private early access · every request read by a person</p>
+        <h2 class="serif">Request <em>access</em>.</h2>
+        <p>Tell us who you are and what you'd own with it. We review every request personally and reply with
+          the build, the docs, and your onboarding path — self-hosted on your machine, or the managed edition
+          if you'd rather we run the ops while you keep the boundary, the export, and the exit.</p>
+        <p class="small">Work email required — it's how we verify a request without asking for anything else.
+          No spam, no reselling your address. You'll be able to leave the product as easily as this list —
           which is the whole point.</p>
       </div>
       <form class="wl-form" id="wl-form" novalidate>
@@ -697,6 +700,10 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
           <input type="text" id="wl-name" name="name" autocomplete="name" placeholder="Jordan Rivera" />
         </div>
         <div class="wl-field">
+          <label for="wl-company">Company <span style="text-transform:none; letter-spacing:0">(optional)</span></label>
+          <input type="text" id="wl-company" name="company" autocomplete="organization" placeholder="Rivera & Partners" />
+        </div>
+        <div class="wl-field">
           <label for="wl-use">What would you use it for?</label>
           <select id="wl-use" name="use">
             <option value="">Choose one…</option>
@@ -706,12 +713,13 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
             <option>Software agency / client context</option>
             <option>Executive / investment research</option>
             <option>Personal / self-hosting</option>
+            <option>Managed edition — run it for me</option>
             <option>Something else</option>
           </select>
         </div>
-        <button type="submit" id="wl-submit">Keep me posted ⬡</button>
+        <button type="submit" id="wl-submit">Request access ⬡</button>
         <p class="wl-error" id="wl-error" role="alert"></p>
-        <p class="wl-consent">By joining you agree we may email you about early access. We store only what you enter here.</p>
+        <p class="wl-consent">By requesting you agree we may email you about your access. We store only what you enter here.</p>
       </form>
     </div>
   </div>
@@ -724,7 +732,7 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
       <a href="#value">The layers</a>
       <a href="#exit">Exit path</a>
       <a href="#install">Install</a>
-      <a href="#waitlist">Stay close</a>
+      <a href="#access">Request access</a>
     </nav>
   </div>
   <div class="wrap">
