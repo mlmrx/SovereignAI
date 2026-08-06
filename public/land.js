@@ -239,6 +239,25 @@ const PROPS = [
   loop();
 })();
 
+/* ------- the first week: moments surface as the reader reaches them -------
+   Opt-in reveal: only when JS runs AND motion is allowed does body get
+   .story-anim (which is what hides unseen moments) — so with no JavaScript,
+   a blocked observer, or reduced motion, the whole story is simply visible. */
+(() => {
+  const moments = document.querySelectorAll('#week .moment');
+  if (!moments.length || REDUCE.matches || !('IntersectionObserver' in window)) return;
+  document.body.classList.add('story-anim');
+  const io = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('seen');
+        io.unobserve(entry.target);
+      }
+    }
+  }, { threshold: 0.2, rootMargin: '0px 0px -8% 0px' });
+  moments.forEach((moment) => io.observe(moment));
+})();
+
 /* ------- the three proofs: operate the product on the landing page ------- */
 (() => {
   /* Strike a memory — deletion you can feel */

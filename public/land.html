@@ -174,6 +174,51 @@ button { font: inherit; cursor: pointer; }
   .contra-cell + .contra-cell { border-left: none; border-top: 1px solid var(--line); }
 }
 
+/* ---------- the first week: ten unlocks, told as a story ----------
+   A journal, not a feature grid: day chips on a spine, one moment per
+   unlock, and under every moment a receipt naming the shipped mechanism.
+   Scroll-reveal is opt-in via body.story-anim (JS + motion allowed only),
+   so with no JavaScript the whole story is simply readable. */
+.week-list { list-style: none; margin: 0; padding: 0; }
+.moment { display: grid; grid-template-columns: 92px 30px 1fr; gap: 0 12px; padding: 0 0 clamp(24px, 4vw, 38px); }
+.m-when { text-align: right; padding-top: 4px; }
+.m-num { display: block; font-size: 0.6rem; letter-spacing: 0.16em; color: var(--dim); }
+.m-day { display: block; font-weight: 700; font-size: 0.8rem; color: var(--ink); margin-top: 2px; }
+.m-time { display: block; font-size: 0.68rem; color: var(--dim); }
+.m-node { position: relative; text-align: center; color: var(--terra); font-size: 0.82rem; line-height: 1.6; }
+.m-node::before { content: ""; position: absolute; left: 50%; top: 26px; bottom: -6px; width: 1px; background: var(--line); }
+.moment:last-child .m-node::before { display: none; }
+.m-body {
+  display: grid; grid-template-columns: 1fr 52px; gap: 4px 18px; align-items: start;
+  background: var(--raise); border: 1px solid var(--edge); border-radius: 14px;
+  padding: 18px 20px 16px; transition: border-color 200ms ease, transform 200ms ease;
+}
+.m-body:hover { border-color: var(--terra); }
+.m-ic { grid-column: 2; grid-row: 1 / span 3; width: 46px; height: 46px; color: var(--terra); margin-top: 2px; }
+.m-ic path, .m-ic circle, .m-ic rect, .m-ic ellipse { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.m-ic .fill { fill: currentColor; stroke: none; }
+.m-body h3 { grid-column: 1; margin: 0; font-size: 1.04rem; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
+.m-body > p { grid-column: 1; margin: 0; font-size: 0.88rem; color: var(--ink-2); line-height: 1.62; }
+.m-receipt { grid-column: 1; margin: 0; padding-top: 7px; font-size: 0.7rem; letter-spacing: 0.05em; color: var(--terra); }
+.m-receipt code { color: inherit; }
+.m-receipt a { color: inherit; }
+.week-kicker { margin: 6px 0 0 134px; font-size: 0.92rem; color: var(--ink-2); max-width: 56ch; line-height: 1.65; }
+.week-kicker a { color: var(--terra-hot); text-decoration: none; border-bottom: 1px solid var(--line); }
+.week-kicker a:hover { border-color: var(--terra); }
+body.story-anim .moment { opacity: 0; transform: translateY(16px); transition: opacity 600ms ease, transform 600ms ease; }
+body.story-anim .moment.seen { opacity: 1; transform: none; }
+@media (max-width: 720px) {
+  .moment { grid-template-columns: 24px 1fr; gap: 0 10px; }
+  .m-when { grid-column: 2; grid-row: 1; display: flex; gap: 10px; align-items: baseline; text-align: left; padding: 0 0 6px; }
+  .m-node { grid-column: 1; grid-row: 1 / span 2; }
+  .m-body { grid-column: 2; grid-row: 2; grid-template-columns: 1fr 40px; }
+  .m-ic { width: 36px; height: 36px; }
+  .week-kicker { margin-left: 34px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.story-anim .moment { opacity: 1; transform: none; transition: none; }
+}
+
 /* ---------- hero intro orchestration ----------
    Headline is plain HTML: fully visible with no JS. The intro classes only
    exist while the shard-convergence act plays, then hand back the stage. */
@@ -254,6 +299,10 @@ section.band { padding: clamp(56px, 10vh, 110px) 0; }
 .tier .name { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--terra); }
 .tier .who { font-size: 0.94rem; font-weight: 600; }
 .tier p { margin: 0; font-size: 0.82rem; color: var(--dim); line-height: 1.55; }
+/* the one-line install URL is unbreakable text: without this it forces a
+   ~570px min-content width and pushes the whole page into horizontal
+   overflow on phones (icons and card edges cut off off-screen) */
+.tier code { overflow-wrap: anywhere; }
 .tiers-note { margin-top: 18px; font-size: 0.76rem; color: var(--dim); letter-spacing: 0.02em; }
 
 /* ---------- waitlist ---------- */
@@ -308,6 +357,7 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
       SovereignAI
     </a>
     <nav>
+      <a class="navlink" href="#week">First week</a>
       <a class="navlink" href="#proof">Proof</a>
       <a class="navlink" href="#value">The layers</a>
       <a class="navlink" href="#exit">The exit path</a>
@@ -336,7 +386,7 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
       and proves you can leave. No cloud required. No account. Nothing to trust but code you can read.</p>
     <div class="hero-cta">
       <a class="btn-primary" href="#install">Install in one minute <span aria-hidden="true">→</span></a>
-      <a class="btn-ghost" href="#value">See the five layers</a>
+      <a class="btn-ghost" href="#week">Read your first week</a>
     </div>
     <p class="hero-note">⬡ Zero-dependency core · fair-source licensed, MIT after two years · your data never trains anyone's model.</p>
   </div>
@@ -359,6 +409,146 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
           here; it's an <b>exit path we test</b>.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- the first week: ten unlocks, told as one story -->
+<section class="band" id="week">
+  <div class="wrap">
+    <div class="band-head">
+      <p class="eyebrow">Ten unlocks · one first week</p>
+      <h2 class="serif">The first week it's actually yours.</h2>
+      <p>Told in the second person, because it will be you. The week is an illustration —
+        the receipts are not: every mechanism named under a moment ships today, none of it is roadmap.</p>
+    </div>
+    <ol class="week-list">
+
+      <li class="moment">
+        <div class="m-when"><span class="m-num">01</span><span class="m-day">Saturday</span><span class="m-time">9:12 am</span></div>
+        <div class="m-node" aria-hidden="true">⬡</div>
+        <div class="m-body">
+          <svg class="m-ic" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 5.5 39.5 14.5v19L24 42.5 8.5 33.5v-19z"/><path d="M24 16v8"/><path d="M18.2 20a7.6 7.6 0 1 0 11.6 0"/></svg>
+          <h3>It boots. Nobody asks for your email.</h3>
+          <p>One downloaded file is the whole thing — runtime, app, interface. It asks what to call itself
+            and gets to work. There's no account screen, because there's no one between you and it.</p>
+          <p class="m-receipt">⬡ single binary · zero runtime dependencies</p>
+        </div>
+      </li>
+
+      <li class="moment">
+        <div class="m-when"><span class="m-num">02</span><span class="m-day">Saturday</span><span class="m-time">9:31 am</span></div>
+        <div class="m-node" aria-hidden="true">⬡</div>
+        <div class="m-body">
+          <svg class="m-ic" viewBox="0 0 48 48" aria-hidden="true"><path d="M10 26h28v14H10z"/><path d="M10 26l5-7h18l5 7"/><path d="M24 6v12m0 0-4.5-4.5M24 18l4.5-4.5"/></svg>
+          <h3>You move four years of your old AI life in.</h3>
+          <p>Your ChatGPT and Claude exports drop straight in. It reads them on your machine and distills
+            what matters into memory — by the second coffee it greets you with what it learned, citing
+            the conversation that taught it each fact.</p>
+          <p class="m-receipt">⬡ <code>sovereign import-chat --distill</code></p>
+        </div>
+      </li>
+
+      <li class="moment">
+        <div class="m-when"><span class="m-num">03</span><span class="m-day">Sunday</span><span class="m-time">4:05 pm</span></div>
+        <div class="m-node" aria-hidden="true">⬡</div>
+        <div class="m-body">
+          <svg class="m-ic" viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="12" width="26" height="19" rx="2"/><path d="M6 14.5 19 24l13-9.5"/><circle cx="33" cy="30" r="6.5"/><path d="M38 35l6 6"/></svg>
+          <h3>Your inbox confesses.</h3>
+          <p>You feed it a mail export. Out come the subscriptions, renewals, and receipts hiding in
+            there — including the ones you forgot you're paying for. Parsed locally, nothing uploaded,
+            and every finding links the email that proves it.</p>
+          <p class="m-receipt">⬡ <code>sovereign import-email</code> · subscription audit · renewals radar</p>
+        </div>
+      </li>
+
+      <li class="moment">
+        <div class="m-when"><span class="m-num">04</span><span class="m-day">Monday</span><span class="m-time">10:40 am</span></div>
+        <div class="m-node" aria-hidden="true">⬡</div>
+        <div class="m-body">
+          <svg class="m-ic" viewBox="0 0 48 48" aria-hidden="true"><path d="M13 6h15l7 7v29H13z"/><path d="M28 6v7h7"/><path d="M18 20h12M18 26h12M18 32h7"/><path d="M29 35l3 3 5.5-5.5"/></svg>
+          <h3>A forty-page contract answers in seconds.</h3>
+          <p>The PDF goes in; you ask what you actually agreed to. Every answer arrives with the source
+            passage attached, so you're checking a claim, not trusting a vibe.</p>
+          <p class="m-receipt">⬡ local knowledge base · sources attached to every answer</p>
+        </div>
+      </li>
+
+      <li class="moment">
+        <div class="m-when"><span class="m-num">05</span><span class="m-day">Tuesday</span><span class="m-time">2:15 pm</span></div>
+        <div class="m-node" aria-hidden="true">⬡</div>
+        <div class="m-body">
+          <svg class="m-ic" viewBox="0 0 48 48" aria-hidden="true"><path d="M15 21a5 5 0 0 1 5-7 6 6 0 0 1 11 1.5A4.75 4.75 0 0 1 32.5 25H17a4.5 4.5 0 0 1-2-4z"/><path d="M15 41v-7.5L24 26l9 7.5V41z"/><circle cx="24" cy="35" r="1.7"/><path d="M24 36.7V39"/></svg>
+          <h3>You rent a frontier brain. It doesn't get to keep you.</h3>
+          <p>A hard problem earns a big rented model for the afternoon — while the only thing allowed to
+            write your memory is a small local model you own. The receipts name which model wrote what.</p>
+          <p class="m-receipt">⬡ the “cognition stays home” switch · the cognition role</p>
+        </div>
+      </li>
+
+      <li class="moment">
+        <div class="m-when"><span class="m-num">06</span><span class="m-day">Wednesday</span><span class="m-time">30,000 ft</span></div>
+        <div class="m-node" aria-hidden="true">⬡</div>
+        <div class="m-body">
+          <svg class="m-ic" viewBox="0 0 48 48" aria-hidden="true"><path d="M9 17a21 21 0 0 1 21.5-4.6"/><path d="M14 23a14 14 0 0 1 10.7-3.9"/><path d="M8 10l26 22"/><path class="fill" d="M36 28l6 3.5v7L36 42l-6-3.5v-7z"/></svg>
+          <h3>Airplane mode changes nothing.</h3>
+          <p>Chat, memory, documents, search — all of it runs with the Wi-Fi off, because all of it lives
+            with you. The passenger next to you is arguing with a spinner.</p>
+          <p class="m-receipt">⬡ local open weights · offline BM25 retrieval</p>
+        </div>
+      </li>
+
+      <li class="moment">
+        <div class="m-when"><span class="m-num">07</span><span class="m-day">Thursday</span><span class="m-time">11:20 am</span></div>
+        <div class="m-node" aria-hidden="true">⬡</div>
+        <div class="m-body">
+          <svg class="m-ic" viewBox="0 0 48 48" aria-hidden="true"><path d="M15 13 6.5 24 15 35"/><path d="M33 13 41.5 24 33 35"/><path d="M24 17.5l5.6 3.25v6.5L24 30.5l-5.6-3.25v-6.5z"/></svg>
+          <h3>It shows up inside your editor.</h3>
+          <p>The same memory and knowledge answer in VS Code, JetBrains, and your browser — any assistant
+            that speaks MCP reads the one store only you hold, instead of keeping its own copy of you.</p>
+          <p class="m-receipt">⬡ <code>sovereign mcp</code> · VS Code, JetBrains &amp; browser extensions</p>
+        </div>
+      </li>
+
+      <li class="moment">
+        <div class="m-when"><span class="m-num">08</span><span class="m-day">Thursday</span><span class="m-time">11:58 pm</span></div>
+        <div class="m-node" aria-hidden="true">⬡</div>
+        <div class="m-body">
+          <svg class="m-ic" viewBox="0 0 48 48" aria-hidden="true"><path d="M13 15h22l-1.8 26H14.8z"/><path d="M9 15h30"/><path d="M19 15a5 5 0 0 1 10 0"/><ellipse cx="24" cy="28" rx="4" ry="6.5"/></svg>
+          <h3>You strike a memory. It's actually gone.</h3>
+          <p>Not hidden, not flagged deleted in someone's database — overwritten on your own disk, bytes
+            zeroed. Some things shouldn't be remembered, even by you.</p>
+          <p class="m-receipt">⬡ SQLite <code>secure_delete</code> · <a href="#proof">playable below</a></p>
+        </div>
+      </li>
+
+      <li class="moment">
+        <div class="m-when"><span class="m-num">09</span><span class="m-day">Friday</span><span class="m-time">6:30 pm</span></div>
+        <div class="m-node" aria-hidden="true">⬡</div>
+        <div class="m-body">
+          <svg class="m-ic" viewBox="0 0 48 48" aria-hidden="true"><path d="M13 19a12 12 0 0 1 20.5-3.5"/><path d="M33.5 9.5v6h-6"/><path d="M35 29a12 12 0 0 1-20.5 3.5"/><path d="M14.5 38.5v-6h6"/><path d="M24 19.5l4.3 2.5v5L24 29.5l-4.3-2.5v-5z"/></svg>
+          <h3>A better model drops. You swap brains, keep the mind.</h3>
+          <p>New open weights land in the news; minutes later they're serving your chat. Your memory,
+            personas, and documents don't move an inch — and every reply names the exact weights that
+            produced it.</p>
+          <p class="m-receipt">⬡ per-persona models · weight-digest receipts on every reply</p>
+        </div>
+      </li>
+
+      <li class="moment">
+        <div class="m-when"><span class="m-num">10</span><span class="m-day">Saturday</span><span class="m-time">one week in</span></div>
+        <div class="m-node" aria-hidden="true">⬡</div>
+        <div class="m-body">
+          <svg class="m-ic" viewBox="0 0 48 48" aria-hidden="true"><path d="M17 7h15v34"/><path d="M17 7l9 4v32l-9-4z"/><circle cx="23" cy="26" r="1.3"/><path d="M32 24h11m0 0-4.2-4.2M43 24l-4.2 4.2"/></svg>
+          <h3>You run the exit drill you'll never need.</h3>
+          <p>One command folds everything into a checksummed file; another proves it intact without even
+            importing it. You're not staying because leaving is hard. You're staying because it isn't.</p>
+          <p class="m-receipt">⬡ <code>sovereign export --encrypt</code> · <code>sovereign verify</code></p>
+        </div>
+      </li>
+
+    </ol>
+    <p class="week-kicker">That's week one. The years after are the point — memory that compounds somewhere
+      no vendor can reach it. <a href="#proof">Don't take the story's word either — press the buttons ↓</a></p>
   </div>
 </section>
 

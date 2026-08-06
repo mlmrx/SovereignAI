@@ -40,6 +40,25 @@ test('the waitlist form captures interest and never silently drops a lead', () =
   assert.match(script, /not in the queue until/i, 'the mailto fallback must not overclaim success');
 });
 
+test('the first-week story: exactly ten moments, each visual and each backed by a shipped receipt', () => {
+  assert.match(html, /id="week"/, 'the story band exists');
+  assert.equal((html.match(/class="moment"/g) ?? []).length, 10, 'the story tells exactly ten unlocks');
+  assert.equal((html.match(/class="m-ic"/g) ?? []).length, 10, 'every moment carries a pictogram');
+  assert.equal((html.match(/class="m-receipt"/g) ?? []).length, 10, 'every moment names its shipped mechanism');
+  // Receipts must name real, shipped mechanisms — the credibility contract of the band.
+  for (const receipt of [
+    'import-chat --distill', 'import-email', 'secure_delete',
+    'sovereign export --encrypt', 'sovereign verify', 'sovereign mcp',
+    'cognition stays home', 'weight-digest receipts', 'BM25',
+  ]) {
+    assert.ok(html.includes(receipt), `a receipt must name: ${receipt}`);
+  }
+  // Reveal is opt-in: no JS or reduced motion must leave the story fully readable.
+  assert.match(script, /story-anim/, 'reveal styles are gated behind a JS-added class');
+  assert.match(script, /IntersectionObserver/, 'moments reveal as the reader reaches them');
+  assert.match(script, /REDUCE\.matches[\s\S]{0,80}return/, 'reduced motion must skip the reveal entirely');
+});
+
 test('the landing page carries the brand and both themes', () => {
   assert.match(html, /%23d97757/, 'favicon uses the terracotta brand mark');
   assert.match(html, /prefers-color-scheme: dark/);
