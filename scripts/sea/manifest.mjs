@@ -52,15 +52,25 @@ export function collectModuleGraph(repoRoot, entry = SEA_ENTRY) {
   return [...keys].sort();
 }
 
+// public/ doubles as the deploy root for the mysovereign.ai landing site.
+// Deploy scaffolding is not part of the app and must never be embedded in a
+// binary; dotfiles are excluded wholesale so a stray .vercel/ or .env.local
+// dropped by deploy tooling can never ship.
+const PUBLIC_SCAFFOLDING_ROOTS = new Set(['api', 'vercel.json']);
+export function isPublicUiPath(rel) {
+  const segments = rel.split('/');
+  if (segments.some((segment) => segment.startsWith('.'))) return false;
+  return !PUBLIC_SCAFFOLDING_ROOTS.has(segments[0]);
+}
+
 export function collectPublicFiles(repoRoot) {
   const publicDir = path.join(path.resolve(repoRoot), 'public');
   return fs
     .readdirSync(publicDir, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())
-    .map((entry) => {
-      const rel = path.relative(publicDir, path.join(entry.parentPath ?? entry.path, entry.name));
-      return `public/${rel.split(path.sep).join('/')}`;
-    })
+    .map((entry) => path.relative(publicDir, path.join(entry.parentPath ?? entry.path, entry.name)).split(path.sep).join('/'))
+    .filter(isPublicUiPath)
+    .map((rel) => `public/${rel}`)
     .sort();
 }
 

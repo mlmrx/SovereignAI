@@ -21,10 +21,13 @@ const PUBLIC_DIR = (() => {
 // Accepts only plain forward-slash relative paths; anything empty, absolute,
 // dotted, or platform-tricky (backslash, NUL, drive colon) is rejected so the
 // URL pathname can be used directly without a separate traversal guard.
+// Dot-leading segments are rejected wholesale: public/ doubles as the landing
+// deploy root, and tooling drops files like .vercel/ and .env.local there —
+// hidden files must never be servable.
 export function normalizeRelPath(rel) {
   if (typeof rel !== 'string' || rel === '' || rel.includes('\\') || rel.includes('\0') || rel.includes(':')) return null;
   const segments = rel.split('/');
-  if (segments.some((segment) => segment === '' || segment === '.' || segment === '..')) return null;
+  if (segments.some((segment) => segment === '' || segment.startsWith('.'))) return null;
   return segments.join('/');
 }
 

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { collectSeaAssets, collectModuleGraph, moduleSpecifiers, SEA_ENTRY } from '../scripts/sea/manifest.mjs';
+import { collectSeaAssets, collectModuleGraph, isPublicUiPath, moduleSpecifiers, SEA_ENTRY } from '../scripts/sea/manifest.mjs';
 import { readPublicFile, normalizeRelPath, SEA_ASSET_READER } from '../src/static-assets.js';
 import { VERSION } from '../src/config.js';
 
@@ -27,12 +27,23 @@ test('SEA manifest embeds the full module graph and the entire web UI', () => {
     assert.ok(assets[required], `missing required asset ${required}`);
   }
   for (const uiFile of fs.readdirSync(path.join(repo, 'public'))) {
+    if (!isPublicUiPath(uiFile)) continue; // landing-deploy scaffolding, not app UI
     assert.ok(assets[`public/${uiFile}`], `web UI file public/${uiFile} must be embedded`);
   }
   for (const [key, file] of Object.entries(assets)) {
     assert.ok(fs.statSync(file).isFile(), `asset ${key} must resolve to a file`);
     assert.doesNotMatch(key, /\\|^\/|^[A-Za-z]:/, `asset key ${key} must be a posix-relative path`);
+    if (key.startsWith('public/')) {
+      assert.ok(isPublicUiPath(key.slice('public/'.length)), `deploy scaffolding ${key} must not be embedded`);
+    }
   }
+});
+
+test('SEA embed and the static server both refuse deploy scaffolding and hidden files', () => {
+  for (const scaffolding of ['.vercel/project.json', '.vercelignore', '.env.local', '.gitignore', 'vercel.json', 'api/access-request.js']) {
+    assert.equal(isPublicUiPath(scaffolding), false, `${scaffolding} must not count as web UI`);
+  }
+  assert.ok(isPublicUiPath('land.html') && isPublicUiPath('index.html'), 'the real UI must still count');
 });
 
 test('SEA module graph walker sees every import form and rejects bad specifiers', () => {
@@ -79,7 +90,7 @@ test('SEA binary keeps the installed-launcher stable home unless overridden', ()
 test('static assets read from disk, reject traversal, and prefer an installed SEA reader', () => {
   assert.equal(normalizeRelPath('style.css'), 'style.css');
   assert.equal(normalizeRelPath('nested/app.js'), 'nested/app.js');
-  for (const bad of ['', '../src/config.js', 'a/../b', './x', 'a//b', 'a\\b', 'c:/windows', 'nul\0byte', '/etc/passwd']) {
+  for (const bad of ['', '../src/config.js', 'a/../b', './x', 'a//b', 'a\\b', 'c:/windows', 'nul\0byte', '/etc/passwd', '.env.local', '.vercel/project.json', 'a/.hidden']) {
     assert.equal(normalizeRelPath(bad), null, `"${bad}" must be rejected`);
   }
 
