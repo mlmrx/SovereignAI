@@ -1,0 +1,8 @@
+# The public web deploy is the landing page only. Everything else in this
+# directory is the app UI, served by the local sovereign server — never hosted.
+*
+!land.html
+!land.js
+!vercel.json
+!api
+!api/**

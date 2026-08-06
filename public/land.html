@@ -7,11 +7,12 @@
 <meta name="description" content="One AI that runs on your machine, thinks with models you choose, remembers with receipts, and proves you can leave. Fair-source code, zero dependencies, no cloud required." />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
 <!-- Waitlist wiring (CSP forbids inline scripts, so configuration lives here):
-     set content of waitlist-endpoint to any URL accepting a JSON POST
-     (Formspree, Basin, a Cloudflare Worker) and submissions post there.
-     Empty endpoint = mailto fallback to waitlist-email. -->
-<meta name="waitlist-endpoint" content="" />
-<meta name="waitlist-email" content="hr@unifydynamics.com" />
+     waitlist-endpoint is any URL accepting a JSON POST — in production it's
+     our own /api/access-request (Vercel function beside this file, delivers
+     via Resend). If the endpoint is empty or the POST fails, land.js falls
+     back to a mailto: to waitlist-email — a request is never dropped. -->
+<meta name="waitlist-endpoint" content="/api/access-request" />
+<meta name="waitlist-email" content="hello@mysovereign.ai" />
 <style>
 /* SovereignAI landing — the thesis is ownership, so the page argues it —
    and choosing your own look is part of the argument. Three named themes,
@@ -155,6 +156,16 @@ button { font: inherit; cursor: pointer; }
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px var(--glow); }
 .btn-ghost { color: var(--ink); text-decoration: none; font-size: 0.86rem; border-bottom: 1px solid var(--line); padding-bottom: 3px; }
 .btn-ghost:hover { color: var(--terra); border-color: var(--terra); }
+/* The om: replay the arrival, with sound. A quiet chip — the act is the loud part. */
+.btn-om {
+  background: none; border: 1px solid var(--line); color: var(--dim); border-radius: 999px;
+  padding: 8px 16px; font: inherit; font-size: 0.8rem; letter-spacing: 0.14em; cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+.btn-om:hover { color: var(--terra); border-color: var(--terra); }
+.btn-om.playing { color: var(--terra); border-color: var(--terra); animation: om-breathe 2.6s ease-in-out infinite; }
+@keyframes om-breathe { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) { .btn-om.playing { animation: none; } }
 .hero-note { margin-top: 20px; font-size: 0.74rem; color: var(--dim); letter-spacing: 0.03em; }
 @media (prefers-reduced-motion: reduce) { .btn-primary:hover { transform: none; } }
 
@@ -367,6 +378,8 @@ section.band { padding: clamp(56px, 10vh, 110px) 0; }
 .wl-done h3 { margin: 8px 0 6px; font-size: 1.1rem; }
 .wl-done p { margin: 0; font-size: 0.86rem; color: var(--dim); line-height: 1.55; }
 .wl-error { font-size: 0.78rem; color: var(--warn); min-height: 1.2em; }
+/* Honeypot: never shown to humans; bots that fill it are dropped server-side. */
+.wl-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 @media (max-width: 780px) { .waitlist .wl-inner { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .wl-form button:hover { transform: none; } }
 
@@ -420,6 +433,9 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
     <div class="hero-cta">
       <a class="btn-primary" href="#access">Request early access <span aria-hidden="true">→</span></a>
       <a class="btn-ghost" href="#week">Read your first week</a>
+      <button class="btn-om" id="om-btn" type="button"
+        title="Replay the arrival with a retro om — synthesized in your browser, no file, no request"
+        aria-label="Replay the arrival animation with sound">⌁ om</button>
     </div>
     <p class="hero-note">⬡ Zero-dependency core · fair-source licensed, MIT after two years · your data never trains anyone's model.</p>
   </div>
@@ -872,6 +888,10 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
             <option>Managed edition — run it for me</option>
             <option>Something else</option>
           </select>
+        </div>
+        <div class="wl-hp" aria-hidden="true">
+          <label for="wl-hp">Website</label>
+          <input type="text" id="wl-hp" name="website" tabindex="-1" autocomplete="off" />
         </div>
         <button type="submit" id="wl-submit">Request access ⬡</button>
         <p class="wl-error" id="wl-error" role="alert"></p>

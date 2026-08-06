@@ -160,11 +160,19 @@ const PROPS = [
     document.body.classList.add('intro-done');
   }
   for (const evt of ['wheel', 'keydown', 'pointerdown', 'touchstart']) {
-    addEventListener(evt, finishIntro, { passive: true, once: false });
+    // Skipping the arrival also hushes the om — the sound belongs to the act.
+    addEventListener(evt, () => { finishIntro(); omDuck(); }, { passive: true, once: false });
   }
   // Failsafe on the wall clock: whatever happens to animation frames, the
   // headline is never held hostage by the intro for more than a few seconds.
-  setTimeout(finishIntro, 4000);
+  // The token keeps a stale failsafe (load, or an earlier replay) from
+  // cutting a newer act short.
+  let introRun = 0;
+  function armFailsafe() {
+    const run = ++introRun;
+    setTimeout(() => { if (run === introRun) finishIntro(); }, 4000);
+  }
+  armFailsafe();
 
   function draw(now) {
     const rect = rectOf();
@@ -233,6 +241,135 @@ const PROPS = [
     };
     raf = requestAnimationFrame(step);
   }
+  /* ------- the om: the arrival, heard -------
+     A retro om synthesized right here with the Web Audio API — two triangle
+     voices and a square-wave partial pushed through a 4-bit staircase (the
+     chiptune throat), a mouth filter that opens on "O" and closes into the
+     "M" hum exactly when the hexagon ignites, and a two-note chip blip at
+     ignition. No file, no request: the sound is source code, like everything
+     else on this page. Browsers rightly refuse audio before a gesture, so
+     the om only ever plays from the button that replays the arrival. */
+  let actx = null;
+  let omVoice = null;
+  const omBtn = $('#om-btn');
+
+  function ensureAudio() {
+    if (!actx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return false;
+      actx = new AC();
+    }
+    if (actx.state === 'suspended') actx.resume();
+    return true;
+  }
+
+  function omDuck() {
+    if (!actx || !omVoice) return;
+    const now = actx.currentTime;
+    const voice = omVoice;
+    omVoice = null;
+    if (omBtn) omBtn.classList.remove('playing');
+    if (now >= voice.until - 0.2) return; // already breathing out on its own
+    voice.env.gain.cancelScheduledValues(now);
+    voice.env.gain.setTargetAtTime(0.0001, now, 0.07);
+  }
+
+  function omPlay() {
+    if (!ensureAudio()) return;
+    omDuck(); // one om at a time
+    const t = actx.currentTime + 0.05;
+    const O_S = INTRO_MS / 1000; // the convergence — the "O"
+    const M_S = IGNITE_MS / 1000; // the ignition — the lips close into "M"
+    const end = t + O_S + M_S + 2.4;
+
+    // The chiptune throat: quantize the whole voice to 16 amplitude levels.
+    const crush = actx.createWaveShaper();
+    const curve = new Float32Array(257);
+    for (let i = 0; i < 257; i++) curve[i] = Math.round((i / 128 - 1) * 8) / 8;
+    crush.curve = curve;
+
+    // The mouth: opens through the O, closes to a hum at ignition.
+    const mouth = actx.createBiquadFilter();
+    mouth.type = 'lowpass';
+    mouth.Q.value = 0.9;
+    mouth.frequency.setValueAtTime(620, t);
+    mouth.frequency.linearRampToValueAtTime(1400, t + O_S * 0.7);
+    mouth.frequency.setTargetAtTime(235, t + O_S, 0.16);
+
+    // The breath: in over the convergence, a bloom at ignition, a long hum out.
+    const env = actx.createGain();
+    env.gain.setValueAtTime(0.0001, t);
+    env.gain.exponentialRampToValueAtTime(0.15, t + Math.min(1.3, O_S * 0.62));
+    env.gain.setValueAtTime(0.15, t + O_S);
+    env.gain.linearRampToValueAtTime(0.18, t + O_S + 0.25);
+    env.gain.setTargetAtTime(0.0001, t + O_S + M_S + 0.4, 0.5);
+    mouth.connect(crush);
+    crush.connect(env);
+    env.connect(actx.destination);
+
+    const voice = (type, freq, level, detune = 0) => {
+      const osc = actx.createOscillator();
+      const g = actx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      osc.detune.value = detune;
+      g.gain.value = level;
+      osc.connect(g);
+      g.connect(mouth);
+      osc.start(t);
+      osc.stop(end + 0.1);
+      return { osc, g };
+    };
+    const chest = voice('triangle', 110, 0.34); // the chest tone
+    const chorus = voice('triangle', 110, 0.28, 9); // a second voice, slightly sharp
+    voice('sine', 55, 0.30); // the floor
+    const bright = voice('square', 220, 0.07); // chip harmonics — the "retro"
+    bright.g.gain.setValueAtTime(0.07, t + O_S - 0.1);
+    bright.g.gain.linearRampToValueAtTime(0, t + O_S + 0.3); // harmonics die as lips close
+
+    // Slow vibrato arrives only once the tone has settled, like a held chant.
+    const lfo = actx.createOscillator();
+    const lfoDepth = actx.createGain();
+    lfo.frequency.value = 5.2;
+    lfoDepth.gain.setValueAtTime(0, t);
+    lfoDepth.gain.linearRampToValueAtTime(3.2, t + O_S * 0.9);
+    lfo.connect(lfoDepth);
+    lfoDepth.connect(chest.osc.frequency);
+    lfoDepth.connect(chorus.osc.frequency);
+    lfo.start(t);
+    lfo.stop(end + 0.1);
+
+    // The ignition: a two-note chip blip, quiet, as the hexagon lights.
+    const blip = actx.createOscillator();
+    const blipG = actx.createGain();
+    blip.type = 'square';
+    blip.frequency.setValueAtTime(784, t + O_S);
+    blip.frequency.setValueAtTime(1174.7, t + O_S + 0.09);
+    blipG.gain.setValueAtTime(0.05, t + O_S);
+    blipG.gain.exponentialRampToValueAtTime(0.0001, t + O_S + 0.75);
+    blip.connect(blipG);
+    blipG.connect(crush);
+    blip.start(t + O_S);
+    blip.stop(t + O_S + 0.8);
+
+    omVoice = { env, until: end };
+    if (omBtn) {
+      omBtn.classList.add('playing');
+      setTimeout(() => omBtn.classList.remove('playing'), (end - actx.currentTime) * 1000);
+    }
+  }
+
+  function replayArrival() {
+    omPlay();
+    if (REDUCE.matches) return; // sound was asked for; motion was not
+    phase = 'intro';
+    t0 = null;
+    document.body.classList.add('intro-live');
+    document.body.classList.remove('intro-done');
+    armFailsafe(); // the replay gets the same failsafe as the first act
+  }
+  if (omBtn) omBtn.addEventListener('click', replayArrival);
+
   window.__grid = { recolor };
   addEventListener('resize', layout);
   layout();
@@ -379,7 +516,7 @@ const PROPS = [
    (Formspree/Basin/a Worker); empty = mailto fallback to waitlist-email so
    no request is silently dropped. */
 window.WAITLIST_ENDPOINT = document.querySelector('meta[name="waitlist-endpoint"]')?.content?.trim() || '';
-window.WAITLIST_EMAIL = document.querySelector('meta[name="waitlist-email"]')?.content?.trim() || 'hr@unifydynamics.com';
+window.WAITLIST_EMAIL = document.querySelector('meta[name="waitlist-email"]')?.content?.trim() || 'hello@mysovereign.ai';
 (() => {
   const form = $('#wl-form');
   const errorEl = $('#wl-error');
@@ -426,7 +563,11 @@ window.WAITLIST_EMAIL = document.querySelector('meta[name="waitlist-email"]')?.c
       $('#wl-email').focus();
       return;
     }
-    const payload = { email, name, company, use, source: 'landing-access', at: new Date().toISOString() };
+    const payload = {
+      email, name, company, use,
+      website: ($('#wl-hp')?.value || '').trim(), // honeypot — humans never see it
+      source: 'landing-access', at: new Date().toISOString(),
+    };
 
     if (window.WAITLIST_ENDPOINT) {
       submitBtn.disabled = true;

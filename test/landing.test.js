@@ -57,6 +57,17 @@ test('private early access: every path funnels to a work-email-validated access 
   assert.match(script, /No work email\?/i, 'personal-address requesters get a direct path, never a dead end');
 });
 
+test('the arrival can be heard: a retro om, synthesized in-page, only ever behind a click', () => {
+  assert.match(html, /id="om-btn"/, 'the hero offers the om behind an explicit button');
+  assert.match(script, /window\.AudioContext \|\| window\.webkitAudioContext/, 'the om is Web Audio synthesis, WebKit included');
+  assert.doesNotMatch(html + script, /<audio|\.mp3|\.wav|\.ogg|\.m4a/, 'no audio asset — the sound is source code, zero requests');
+  assert.match(script, /INTRO_MS \/ 1000/, 'the om is scheduled from the same constants that time the animation');
+  assert.match(script, /finishIntro\(\); omDuck\(\);/, 'skipping the arrival also hushes the om');
+  assert.match(script, /createWaveShaper/, 'the retro comes from a bitcrusher, not a sample');
+  // No autoplay, no stored preference: the om exists only behind the click.
+  assert.doesNotMatch(script, /sovereign-om/, 'no sound preference is stored — every om is freshly asked for');
+});
+
 test('the first-week story: exactly ten moments, each visual and each backed by a shipped receipt', () => {
   assert.match(html, /id="week"/, 'the story band exists');
   assert.equal((html.match(/class="moment"/g) ?? []).length, 10, 'the story tells exactly ten unlocks');

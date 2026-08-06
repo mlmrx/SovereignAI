@@ -29,6 +29,9 @@ sovereign-export-*.json
 *.gguf
 *.safetensors
 
+# Vercel (landing page deploy)
+.vercel/
+
 # Editors & OS
 .vscode/
 .idea/
