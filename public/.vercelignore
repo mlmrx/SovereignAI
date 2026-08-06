@@ -1,8 +1,16 @@
-# The public web deploy is the landing page only. Everything else in this
+# The public web deploy is the marketing site only. Everything else in this
 # directory is the app UI, served by the local sovereign server — never hosted.
 *
 !land.html
 !land.js
+!doc.css
+!what-is-sovereign-ai.html
+!sovereignty.html
+!why.html
+!faq.html
+!robots.txt
+!sitemap.xml
+!llms.txt
 !vercel.json
 !api
 !api/**

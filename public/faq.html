@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SovereignAI FAQ — private, self-hosted AI questions answered</title>
+<meta name="description" content="Direct answers about running a private AI on your own machine: offline use, local models, importing ChatGPT and Claude history, verified exports, real deletion, licensing, hardware, cost, and the limitations we do not hide." />
+<link rel="canonical" href="https://mysovereign.ai/faq" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="SovereignAI FAQ — private, self-hosted AI questions answered" />
+<meta property="og:description" content="Offline use, local models, importing your AI history, verified exports, real deletion, licensing, cost, and the limitations we do not hide." />
+<meta property="og:url" content="https://mysovereign.ai/faq" />
+<meta property="og:site_name" content="SovereignAI" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="SovereignAI FAQ" />
+<meta name="twitter:description" content="Direct answers about running a private AI on hardware you own." />
+<link rel="stylesheet" href="/doc.css" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "inLanguage": "en",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is SovereignAI?",
+      "acceptedAnswer": { "@type": "Answer", "text": "SovereignAI is a private AI command center that runs entirely on hardware you control. It is one file with zero runtime dependencies, needs no account and no cloud, and works offline. It combines chat, a memory system where every fact carries provenance, document knowledge, and imports of your history from other AI assistants." }
+    },
+    {
+      "@type": "Question",
+      "name": "Does SovereignAI work offline?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. With a local model running on your machine, the entire product works with no internet connection: chat, memory, document search, imports, and exports. Keyword search always works offline; semantic search additionally requires a local embedding model." }
+    },
+    {
+      "@type": "Question",
+      "name": "Is SovereignAI open source?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No, and we do not claim to be. The core is fair source under FSL-1.1-MIT. You can read the code, self-host it, fork it, and use it internally without restriction; the only barred use is launching a competing commercial SovereignAI offering. Each release converts to the plain MIT license two years after it ships, so the code outlives the company." }
+    },
+    {
+      "@type": "Question",
+      "name": "Which AI models can I use with it?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Local open-weight models are the default, through Ollama or any OpenAI-compatible server such as llama.cpp or vLLM. You can also use a frontier model with your own API key. Models are chosen per persona and swappable in minutes, and when a remote model is used the disclosure appears on screen at the point of use." }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I import my ChatGPT, Claude, or Gemini history?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. SovereignAI imports the data exports those services are legally required to give you, plus a documented generic format for anything else. Imports are idempotent, so re-running them does not duplicate data, and every imported record keeps provenance pointing back to its source conversation." }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I know my data is really deleted?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Deleting a memory zeroes the bytes on disk rather than hiding a row, using SQLite secure_delete. Because there is no cloud copy and no hosted control plane, there is no second location holding what you deleted. Write-ahead log frames are recycled by the database engine over time, which is noted in the code rather than glossed over." }
+    },
+    {
+      "@type": "Question",
+      "name": "How does the export work, and can I verify it?",
+      "acceptedAnswer": { "@type": "Answer", "text": "One command writes everything to a documented format with a SHA-256 manifest per table plus a digest over the whole archive. A separate verify command checks an archive without importing it, so you can test a year-old backup without touching live data. Exports can be encrypted with AES-256-GCM under a scrypt-derived passphrase that never leaves your machine, and import refuses an archive whose checksums do not match." }
+    },
+    {
+      "@type": "Question",
+      "name": "What hardware do I need to run a private AI?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The application itself is lightweight and runs comfortably on an ordinary laptop; the model decides your requirements. A small open-weight model in the 3-to-8 billion parameter range runs on most modern machines with 16GB of RAM. SovereignAI checks your available memory and recommends models that will actually fit before you download them." }
+    },
+    {
+      "@type": "Question",
+      "name": "How is this different from just running Ollama myself?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Ollama runs models; it does not give you memory, provenance, knowledge, or an exit. SovereignAI is the layer that turns local inference into something that knows you over time: durable memory where every fact records which model wrote it and which conversation it came from, local document parsing and search, imports of your history from other assistants, and a verifiable export. SovereignAI uses Ollama as one of several inference backends." }
+    },
+    {
+      "@type": "Question",
+      "name": "What are SovereignAI's limitations?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The database is not encrypted at rest, so the honest answer today is operating-system full-disk encryption. The model layer is borrowed: even open weights are a third party's artifact trained on data nobody can audit. Rented GPU compute is tenancy rather than ownership, and those trade-offs are printed before you provision. A full layer-by-layer self-audit is published as the Sovereignty Ledger." }
+    },
+    {
+      "@type": "Question",
+      "name": "Does SovereignAI train on my data or send telemetry?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. There is no telemetry, no analytics, and no hosted control plane that your instance reports to. Your data never trains anyone's model. When you choose to use a remote provider for a message, that provider's terms apply to that call, and the product tells you on screen at the moment it happens." }
+    },
+    {
+      "@type": "Question",
+      "name": "What does SovereignAI cost, and how do I get access?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Self-hosting the core is free: an individual never has to pay to own their own AI. Commercial offerings come by addition, such as a managed edition and organization features. As of August 2026 the product is in gated early access at mysovereign.ai, and a person reviews every request." }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<div class="top">
+  <div class="wrap">
+    <a class="home" href="/">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1f1e1d" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+      SovereignAI
+    </a>
+    <nav>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/why">The thesis</a>
+      <a href="/faq">FAQ</a>
+    </nav>
+  </div>
+</div>
+
+<main>
+  <div class="wrap">
+    <p class="eyebrow">Frequently asked · updated August 2026</p>
+    <h1 class="serif">Questions about running your own AI</h1>
+    <p class="lede">Direct answers, including the unflattering ones. If something isn't solved, this page says so.</p>
+
+    <div class="qa" style="border-top:0;padding-top:0">
+      <h3>What is SovereignAI?</h3>
+      <p>SovereignAI is a private AI command center that runs entirely on hardware you control. It is one file with zero runtime dependencies, needs no account and no cloud, and works offline. It combines chat, a memory system where every fact carries provenance, document knowledge, and imports of your history from other AI assistants.</p>
+    </div>
+
+    <div class="qa">
+      <h3>Does SovereignAI work offline?</h3>
+      <p>Yes. With a local model running on your machine, the entire product works with no internet connection: chat, memory, document search, imports, and exports. Keyword search always works offline; semantic search additionally requires a local embedding model.</p>
+    </div>
+
+    <div class="qa">
+      <h3>Is SovereignAI open source?</h3>
+      <p>No, and we do not claim to be. The core is <strong>fair source</strong> under FSL-1.1-MIT. You can read the code, self-host it, fork it, and use it internally without restriction; the only barred use is launching a competing commercial SovereignAI offering. Each release converts to the plain MIT license two years after it ships, so the code outlives the company.</p>
+    </div>
+
+    <div class="qa">
+      <h3>Which AI models can I use with it?</h3>
+      <p>Local open-weight models are the default, through Ollama or any OpenAI-compatible server such as llama.cpp or vLLM. You can also use a frontier model with your own API key. Models are chosen per persona and swappable in minutes, and when a remote model is used the disclosure appears on screen at the point of use.</p>
+    </div>
+
+    <div class="qa">
+      <h3>Can I import my ChatGPT, Claude, or Gemini history?</h3>
+      <p>Yes. SovereignAI imports the data exports those services are legally required to give you, plus a documented generic format for anything else. Imports are idempotent, so re-running them does not duplicate data, and every imported record keeps provenance pointing back to its source conversation.</p>
+    </div>
+
+    <div class="qa">
+      <h3>How do I know my data is really deleted?</h3>
+      <p>Deleting a memory zeroes the bytes on disk rather than hiding a row, using SQLite <code>secure_delete</code>. Because there is no cloud copy and no hosted control plane, there is no second location holding what you deleted. Write-ahead log frames are recycled by the database engine over time, which is noted in the code rather than glossed over.</p>
+    </div>
+
+    <div class="qa">
+      <h3>How does the export work, and can I verify it?</h3>
+      <p>One command writes everything to a documented format with a SHA-256 manifest per table plus a digest over the whole archive. A separate verify command checks an archive without importing it, so you can test a year-old backup without touching live data. Exports can be encrypted with AES-256-GCM under a scrypt-derived passphrase that never leaves your machine, and import refuses an archive whose checksums do not match.</p>
+    </div>
+
+    <div class="qa">
+      <h3>What hardware do I need to run a private AI?</h3>
+      <p>The application itself is lightweight and runs comfortably on an ordinary laptop; the model decides your requirements. A small open-weight model in the 3-to-8 billion parameter range runs on most modern machines with 16GB of RAM. SovereignAI checks your available memory and recommends models that will actually fit before you download them.</p>
+    </div>
+
+    <div class="qa">
+      <h3>How is this different from just running Ollama myself?</h3>
+      <p>Ollama runs models; it does not give you memory, provenance, knowledge, or an exit. SovereignAI is the layer that turns local inference into something that knows you over time: durable memory where every fact records which model wrote it and which conversation it came from, local document parsing and search, imports of your history from other assistants, and a verifiable export. SovereignAI uses Ollama as one of several inference backends.</p>
+    </div>
+
+    <div class="qa">
+      <h3>What are SovereignAI's limitations?</h3>
+      <p>The database is not encrypted at rest, so the honest answer today is operating-system full-disk encryption. The model layer is borrowed: even open weights are a third party's artifact trained on data nobody can audit. Rented GPU compute is tenancy rather than ownership, and those trade-offs are printed before you provision. A full layer-by-layer self-audit is published as the <a href="/sovereignty">Sovereignty Ledger</a>.</p>
+    </div>
+
+    <div class="qa">
+      <h3>Does SovereignAI train on my data or send telemetry?</h3>
+      <p>No. There is no telemetry, no analytics, and no hosted control plane that your instance reports to. Your data never trains anyone's model. When you choose to use a remote provider for a message, that provider's terms apply to that call, and the product tells you on screen at the moment it happens.</p>
+    </div>
+
+    <div class="qa">
+      <h3>What does SovereignAI cost, and how do I get access?</h3>
+      <p>Self-hosting the core is free: an individual never has to pay to own their own AI. Commercial offerings come by addition, such as a managed edition and organization features. As of August 2026 the product is in gated early access, and a person reviews every request.</p>
+    </div>
+
+    <div class="cta">
+      <h3 class="serif" style="margin-top:0">Still deciding?</h3>
+      <p>Read the <a href="/sovereignty">Sovereignty Ledger</a> — it lists what we control, what is borrowed, and what remains unsolved. It is the fastest way to judge whether this is built the way you'd want.</p>
+      <p><a class="btn" href="/#access">Request early access</a></p>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <nav>
+      <a href="/">Home</a>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/why">The thesis</a>
+    </nav>
+    <p>SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years · Own every layer you can. Rent nothing you can't walk away from.</p>
+  </div>
+</footer>
+
+</body>
+</html>

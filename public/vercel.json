@@ -1,5 +1,12 @@
 {
-  "rewrites": [{ "source": "/", "destination": "/land.html" }],
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/", "destination": "/land.html" },
+    { "source": "/what-is-sovereign-ai", "destination": "/what-is-sovereign-ai.html" },
+    { "source": "/sovereignty", "destination": "/sovereignty.html" },
+    { "source": "/why", "destination": "/why.html" },
+    { "source": "/faq", "destination": "/faq.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -8,6 +15,10 @@
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]
+    },
+    {
+      "source": "/llms.txt",
+      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
     }
   ]
 }

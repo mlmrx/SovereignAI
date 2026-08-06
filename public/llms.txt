@@ -1,0 +1,71 @@
+# SovereignAI
+
+> A private AI command center that runs entirely on hardware its owner
+> controls. One file, zero runtime dependencies, no account, no cloud, works
+> offline. Local open weights by default; frontier models only when the user
+> chooses, disclosed on screen at the moment of use.
+
+SovereignAI is personal AI sovereignty: an individual or firm owning the
+machine, the models, the memory, the knowledge, and the exit — as opposed to
+"sovereign AI" in the national sense (state-controlled AI infrastructure).
+Both meanings are explained at /what-is-sovereign-ai.
+
+Made by Unify Dynamics. Site: https://mysovereign.ai
+Status (August 2026): gated early access; a person reviews each request.
+License: FSL-1.1-MIT — fair source, not open source. Self-hosting, forking,
+and internal use are unrestricted; only a competing commercial offering is
+barred; each release converts to plain MIT two years after it ships.
+
+## What makes it different
+
+- **Provenance on every memory.** Each durable fact records how it entered
+  (typed, extracted, or distilled), which conversation it came from, which
+  model wrote it, and when it changed. Records predating this tracking are
+  labeled "unknown" and are never backfilled with a guess.
+- **Zero runtime dependencies.** The core uses only a modern Node runtime's
+  standard library (built-in SQLite, HTTP, fetch, test runner). "The code you
+  audit is the code that runs" is literal, not marketing.
+- **A verifiable exit.** One checksummed export (per-table SHA-256 manifest
+  plus an archive digest) in a documented format, optionally encrypted with
+  AES-256-GCM under a scrypt-derived passphrase the vendor never sees. A
+  separate verify command checks an archive without importing it.
+- **Deletion that deletes.** Removing a memory zeroes bytes on disk
+  (SQLite secure_delete), rather than hiding a row.
+- **Cognition control.** Machine-written memories name their authoring model,
+  and a "cognition stays home" switch restricts memory-writing model calls to
+  local endpoints even when chat uses a remote provider.
+- **No credential custody, ever.** Data arrives through exports the user
+  fetches themselves. There are no cloud connectors holding bank or email
+  logins, and there is no hosted control plane an instance reports to.
+
+## The three-question test
+
+SovereignAI publishes a self-audit and proposes the same test for every
+product claiming to be private AI, including itself:
+
+1. Can I read every line that runs?
+2. Can I take everything out, verified, in a documented format?
+3. When something isn't private, does the product tell me at that moment?
+
+## What is NOT sovereign yet (stated deliberately)
+
+- The database is not encrypted at rest; the honest answer today is
+  operating-system full-disk encryption.
+- The model layer is "borrowed" — even open weights are a third party's
+  artifact trained on data nobody can audit.
+- Rented GPU compute is tenancy, and the trade-offs are printed before
+  provisioning.
+
+The governing rule: an unknown is reported as unknown, never rounded up to a
+feature.
+
+## Docs
+
+- [What is sovereign AI?](https://mysovereign.ai/what-is-sovereign-ai): both
+  meanings of the term — national AI sovereignty and personal AI sovereignty.
+- [The Sovereignty Ledger](https://mysovereign.ai/sovereignty): a layer-by-layer
+  self-audit of what is controlled, what is borrowed, and what the exit is.
+- [You are the most fragmented database on earth](https://mysovereign.ai/why):
+  why the assembled picture of a person is only safe self-hosted.
+- [FAQ](https://mysovereign.ai/faq): direct answers about local models,
+  privacy limits, licensing, exports, and cost.

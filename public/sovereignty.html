@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Sovereignty Ledger — a private AI product auditing itself</title>
+<meta name="description" content="A layer-by-layer self-audit of SovereignAI: what we control, what is borrowed, what the honest compromise is, and what your exit is at every layer. An unknown is reported as unknown, not rounded up to a feature." />
+<link rel="canonical" href="https://mysovereign.ai/sovereignty" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="The Sovereignty Ledger — a private AI product auditing itself" />
+<meta property="og:description" content="Every layer of the stack, what we actually control, what we don't, and what your exit is. Including the parts that are not sovereign yet." />
+<meta property="og:url" content="https://mysovereign.ai/sovereignty" />
+<meta property="og:site_name" content="SovereignAI" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="The Sovereignty Ledger" />
+<meta name="twitter:description" content="Every layer of the stack, what we control, what we don't, and what your exit is." />
+<link rel="stylesheet" href="/doc.css" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "The Sovereignty Ledger",
+  "description": "A layer-by-layer self-audit of what SovereignAI controls, what is borrowed, and what the exit is at each layer.",
+  "datePublished": "2026-08-05",
+  "dateModified": "2026-08-05",
+  "inLanguage": "en",
+  "mainEntityOfPage": "https://mysovereign.ai/sovereignty",
+  "author": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "publisher": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" }
+}
+</script>
+</head>
+<body>
+
+<div class="top">
+  <div class="wrap">
+    <a class="home" href="/">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1f1e1d" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+      SovereignAI
+    </a>
+    <nav>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/why">The thesis</a>
+      <a href="/faq">FAQ</a>
+    </nav>
+  </div>
+</div>
+
+<main>
+  <div class="wrap">
+    <p class="eyebrow">Self-audit · updated August 2026</p>
+    <h1 class="serif">The Sovereignty Ledger</h1>
+    <p class="lede">"Sovereign AI" is a claim most products make and none audit. This is our audit of ourselves.</p>
+
+    <div class="answer">
+      <p>Every layer of the stack, what we actually control, what we don't, and what your exit is. It is maintained under one rule: <strong>an unknown is reported as unknown, not rounded up to a feature.</strong></p>
+      <p>Truly sovereign AI — every layer owned, down to the model's weights and the data they were trained on — does not exist in 2026, for us or anyone. What this product builds is maximum achievable sovereignty at every layer, every compromise disclosed, every exit built before the door.</p>
+    </div>
+
+    <h2 class="serif">The ledger</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Layer</th><th>Status</th><th>What you control</th><th>The honest compromise</th><th>Your exit</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Your data</strong></td>
+            <td class="s-ok">Sovereign</td>
+            <td>Everything: SQLite in a directory you choose, no hosted control plane, no telemetry, secrets never exported.</td>
+            <td>No at-rest database encryption — use operating-system disk encryption. Plain HTTP on localhost.</td>
+            <td>Checksummed, optionally encrypted export in a documented open format any tool can read.</td>
+          </tr>
+          <tr>
+            <td><strong>Provenance</strong></td>
+            <td class="s-ok">Sovereign</td>
+            <td>Every memory records how it entered, from which conversation, which model wrote it, and when it changed.</td>
+            <td>Records predating this tracking honestly say "unknown" — we refuse to backfill a guess.</td>
+            <td>Provenance round-trips through export; the portfolio carries receipts into any other tool.</td>
+          </tr>
+          <tr>
+            <td><strong>Runtime</strong></td>
+            <td class="s-ok">Sovereign</td>
+            <td>Zero npm dependencies — the code you audit is the code that runs. Single binary or run from source.</td>
+            <td>Node.js itself (and V8 under it) is a runtime we did not write or audit.</td>
+            <td>Runs from source with nothing but Node. Every release turns MIT within two years, so the code survives us.</td>
+          </tr>
+          <tr>
+            <td><strong>Retrieval / knowledge</strong></td>
+            <td class="s-ok">Sovereign</td>
+            <td>Dependency-free local parsing (PDF, DOCX, ZIP). Keyword search always works offline.</td>
+            <td>Semantic embeddings require an embedding model — see the model layer.</td>
+            <td>Search degrades gracefully; documents re-export as-is.</td>
+          </tr>
+          <tr>
+            <td><strong>Distribution</strong></td>
+            <td class="s-warn">Conditional</td>
+            <td>Checksums on every release; signatures when configured; reproducible path is clone-and-run.</td>
+            <td>Binaries are unsigned by an OS vendor, and the release host is a single distribution point.</td>
+            <td>Source checkout — the zero-trust install that needs none of our artifacts.</td>
+          </tr>
+          <tr>
+            <td><strong>Compute (bring your own)</strong></td>
+            <td class="s-warn">Conditional</td>
+            <td>Hardware you own, host-key pinning, token hashes only, verifiable delete.</td>
+            <td>Rented GPUs are tenancy: the marketplace owns the disk, and provisioning exposes the instance token. Disclosed in the deploy plan before you provision.</td>
+            <td>Stream your data home; destroy with verified data purge.</td>
+          </tr>
+          <tr>
+            <td><strong>The model</strong></td>
+            <td class="s-stop">Borrowed</td>
+            <td>Where inference runs, which model, per persona — local, any OpenAI-compatible server, or your own API key.</td>
+            <td>The weights are someone else's artifact — trained on unknown data with unknown priors, unauditable in practice.</td>
+            <td>Models are swappable per persona in minutes; recipes and fine-tuning lineage are portable data.</td>
+          </tr>
+          <tr>
+            <td><strong>Cognition</strong><br><span style="color:var(--dim);font-size:0.86em">who writes your memory</span></td>
+            <td class="s-warn">Conditional</td>
+            <td>Machine-written memories name their authoring model. A "cognition stays home" switch restricts memory-writing to local endpoints even when chat uses a remote provider.</td>
+            <td>With the switch off and a remote provider, a third party's model is the lens deciding what is durable about you — disclosed at the point of use.</td>
+            <td>Turn the switch on, or delete any machine-written memory — the ledger shows exactly which those are.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="serif">Everything an individual owns here</h2>
+    <p>The ledger above audits claims. This list enumerates what a person actually holds in this product today, each backed by a shipped mechanism rather than an aspiration.</p>
+    <ol>
+      <li><strong>Your hardware</strong> — it runs where you decide: laptop, homelab, your own server, even a rented GPU with the trade-offs printed before provisioning.</li>
+      <li><strong>Your runtime</strong> — zero-dependency, fair-source code; the single binary embeds the same files you can read in the source.</li>
+      <li><strong>Your data</strong> — one folder you can copy, where deleted means zeroed on disk, not soft-hidden.</li>
+      <li><strong>Your AI's identity</strong> — its name, personas, and system prompts are records you edit and export, not settings a vendor hosts.</li>
+      <li><strong>Your models</strong> — local open weights, swappable per persona, built into named artifacts on an endpoint you control.</li>
+      <li><strong>Your fine-tuning</strong> — datasets you curated, consent you recorded, adapters trained on a trainer you operate, lineage kept end to end.</li>
+      <li><strong>Your memory</strong> — every durable fact carries its origin, source conversation, authoring model, and edit time. Receipts, not vibes.</li>
+      <li><strong>Your cognition policy</strong> — you decide which models may write memory, and whether automatic learning runs at all.</li>
+      <li><strong>Your knowledge</strong> — documents parsed on your machine by dependency-free parsers, into an index you can preview before any model sees it.</li>
+      <li><strong>Your history</strong> — conversations born here or imported from other assistants, plus records mined from your own inbox, each carrying the evidence it was built from.</li>
+      <li><strong>Your access</strong> — localhost by default; your own network behind your token; editors, browser, and other AI clients all reading the store you own.</li>
+      <li><strong>Your exit</strong> — the checksummed export in a documented open format, optional passphrase encryption, a pasteable portfolio, and verifiable deletion. Tested, not promised.</li>
+    </ol>
+
+    <h2 class="serif">What we will not do</h2>
+    <ul>
+      <li><strong>Custody of your credentials</strong> — no cloud connectors holding your bank or email logins. Data comes in through exports you fetch yourself.</li>
+      <li><strong>A hosted control plane</strong> — there is no SovereignAI server your instance reports to, and there never will be.</li>
+      <li><strong>Silent downgrades</strong> — when a sovereignty property cannot hold, the product says so at the point of use instead of averaging it into a green checkmark.</li>
+    </ul>
+
+    <h2 class="serif">How to read a competitor's page against this one</h2>
+    <p>Ask three questions of any product claiming to be private AI:</p>
+    <ol>
+      <li>Can I read every line that runs?</li>
+      <li>Can I take everything out, verified, in a documented format?</li>
+      <li>When something isn't private, does the product tell me at that moment?</li>
+    </ol>
+    <p>This ledger is our answer sheet. Demand one from everyone else.</p>
+
+    <div class="cta">
+      <h3 class="serif" style="margin-top:0">See the product behind the ledger</h3>
+      <p>A private AI command center that runs as one file on your machine — no account, no cloud, works offline.</p>
+      <p><a class="btn" href="/#access">Request early access</a></p>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <nav>
+      <a href="/">Home</a>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/why">The thesis</a>
+      <a href="/faq">FAQ</a>
+    </nav>
+    <p>SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years · Own every layer you can. Rent nothing you can't walk away from.</p>
+  </div>
+</footer>
+
+</body>
+</html>

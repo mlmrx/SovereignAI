@@ -1,0 +1,67 @@
+# mysovereign.ai — the public marketing site.
+#
+# We ask people to be deliberate about who reads their data, so we are
+# deliberate here: this site is documentation and argument we WANT quoted,
+# by search engines and by answer engines alike. Every crawler below is
+# welcome to read and cite it.
+#
+# This says nothing about anyone's SovereignAI instance. A running instance
+# is on hardware its owner controls, reachable only by them, and no crawler
+# on earth can see it. That is the product.
+
+User-agent: *
+Allow: /
+
+# Answer engines and model crawlers — explicitly allowed.
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+Sitemap: https://mysovereign.ai/sitemap.xml
