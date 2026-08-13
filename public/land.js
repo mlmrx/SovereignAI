@@ -509,6 +509,36 @@ const PROPS = [
   }
 })();
 
+/* ------- the trial command: one click to the clipboard ------- */
+(() => {
+  const btn = $('#run-copy');
+  const cmd = $('#run-cmd');
+  if (!btn || !cmd) return;
+  const done = () => {
+    const was = btn.textContent;
+    btn.textContent = 'Copied ⬡';
+    setTimeout(() => { btn.textContent = was; }, 1600);
+  };
+  btn.addEventListener('click', async () => {
+    const text = cmd.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      done();
+    } catch {
+      // Clipboard API needs a secure context; fall back to a transient textarea.
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); } catch { /* the command is still selectable by hand */ }
+      ta.remove();
+    }
+  });
+})();
+
 /* ------- access requests: the one door in -------
    Configuration comes from <meta> tags in land.html (this page's CSP forbids
    inline scripts, so window globals could never actually be set in

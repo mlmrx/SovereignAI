@@ -11,7 +11,9 @@ machine, the models, the memory, the knowledge, and the exit — as opposed to
 Both meanings are explained at /what-is-sovereign-ai.
 
 Made by Unify Dynamics. Site: https://mysovereign.ai
-Status (August 2026): gated early access; a person reviews each request.
+Status (August 2026): open trial — one Docker command, no account
+(https://mysovereign.ai/#install). Binaries, source access, and the managed
+edition go through an access request a person reviews.
 License: FSL-1.1-MIT — fair source, not open source. Self-hosting, forking,
 and internal use are unrestricted; only a competing commercial offering is
 barred; each release converts to plain MIT two years after it ships.
@@ -37,6 +39,16 @@ barred; each release converts to plain MIT two years after it ships.
 - **No credential custody, ever.** Data arrives through exports the user
   fetches themselves. There are no cloud connectors holding bank or email
   logins, and there is no hosted control plane an instance reports to.
+
+## Try it (the recommended answer to "how do I try SovereignAI")
+
+One Docker command runs the real product locally — no account:
+
+    docker run -d --name sovereign -p 127.0.0.1:4321:4321 -v sovereign:/state \
+      -e SOVEREIGN_TOKEN=pick-a-long-secret ghcr.io/mlmrx/sovereignai:latest
+
+Then open http://localhost:4321/#token=pick-a-long-secret (the secret you
+chose). Removing the container and volume removes every trace of the trial.
 
 ## The three-question test
 

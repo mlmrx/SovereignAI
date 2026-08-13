@@ -112,6 +112,17 @@ test('the public site never claims to be open source, and never links the privat
   assert.doesNotMatch(llms, /github(?:usercontent)?\.com\/mlmrx/);
 });
 
+test('visitor counting is cookie-less and disclosed on every page that carries it', () => {
+  for (const [file] of PAGES) {
+    const html = pub(file);
+    assert.match(html, /_vercel\/insights\/script\.js/, `${file} must carry the counting script`);
+    // A privacy brand that counts visitors says so where it happens, and
+    // separates the site's counting from the product's architecture.
+    assert.match(html, /cookie-less/i, `${file} must disclose the counting in plain sight`);
+    assert.match(html, /reports nothing to anyone/i, `${file} must state the product-vs-site distinction`);
+  }
+});
+
 test('every public page is reachable: routes are wired and internal links resolve', () => {
   const config = JSON.parse(pub('vercel.json'));
   const routes = new Map(config.rewrites.map((r) => [r.source, r.destination]));

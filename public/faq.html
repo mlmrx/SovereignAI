@@ -29,6 +29,11 @@
     },
     {
       "@type": "Question",
+      "name": "How do I try SovereignAI right now?",
+      "acceptedAnswer": { "@type": "Answer", "text": "One Docker command runs the real product on your machine — no account, no sign-up. Run: docker run -d --name sovereign -p 127.0.0.1:4321:4321 -v sovereign:/state -e SOVEREIGN_TOKEN=pick-a-long-secret ghcr.io/mlmrx/sovereignai:latest — then open http://localhost:4321/#token=pick-a-long-secret using the secret you chose, and the guided setup takes it from there. Deleting the container and its volume deletes every trace of the trial." }
+    },
+    {
+      "@type": "Question",
       "name": "Does SovereignAI work offline?",
       "acceptedAnswer": { "@type": "Answer", "text": "Yes. With a local model running on your machine, the entire product works with no internet connection: chat, memory, document search, imports, and exports. Keyword search always works offline; semantic search additionally requires a local embedding model." }
     },
@@ -80,7 +85,7 @@
     {
       "@type": "Question",
       "name": "What does SovereignAI cost, and how do I get access?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Self-hosting the core is free: an individual never has to pay to own their own AI. Commercial offerings come by addition, such as a managed edition and organization features. As of August 2026 the product is in gated early access at mysovereign.ai, and a person reviews every request." }
+      "acceptedAnswer": { "@type": "Answer", "text": "Self-hosting the core is free: an individual never has to pay to own their own AI. The open trial is one Docker command — the real product, no account. Binaries, source access, and the managed edition come through the access request at mysovereign.ai, where a person reviews every request. Commercial offerings come by addition, such as a managed edition and organization features." }
     }
   ]
 }
@@ -112,6 +117,13 @@
     <div class="qa" style="border-top:0;padding-top:0">
       <h3>What is SovereignAI?</h3>
       <p>SovereignAI is a private AI command center that runs entirely on hardware you control. It is one file with zero runtime dependencies, needs no account and no cloud, and works offline. It combines chat, a memory system where every fact carries provenance, document knowledge, and imports of your history from other AI assistants.</p>
+    </div>
+
+    <div class="qa">
+      <h3>How do I try SovereignAI right now?</h3>
+      <p>One Docker command runs the real product on your machine — no account, no sign-up. Run:</p>
+      <p><code>docker run -d --name sovereign -p 127.0.0.1:4321:4321 -v sovereign:/state -e SOVEREIGN_TOKEN=pick-a-long-secret ghcr.io/mlmrx/sovereignai:latest</code></p>
+      <p>Then open <code>http://localhost:4321/#token=pick-a-long-secret</code> using the secret you chose, and the guided setup takes it from there. Deleting the container and its volume deletes every trace of the trial.</p>
     </div>
 
     <div class="qa">
@@ -166,7 +178,7 @@
 
     <div class="qa">
       <h3>What does SovereignAI cost, and how do I get access?</h3>
-      <p>Self-hosting the core is free: an individual never has to pay to own their own AI. Commercial offerings come by addition, such as a managed edition and organization features. As of August 2026 the product is in gated early access, and a person reviews every request.</p>
+      <p>Self-hosting the core is free: an individual never has to pay to own their own AI. The open trial is one Docker command — the real product, no account. Binaries, source access, and the managed edition come through the <a href="/#access">access request</a>, where a person reviews every request. Commercial offerings come by addition, such as a managed edition and organization features.</p>
     </div>
 
     <div class="cta">
@@ -186,8 +198,10 @@
       <a href="/why">The thesis</a>
     </nav>
     <p>SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years · Own every layer you can. Rent nothing you can't walk away from.</p>
+    <p>This website counts visits with Vercel Web Analytics — cookie-less, aggregate, no cross-site tracking. Your SovereignAI instance reports nothing to anyone, ever.</p>
   </div>
 </footer>
 
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

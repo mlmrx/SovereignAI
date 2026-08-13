@@ -395,6 +395,27 @@ section.band { padding: clamp(56px, 10vh, 110px) 0; }
    ~570px min-content width and pushes the whole page into horizontal
    overflow on phones (icons and card edges cut off off-screen) */
 .tier code { overflow-wrap: anywhere; }
+/* The runbox: the trial command, treated like the artifact it is. The command
+   is one long unbreakable token — it scrolls inside its own box, never the page. */
+.runbox { margin: 26px 0 34px; }
+.run-label { font-size: 0.86rem; color: var(--dim); margin: 0 0 10px; }
+.run-cmd {
+  display: flex; align-items: stretch; gap: 0; border: 1px solid var(--line);
+  border-radius: 10px; overflow: hidden; background: var(--panel, rgba(0,0,0,0.04));
+}
+.run-cmd code {
+  flex: 1; padding: 14px 16px; font-size: 0.82rem; white-space: pre;
+  overflow-x: auto; background: none; -webkit-overflow-scrolling: touch;
+}
+.run-copy {
+  flex: none; border: 0; border-left: 1px solid var(--line); background: none;
+  color: var(--terra); font: inherit; font-size: 0.8rem; font-weight: 700;
+  padding: 0 18px; cursor: pointer; letter-spacing: 0.04em;
+}
+.run-copy:hover { background: var(--terra); color: var(--on-terra); }
+.run-then, .run-notes { font-size: 0.86rem; margin: 12px 0 0; }
+.run-notes { color: var(--dim); }
+.run-then code, .run-notes code { overflow-wrap: anywhere; }
 .tiers-note { margin-top: 18px; font-size: 0.76rem; color: var(--dim); letter-spacing: 0.02em; }
 
 /* ---------- waitlist ---------- */
@@ -479,7 +500,7 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
     <p class="lede">One AI that runs on your machine, thinks with models you choose, remembers with receipts,
       and proves you can leave. No cloud required. No account. Nothing to trust but code you can read.</p>
     <div class="hero-cta">
-      <a class="btn-primary" href="#access">Request early access <span aria-hidden="true">→</span></a>
+      <a class="btn-primary" href="#install">Run it on your machine <span aria-hidden="true">→</span></a>
       <a class="btn-ghost" href="#week">Read your first week</a>
       <button class="btn-om" id="om-btn" type="button"
         title="Replay the arrival with a retro om — synthesized in your browser, no file, no request"
@@ -864,18 +885,32 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
 <section class="band" id="install">
   <div class="wrap">
     <div class="band-head">
-      <p class="eyebrow">Private early access · fair-source licensed</p>
-      <h2 class="serif">Three ways in. All of them yours.</h2>
-      <p>We're in a gated early-access phase: <a href="#access">request access with your work email</a> and
-        we send the build, the docs, and your onboarding path. Once it's yours, first launch opens a guided
-        setup — drop in a ChatGPT or Claude export and your AI knows you within minutes. The gate is on the
-        door, not in the product: nothing you receive ever phones home to ask permission.</p>
+      <p class="eyebrow">Open trial · fair-source licensed</p>
+      <h2 class="serif">Run it <em>now</em>. One command.</h2>
+      <p>The trial is the product — the real thing on your machine, not a demo with scripted answers.
+        No account, no sign-up: your trial lives in a Docker volume you own, and deleting that volume
+        deletes every trace of you. That's the exit working before you've even committed.</p>
+    </div>
+    <div class="runbox">
+      <p class="run-label">Have Docker? You're about two minutes away:</p>
+      <div class="run-cmd">
+        <code id="run-cmd">docker run -d --name sovereign -p 127.0.0.1:4321:4321 -v sovereign:/state -e SOVEREIGN_TOKEN=pick-a-long-secret ghcr.io/mlmrx/sovereignai:latest</code>
+        <button class="run-copy" id="run-copy" type="button" aria-label="Copy the docker command">Copy ⬡</button>
+      </div>
+      <p class="run-then">Then open <code>http://localhost:4321/#token=pick-a-long-secret</code> — with the
+        secret you chose — and the guided setup takes it from there. Drop in a ChatGPT or Claude export and
+        your AI knows you within minutes.</p>
+      <p class="run-notes">Bring a model, your dial: point setup at an Ollama already running on your machine
+        (on Linux, add <code>--add-host=host.docker.internal:host-gateway</code> to the command so the
+        container can reach it), or use your own API key for a frontier model — disclosed on screen whenever
+        it's used. Done trying? <code>docker rm -f sovereign &amp;&amp; docker volume rm sovereign</code> — gone
+        means gone.</p>
     </div>
     <div class="tiers">
       <div class="tier feature">
         <span class="name">Single binary</span>
-        <span class="who">No Node, no installer</span>
-        <p>One file for Windows, macOS, or Linux, delivered with your access grant — runtime, app, and UI
+        <span class="who">No Node, no Docker</span>
+        <p>One file for Windows, macOS, or Linux, delivered with an access grant — runtime, app, and UI
           inside. Check it against the release's <code>SHA256SUMS.txt</code>, then run it.</p>
       </div>
       <div class="tier">
@@ -891,8 +926,9 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
           and Docker — health-checked upgrades, export-to-owner, verifiable delete.</p>
       </div>
     </div>
-    <p class="tiers-note">Prefer reading before running? Say so in your <a href="#access">request</a> — source
-      access comes with the grant, and zero runtime dependencies means the audit is actually finishable.</p>
+    <p class="tiers-note">Want the binary, the source, or someone else running the ops? <a href="#access">Request
+      access</a> — source access comes with the grant, and zero runtime dependencies means the audit is
+      actually finishable.</p>
   </div>
 </section>
 
@@ -901,11 +937,11 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
   <div class="wrap band">
     <div class="wl-inner">
       <div class="wl-copy">
-        <p class="eyebrow" style="color: var(--on-terra); letter-spacing: 0.22em; opacity: 0.72;">Private early access · every request read by a person</p>
+        <p class="eyebrow" style="color: var(--on-terra); letter-spacing: 0.22em; opacity: 0.72;">Binaries · source · managed edition — every request read by a person</p>
         <h2 class="serif">Request <em>access</em>.</h2>
-        <p>Tell us who you are and what you'd own with it. We review every request personally and reply with
-          the build, the docs, and your onboarding path — self-hosted on your machine, or the managed edition
-          if you'd rather we run the ops while you keep the boundary, the export, and the exit.</p>
+        <p>The trial above is yours already, no permission needed. This door is for the rest: the single
+          binary, source access for a finishable audit, or the managed edition if you'd rather we run the
+          ops while you keep the boundary, the export, and the exit. We review every request personally.</p>
         <p class="small">Work email required — it's how we verify a request without asking for anything else.
           No spam, no reselling your address. You'll be able to leave the product as easily as this list —
           which is the whole point.</p>
@@ -963,11 +999,15 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
     <p class="honesty">We deliberately don't claim SOC 2, HIPAA, or "zero-knowledge" until controls actually support
       those words. What we claim today — local-first, zero dependencies, memory with receipts, a verified export — is
       auditable in the code and in the public sovereignty ledger, where an unknown is marked unknown.</p>
+    <p class="honesty">This website counts visits with Vercel Web Analytics — cookie-less, aggregate page counts,
+      no cross-site tracking, disclosed here because we'd rather say so than be caught. Your SovereignAI instance
+      reports nothing to anyone, ever — that part isn't analytics policy, it's architecture.</p>
     <p class="honesty">Colophon: three themes, in the tradition of the Florentine workshops — Cielo for openness,
       Bottega for ownership, Notte for sovereignty. Your choice is remembered on your device and nowhere else.</p>
   </div>
 </footer>
 
 <script src="land.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

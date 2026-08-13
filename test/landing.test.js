@@ -40,11 +40,22 @@ test('the waitlist form captures interest and never silently drops a lead', () =
   assert.match(script, /not in the queue until/i, 'the mailto fallback must not overclaim success');
 });
 
-test('private early access: every path funnels to a work-email-validated access request', () => {
+test('the open trial is real and un-gated: one command, token required, exit printed beside it', () => {
+  assert.match(html, /btn-primary" href="#install"/, 'the hero primary CTA leads to the trial, not a form');
+  assert.match(
+    html,
+    /docker run -d --name sovereign[^<]*-e SOVEREIGN_TOKEN=[^<]*ghcr\.io\/mlmrx\/sovereignai:latest/,
+    'the one-command trial is on the page, with the token the container requires for any outside access'
+  );
+  assert.match(html, /#token=/, 'the post-run URL carries the token in the hash, where proxies and logs never see it');
+  assert.match(html, /docker rm -f sovereign/, 'the teardown is printed next to the invitation — the exit before the door');
+  assert.match(script, /#run-copy/, 'the command is copyable in one click');
+});
+
+test('the access request remains the door for binaries, source, and the managed edition', () => {
   assert.match(html, /id="access"/, 'the access-request band exists');
   // The repo is private: public links to it would 404 for every visitor.
   assert.doesNotMatch(html, /github(?:usercontent)?\.com\/mlmrx/, 'no links to the private repo on the public page');
-  assert.match(html, /btn-primary" href="#access"/, 'the hero primary CTA leads to the access request');
   assert.match(html, /class="join" href="#access"/, 'the nav CTA leads to the access request');
   assert.match(html, /id="wl-company"/, 'company is captured (optional)');
   // The work-email gate: personal domains are declined with an explanation
