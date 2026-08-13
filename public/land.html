@@ -894,17 +894,16 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
     <div class="runbox">
       <p class="run-label">Have Docker? You're about two minutes away:</p>
       <div class="run-cmd">
-        <code id="run-cmd">docker run -d --name sovereign -p 127.0.0.1:4321:4321 -v sovereign:/state -e SOVEREIGN_TOKEN=pick-a-long-secret ghcr.io/mlmrx/sovereignai:latest</code>
+        <code id="run-cmd">docker run -d --name sovereign -p 127.0.0.1:4321:4321 -v sovereign:/state --add-host=host.docker.internal:host-gateway -e OLLAMA_BASE_URL=http://host.docker.internal:11434 -e SOVEREIGN_TOKEN=pick-a-long-secret ghcr.io/mlmrx/sovereignai:latest</code>
         <button class="run-copy" id="run-copy" type="button" aria-label="Copy the docker command">Copy ⬡</button>
       </div>
       <p class="run-then">Then open <code>http://localhost:4321/#token=pick-a-long-secret</code> — with the
         secret you chose — and the guided setup takes it from there. Drop in a ChatGPT or Claude export and
         your AI knows you within minutes.</p>
-      <p class="run-notes">Bring a model, your dial: point setup at an Ollama already running on your machine
-        (on Linux, add <code>--add-host=host.docker.internal:host-gateway</code> to the command so the
-        container can reach it), or use your own API key for a frontier model — disclosed on screen whenever
-        it's used. Done trying? <code>docker rm -f sovereign &amp;&amp; docker volume rm sovereign</code> — gone
-        means gone.</p>
+      <p class="run-notes">Bring a model, your dial: the command already points at an Ollama running on your
+        machine — that's the <code>host.docker.internal</code> part — or skip Ollama and use your own API key
+        for a frontier model in setup, disclosed on screen whenever it's used. Done trying?
+        <code>docker rm -f sovereign &amp;&amp; docker volume rm sovereign</code> — gone means gone.</p>
     </div>
     <div class="tiers">
       <div class="tier feature">

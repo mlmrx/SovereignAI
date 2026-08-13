@@ -45,6 +45,8 @@ barred; each release converts to plain MIT two years after it ships.
 One Docker command runs the real product locally — no account:
 
     docker run -d --name sovereign -p 127.0.0.1:4321:4321 -v sovereign:/state \
+      --add-host=host.docker.internal:host-gateway \
+      -e OLLAMA_BASE_URL=http://host.docker.internal:11434 \
       -e SOVEREIGN_TOKEN=pick-a-long-secret ghcr.io/mlmrx/sovereignai:latest
 
 Then open http://localhost:4321/#token=pick-a-long-secret (the secret you

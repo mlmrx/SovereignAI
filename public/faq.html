@@ -30,7 +30,7 @@
     {
       "@type": "Question",
       "name": "How do I try SovereignAI right now?",
-      "acceptedAnswer": { "@type": "Answer", "text": "One Docker command runs the real product on your machine — no account, no sign-up. Run: docker run -d --name sovereign -p 127.0.0.1:4321:4321 -v sovereign:/state -e SOVEREIGN_TOKEN=pick-a-long-secret ghcr.io/mlmrx/sovereignai:latest — then open http://localhost:4321/#token=pick-a-long-secret using the secret you chose, and the guided setup takes it from there. Deleting the container and its volume deletes every trace of the trial." }
+      "acceptedAnswer": { "@type": "Answer", "text": "One Docker command runs the real product on your machine — no account, no sign-up. Run: docker run -d --name sovereign -p 127.0.0.1:4321:4321 -v sovereign:/state --add-host=host.docker.internal:host-gateway -e OLLAMA_BASE_URL=http://host.docker.internal:11434 -e SOVEREIGN_TOKEN=pick-a-long-secret ghcr.io/mlmrx/sovereignai:latest — then open http://localhost:4321/#token=pick-a-long-secret using the secret you chose, and the guided setup takes it from there. The command already points the container at an Ollama running on your machine; no Ollama means you can use your own API key in setup instead. Deleting the container and its volume deletes every trace of the trial." }
     },
     {
       "@type": "Question",
@@ -122,8 +122,8 @@
     <div class="qa">
       <h3>How do I try SovereignAI right now?</h3>
       <p>One Docker command runs the real product on your machine — no account, no sign-up. Run:</p>
-      <p><code>docker run -d --name sovereign -p 127.0.0.1:4321:4321 -v sovereign:/state -e SOVEREIGN_TOKEN=pick-a-long-secret ghcr.io/mlmrx/sovereignai:latest</code></p>
-      <p>Then open <code>http://localhost:4321/#token=pick-a-long-secret</code> using the secret you chose, and the guided setup takes it from there. Deleting the container and its volume deletes every trace of the trial.</p>
+      <p><code>docker run -d --name sovereign -p 127.0.0.1:4321:4321 -v sovereign:/state --add-host=host.docker.internal:host-gateway -e OLLAMA_BASE_URL=http://host.docker.internal:11434 -e SOVEREIGN_TOKEN=pick-a-long-secret ghcr.io/mlmrx/sovereignai:latest</code></p>
+      <p>Then open <code>http://localhost:4321/#token=pick-a-long-secret</code> using the secret you chose, and the guided setup takes it from there. The command already points the container at an Ollama running on your machine; no Ollama means you can use your own API key in setup instead. Deleting the container and its volume deletes every trace of the trial.</p>
     </div>
 
     <div class="qa">
