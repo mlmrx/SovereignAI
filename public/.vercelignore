@@ -1,9 +1,20 @@
-# The public web deploy is the marketing site only. Everything else in this
-# directory is the app UI, served by the local sovereign server — never hosted.
+# The public web deploy is the marketing site plus the playground: four demo
+# surfaces that ship the product's real interface files running in their
+# honestly-badged demo mode. Everything else in this directory is the live app
+# UI, served only by the local sovereign server — never hosted.
 *
 !land.html
 !land.js
 !doc.css
+!playground.html
+!xbrain.html
+!xbrain.js
+!xbrain-ledger.html
+!xbrain-ledger.js
+!xbrain-atlas.html
+!xbrain-atlas.js
+!guide.html
+!guide.js
 !what-is-sovereign-ai.html
 !sovereignty.html
 !why.html

@@ -18,6 +18,16 @@ const PAGES = [
   ['sovereignty.html', '/sovereignty'],
   ['why.html', '/why'],
   ['faq.html', '/faq'],
+  ['playground.html', '/playground'],
+];
+
+// The playground: the product's real interface files, publicly hosted in
+// their honestly-badged demo mode.
+const DEMO_SURFACES = [
+  ['xbrain.html', 'xbrain.js', '/xbrain'],
+  ['xbrain-ledger.html', 'xbrain-ledger.js', '/xbrain-ledger'],
+  ['xbrain-atlas.html', 'xbrain-atlas.js', '/xbrain-atlas'],
+  ['guide.html', 'guide.js', '/guide'],
 ];
 
 test('every public page carries a canonical URL, a description, and sharing metadata', () => {
@@ -121,6 +131,33 @@ test('visitor counting is cookie-less and disclosed on every page that carries i
     assert.match(html, /cookie-less/i, `${file} must disclose the counting in plain sight`);
     assert.match(html, /reports nothing to anyone/i, `${file} must state the product-vs-site distinction`);
   }
+});
+
+test('the playground ships real interfaces, guarded for the public origin', () => {
+  const config = JSON.parse(pub('vercel.json'));
+  const routes = new Map(config.rewrites.map((r) => [r.source, r.destination]));
+  const ignore = pub('.vercelignore');
+  const hub = pub('playground.html');
+  for (const [html, js, route] of DEMO_SURFACES) {
+    assert.equal(routes.get(route), `/${html}`, `${route} must serve ${html}`);
+    assert.ok(ignore.includes(`!${html}`) && ignore.includes(`!${js}`), `${html}+${js} must be deployed`);
+    assert.ok(hub.includes(`href="${route}"`), `the playground hub must link ${route}`);
+    const script = pub(js);
+    // A real install's #token= link pasted on the public origin must never
+    // persist or transmit a credential.
+    assert.match(script, /PUBLIC_DEMO_HOST/, `${js} needs the public-origin guard`);
+    assert.match(script, /if \(PUBLIC_DEMO_HOST\) return \{\};/, `${js} must never send auth headers on the public origin`);
+    // The badge must not claim "no server reachable" on a host that is
+    // reachable and simply has no server behind it.
+    assert.match(script, /fictional data, no server behind this page/, `${js} needs the honest public badge`);
+    assert.match(script, /href="\/playground"/, `${js} must offer the way back to the playground`);
+  }
+  const sitemap = pub('sitemap.xml');
+  for (const [, , route] of DEMO_SURFACES) {
+    assert.ok(sitemap.includes(`<loc>${SITE}${route}</loc>`), `sitemap is missing ${route}`);
+  }
+  // The internal note about how the founder works stays out of public demo data.
+  assert.doesNotMatch(pub('xbrain.js'), /flag only strategic business calls/, 'no internal operating notes in demo memories');
 });
 
 test('every public page is reachable: routes are wired and internal links resolve', () => {

@@ -1,16 +1,24 @@
 'use strict';
 /* ---------- shared plumbing (same contracts as every XBrain surface) ---------- */
+/* On the public demo host (the marketing site) no instance can exist, so no
+   token is ever read, stored, or sent on that origin — a real install's
+   #token= link pasted there must not persist a credential. The hash is still
+   scrubbed so the secret never lingers in the address bar or history. */
+const PUBLIC_DEMO_HOST = /(^|\.)mysovereign\.ai$|\.vercel\.app$/.test(location.hostname);
 const HEADERS = (() => {
   let token = '';
   try {
     const url = new URL(location.href);
     if (url.hash.startsWith('#token=')) {
-      try { token = decodeURIComponent(url.hash.slice(7)); } catch { token = url.hash.slice(7); }
-      try { localStorage.setItem('sovereign-token', token); } catch { /* private session */ }
+      if (!PUBLIC_DEMO_HOST) {
+        try { token = decodeURIComponent(url.hash.slice(7)); } catch { token = url.hash.slice(7); }
+        try { localStorage.setItem('sovereign-token', token); } catch { /* private session */ }
+      }
       try { url.hash = ''; history.replaceState(null, '', url); } catch { /* fine */ }
     }
   } catch { /* fine */ }
   return () => {
+    if (PUBLIC_DEMO_HOST) return {};
     try { token = token || localStorage.getItem('sovereign-token') || ''; } catch { /* fine */ }
     return token ? { authorization: `Bearer ${token}` } : {};
   };
@@ -310,8 +318,11 @@ async function survey({ quiet = false } = {}) {
 function bootDemo() {
   state.demo = true;
   const badge = $('#mode-badge');
-  badge.textContent = 'demo — no server reachable';
+  badge.textContent = PUBLIC_DEMO_HOST ? 'demo — fictional data, no server behind this page' : 'demo — no server reachable';
   badge.classList.add('demo');
+  if (PUBLIC_DEMO_HOST && !document.querySelector('a[href="/playground"]')) {
+    badge.insertAdjacentHTML('afterend', ' <a href="/playground" style="font-size:.72rem;margin-left:10px;color:inherit">⬡ playground</a>');
+  }
   state.snapshot = {
     status: { name: 'Atlas', version: '0.3.0', setupComplete: true, counts: { conversations: 6, documents: 3, memories: 1, personas: 4 } },
     config: { embeddings: { model: 'nomic-embed-text' } },

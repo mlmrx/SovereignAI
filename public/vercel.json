@@ -5,7 +5,12 @@
     { "source": "/what-is-sovereign-ai", "destination": "/what-is-sovereign-ai.html" },
     { "source": "/sovereignty", "destination": "/sovereignty.html" },
     { "source": "/why", "destination": "/why.html" },
-    { "source": "/faq", "destination": "/faq.html" }
+    { "source": "/faq", "destination": "/faq.html" },
+    { "source": "/playground", "destination": "/playground.html" },
+    { "source": "/xbrain", "destination": "/xbrain.html" },
+    { "source": "/xbrain-ledger", "destination": "/xbrain-ledger.html" },
+    { "source": "/xbrain-atlas", "destination": "/xbrain-atlas.html" },
+    { "source": "/guide", "destination": "/guide.html" }
   ],
   "headers": [
     {

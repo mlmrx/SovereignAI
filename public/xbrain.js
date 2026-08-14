@@ -1,16 +1,24 @@
 'use strict';
 /* ================= token bootstrap (same contract as the classic UI) ============ */
+/* On the public demo host (the marketing site) no instance can exist, so no
+   token is ever read, stored, or sent on that origin — a real install's
+   #token= link pasted there must not persist a credential. The hash is still
+   scrubbed so the secret never lingers in the address bar or history. */
+const PUBLIC_DEMO_HOST = /(^|\.)mysovereign\.ai$|\.vercel\.app$/.test(location.hostname);
 const HEADERS = (() => {
   let token = '';
   try {
     const url = new URL(location.href);
     if (url.hash.startsWith('#token=')) {
-      try { token = decodeURIComponent(url.hash.slice(7)); } catch { token = url.hash.slice(7); }
-      try { localStorage.setItem('sovereign-token', token); } catch { /* private session */ }
+      if (!PUBLIC_DEMO_HOST) {
+        try { token = decodeURIComponent(url.hash.slice(7)); } catch { token = url.hash.slice(7); }
+        try { localStorage.setItem('sovereign-token', token); } catch { /* private session */ }
+      }
       try { url.hash = ''; history.replaceState(null, '', url); } catch { /* fine */ }
     }
   } catch { /* fine */ }
   return () => {
+    if (PUBLIC_DEMO_HOST) return {};
     try { token = token || localStorage.getItem('sovereign-token') || ''; } catch { /* fine */ }
     return token ? { authorization: `Bearer ${token}` } : {};
   };
@@ -572,7 +580,7 @@ async function askLive(question, exchange) {
 
 /* ================= demo brain (artifact / no server) ================= */
 const DEMO_CELLS = [
-  ['memory', 'The founder prefers autonomous execution; flag only strategic business calls.'],
+  ['memory', 'The studio lease renews every March — the renewals radar caught it from the inbox import.'],
   ['memory', 'Zero runtime dependencies is a product principle — sovereignty means an auditable supply chain.'],
   ['memory', 'Anthropic models are spoken to natively; never through an OpenAI-compat shim.'],
   ['memory', 'Memory writes must always be consented — nothing is learned about the user silently.'],
@@ -603,8 +611,20 @@ function bootDemo() {
   state.demo = true;
   $('#brain-name').textContent = 'Atlas';
   const badge = $('#mode-badge');
-  badge.textContent = 'demo — no server reachable';
+  badge.textContent = PUBLIC_DEMO_HOST ? 'demo — fictional data, no server behind this page' : 'demo — no server reachable';
   badge.classList.add('demo');
+  if (PUBLIC_DEMO_HOST) {
+    badge.insertAdjacentHTML('afterend', ' <a href="/playground" style="font-size:.72rem;margin-left:10px;color:inherit">⬡ playground</a>');
+  }
+  // Demo honesty: the resting copy promises real cells; in demo mode they are
+  // staged, and the page must say so before a question is ever asked.
+  const emptyMind = $('#empty-mind');
+  const overclaim = emptyMind && emptyMind.querySelectorAll('p')[1];
+  if (overclaim) {
+    overclaim.innerHTML = 'In this demo the field is a <b>staged fiction</b> — twelve scripted cells standing in ' +
+      'for the memories and documents a live instance holds. Ask something below: the cells the script recalls ' +
+      'ignite and thread into the answer, exactly as real retrieval behaves after <code>sovereign start</code>.';
+  }
   state.personas = [{ id: 'demo-atlas', name: 'Atlas' }, { id: 'demo-scribe', name: 'Scribe' }];
   renderPersonas();
   for (const [kind, body] of DEMO_CELLS) addCell(kind, body, body);
