@@ -40,8 +40,13 @@
     document.querySelectorAll('[data-theme-pick]').forEach((item) => {
       item.classList.toggle('on', item.dataset.themePick === current);
     });
+    // A swatch, not a sentence: the control keeps its width out of the nav.
     document.querySelectorAll('[data-theme-label]').forEach((el) => {
-      el.textContent = `theme: ${current}`;
+      el.style.background = current === 'auto'
+        ? 'linear-gradient(135deg, #2f9be0 50%, #26211f 50%)'
+        : SWATCH[current];
+      el.setAttribute('title', `Theme: ${current}`);
+      el.setAttribute('aria-label', `Theme: ${current}. Choose another.`);
     });
   }
 
@@ -63,11 +68,10 @@
     document.querySelectorAll('[data-theme-mount]').forEach((mount) => {
       const btn = document.createElement('button');
       btn.type = 'button';
+      btn.className = 'shell-swatch';
       btn.setAttribute('aria-haspopup', 'menu');
       btn.setAttribute('aria-expanded', 'false');
-      btn.setAttribute('aria-label', 'Choose a colour theme');
       btn.setAttribute('data-theme-label', '');
-      btn.textContent = `theme: ${current}`;
 
       const menu = document.createElement('div');
       menu.className = 'shell-menu';

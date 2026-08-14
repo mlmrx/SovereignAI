@@ -56,7 +56,9 @@ test('the access request remains the door for binaries, source, and the managed 
   assert.match(html, /id="access"/, 'the access-request band exists');
   // The repo is private: public links to it would 404 for every visitor.
   assert.doesNotMatch(html, /github(?:usercontent)?\.com\/mlmrx/, 'no links to the private repo on the public page');
-  assert.match(html, /class="shell-sub"[\s\S]*href="#access"/, 'the access request stays reachable from the section row');
+  // The bar is deliberately short, so the footer is what guarantees the door
+  // stays reachable from anywhere on the site.
+  assert.match(html, /<footer class="shell-foot">[\s\S]*href="\/#access"/, 'the access request stays reachable from the footer');
   assert.match(html, /id="wl-company"/, 'company is captured (optional)');
   // The work-email gate: personal domains are declined with an explanation
   // and a direct escape hatch, so validation never silently drops a lead.

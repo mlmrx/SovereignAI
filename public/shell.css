@@ -46,12 +46,17 @@
 /* Theme control — the three named looks, reachable from every page rather
    than only from the landing. */
 .shell-theme { position: relative; }
-.shell-theme > button {
-  background: none; border: 1px solid var(--shell-edge); color: var(--shell-dim);
-  border-radius: 999px; padding: 6px 13px; font: inherit; font-size: 0.72rem;
-  letter-spacing: 0.05em; cursor: pointer; white-space: nowrap;
+/* The control is a swatch of the look you are wearing — it costs the nav
+   almost nothing and still opens the full picker. */
+.shell-theme > button.shell-swatch {
+  width: 20px; height: 20px; padding: 0; display: block; cursor: pointer;
+  /* The ring is always visible, so Notte's near-black fill still reads as a
+     control rather than a hole punched in the bar. */
+  border: 1px solid var(--shell-dim); border-radius: 50%;
+  background: var(--shell-terra);
 }
-.shell-theme > button:hover { color: var(--shell-terra); border-color: var(--shell-terra); }
+.shell-theme > button.shell-swatch:hover { border-color: var(--shell-terra); transform: scale(1.12); }
+.shell-theme > button.shell-swatch:focus-visible { outline: 2px solid var(--shell-terra); outline-offset: 2px; }
 .shell-menu {
   position: absolute; right: 0; top: calc(100% + 8px); min-width: 232px;
   background: var(--shell-mass); border: 1px solid var(--shell-edge);

@@ -129,7 +129,10 @@ test('the public site never claims to be open source, and never links the privat
 test('one shell frames every page: same header, same footer, same theme control', () => {
   // The site felt like separate sites because it was: four hand-rolled headers,
   // three link orders, and a theme picker that existed only on the landing.
-  const NAV = ['/film', '/playground', '/sovereignty', '/why', '/faq'];
+  // Deliberately short: brand, three destinations, one call to action. Depth
+  // pages (thesis, what-is, a-day, access) live in the footer, which carries
+  // every link — a nav is a choice, not an inventory.
+  const NAV = ['/film', '/playground', '/sovereignty', '/faq'];
   for (const [file] of [...PAGES, ['film.html']]) {
     const html = pub(file);
     assert.match(html, /<header class="shell-bar">/, `${file} must carry the shared header`);
@@ -142,7 +145,14 @@ test('one shell frames every page: same header, same footer, same theme control'
     const links = html.match(/<nav class="shell-links">([\s\S]*?)<\/nav>/)[1];
     const hrefs = [...links.matchAll(/href="([^"]+)"/g)].map((m) => m[1]).filter((h) => h.startsWith('/') && !h.includes('#'));
     assert.deepEqual(hrefs, NAV, `${file} nav must match the canonical order`);
+    // Everything cut from the bar must still be reachable from the footer.
+    const foot = html.match(/<footer class="shell-foot">([\s\S]*?)<\/footer>/)[1];
+    for (const href of ['/why', '/what-is-sovereign-ai', '/a-day', '/#access']) {
+      assert.ok(foot.includes(`href="${href}"`), `${file} footer must still reach ${href}`);
+    }
   }
+  // The landing's section row is gone: its own CTAs already do that work.
+  assert.doesNotMatch(pub('land.html'), /shell-sub/, 'no second nav row on the landing');
   // Every surface that paints its own tokens understands the named themes, so
   // a choice survives the jump between pages. (film.css is exempt on purpose:
   // a cinema commits to one look.)
