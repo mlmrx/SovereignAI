@@ -56,7 +56,7 @@ test('the access request remains the door for binaries, source, and the managed 
   assert.match(html, /id="access"/, 'the access-request band exists');
   // The repo is private: public links to it would 404 for every visitor.
   assert.doesNotMatch(html, /github(?:usercontent)?\.com\/mlmrx/, 'no links to the private repo on the public page');
-  assert.match(html, /class="join" href="#access"/, 'the nav CTA leads to the access request');
+  assert.match(html, /class="shell-sub"[\s\S]*href="#access"/, 'the access request stays reachable from the section row');
   assert.match(html, /id="wl-company"/, 'company is captured (optional)');
   // The work-email gate: personal domains are declined with an explanation
   // and a direct escape hatch, so validation never silently drops a lead.
@@ -118,11 +118,13 @@ test('the landing page carries the brand and both themes', () => {
   assert.match(html, /data-theme="dark"/);
   assert.match(html, /prefers-reduced-motion/);
   // Named themes: viewer-chosen, one virtue each, legacy values still honored.
+  // The landing defines the looks; the shell offers them, on every page.
+  const shell = fs.readFileSync(path.join(root, 'public', 'shell.js'), 'utf8');
   for (const theme of ['cielo', 'bottega', 'notte']) {
     assert.match(html, new RegExp(`data-theme="${theme}"`), `missing ${theme} token block`);
-    assert.match(html, new RegExp(`data-theme-pick="${theme}"`), `missing ${theme} picker option`);
+    assert.match(shell, new RegExp(`'${theme}'`), `the shared picker must offer ${theme}`);
   }
-  assert.match(script, /LEGACY = \{ dark: 'notte', light: 'bottega' \}/, 'stored legacy themes must migrate, not reset');
+  assert.match(shell, /LEGACY = \{ dark: 'notte', light: 'bottega' \}/, 'stored legacy themes must migrate, not reset');
   assert.match(html, /remembered on your device and nowhere else/i, 'the picker must state its privacy');
   // value props and the exit-path moat are the strategic spine of the page
   assert.match(html, /sovereignty ledger|What you get/i);

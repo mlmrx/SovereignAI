@@ -53,6 +53,8 @@
   ]
 }
 </script>
+<link rel="stylesheet" href="/shell.css" />
+<script src="/shell.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
 <!-- Waitlist wiring (CSP forbids inline scripts, so configuration lives here):
      waitlist-endpoint is any URL accepting a JSON POST — in production it's
@@ -465,33 +467,33 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
 </head>
 <body>
 
-<header class="bar">
-  <div class="wrap bar-inner">
-    <a class="brand" href="#top">
-      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="var(--terra)" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="var(--on-terra)" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+<header class="shell-bar">
+  <div class="shell-in">
+    <a class="shell-brand" href="/">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
       SovereignAI
     </a>
-    <nav>
-      <a class="navlink" href="#week">First week</a>
-      <a class="navlink" href="#proof">Proof</a>
-      <a class="navlink" href="#value">The layers</a>
-      <a class="navlink" href="#exit">The exit path</a>
-      <a class="navlink" href="#install">Install</a>
-      <a class="navlink" href="/film">Film</a>
-      <a class="navlink" href="/playground">Playground</a>
-      <a class="join" href="#access">Request access</a>
-      <div class="theme-pick">
-        <button class="theme-btn" id="theme-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Choose a color theme">theme</button>
-        <div class="theme-menu" id="theme-menu" hidden role="menu" aria-label="Color themes — yours to choose, remembered only on this device">
-          <button type="button" role="menuitem" data-theme-pick="auto"><span class="sw auto" aria-hidden="true"></span>Auto <small>follow this device</small></button>
-          <button type="button" role="menuitem" data-theme-pick="cielo"><span class="sw" style="background:#2f9be0" aria-hidden="true"></span>Cielo <small>the open sky · openness</small></button>
-          <button type="button" role="menuitem" data-theme-pick="bottega"><span class="sw" style="background:#a6522a" aria-hidden="true"></span>Bottega <small>the workshop · ownership</small></button>
-          <button type="button" role="menuitem" data-theme-pick="notte"><span class="sw" style="background:#26211f" aria-hidden="true"></span>Notte <small>lights out · sovereignty</small></button>
-        </div>
-      </div>
+    <nav class="shell-links">
+      <a href="/film">Film</a>
+      <a href="/playground">Playground</a>
+      <a href="/sovereignty">Ledger</a>
+      <a href="/why">Thesis</a>
+      <a href="/faq">FAQ</a>
+      <span class="shell-theme" data-theme-mount></span>
+      <a class="shell-cta" href="/#install">Run it</a>
     </nav>
   </div>
 </header>
+<nav class="shell-sub" aria-label="Sections of this page">
+  <div class="shell-in">
+    <a href="#week">First week</a>
+    <a href="#proof">Proof</a>
+    <a href="#value">The layers</a>
+    <a href="#exit">The exit path</a>
+    <a href="#install">Install</a>
+    <a href="#access">Request access</a>
+  </div>
+</nav>
 
 <a id="top"></a>
 <section class="hero">
@@ -986,20 +988,23 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
   </div>
 </section>
 
-<footer>
-  <div class="wrap foot-inner">
-    <span>⬡ SovereignAI — your models, your memory, your machine.</span>
-    <nav>
-      <a href="#value">The layers</a>
-      <a href="#exit">Exit path</a>
-      <a href="#install">Install</a>
+<footer class="shell-foot">
+  <div class="shell-in">
+    <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg> SovereignAI</div>
+    <div class="cols">
+      <a href="/">Home</a>
       <a href="/film">The film</a>
       <a href="/a-day">A day with it</a>
       <a href="/playground">Playground</a>
-      <a href="#access">Request access</a>
-    </nav>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/why">The thesis</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/faq">FAQ</a>
+      <a href="/#install">Run the trial</a>
+      <a href="/#access">Request access</a>
+    </div>
   </div>
-  <div class="wrap">
+  <div class="shell-in">
     <p class="honesty">We deliberately don't claim SOC 2, HIPAA, or "zero-knowledge" until controls actually support
       those words. What we claim today — local-first, zero dependencies, memory with receipts, a verified export — is
       auditable in the code and in the public sovereignty ledger, where an unknown is marked unknown.</p>

@@ -28,7 +28,8 @@
 }
 </script>
 <link rel="stylesheet" href="/film.css" />
-<script>try{var t=localStorage.getItem("sovereign-theme");if(t==="notte")document.documentElement.dataset.theme="dark";else if(t==="cielo"||t==="bottega")document.documentElement.dataset.theme="light";}catch(e){}</script>
+<link rel="stylesheet" href="/shell.css" />
+<script src="/shell.js"></script>
 </head>
 <body>
 
@@ -63,15 +64,24 @@
 <!-- The written cut: every shot, in order, readable without a single frame
      of animation. This is the fallback and the transcript at once. -->
 <article class="read" id="read">
-  <div class="wrap">
-    <nav class="topnav">
-      <a class="home" href="/"><span class="hexmark" aria-hidden="true"></span> SovereignAI</a>
-      <span class="spacer"></span>
-      <a href="/a-day">A day with it</a>
+<header class="shell-bar">
+  <div class="shell-in">
+    <a class="shell-brand" href="/">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+      SovereignAI
+    </a>
+    <nav class="shell-links">
+      <a href="/film">Film</a>
       <a href="/playground">Playground</a>
-      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/sovereignty">Ledger</a>
+      <a href="/why">Thesis</a>
       <a href="/faq">FAQ</a>
+      <span class="shell-theme" data-theme-mount></span>
+      <a class="shell-cta" href="/#install">Run it</a>
     </nav>
+  </div>
+</header>
+  <div class="wrap">
 
     <p class="eyebrow">The film · sixty seconds · no video file, drawn live</p>
     <h1 class="serif">The whole argument, in ten shots.</h1>
@@ -100,12 +110,28 @@
       </p>
     </div>
 
-    <footer>
-      <p>SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years.</p>
-      <p>This website counts visits with Vercel Web Analytics — cookie-less, aggregate, no cross-site tracking. Your SovereignAI instance reports nothing to anyone, ever.</p>
-    </footer>
   </div>
 </article>
+
+<footer class="shell-foot">
+  <div class="shell-in">
+    <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg> SovereignAI</div>
+    <div class="cols">
+      <a href="/">Home</a>
+      <a href="/film">The film</a>
+      <a href="/a-day">A day with it</a>
+      <a href="/playground">Playground</a>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/why">The thesis</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/faq">FAQ</a>
+      <a href="/#install">Run the trial</a>
+      <a href="/#access">Request access</a>
+    </div>
+    <p>Own every layer you can. Rent nothing you can&#39;t walk away from. · SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years.</p>
+    <p>This website counts visits with Vercel Web Analytics — cookie-less, aggregate, no cross-site tracking. Your SovereignAI instance reports nothing to anyone, ever.</p>
+  </div>
+</footer>
 
 <script src="/film.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>

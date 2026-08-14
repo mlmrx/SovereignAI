@@ -1,0 +1,105 @@
+/* The shell: one header and one footer, identical on every page of
+   mysovereign.ai. It deliberately owns its own colours instead of inheriting
+   each page's tokens — a frame that changes with its contents is exactly what
+   made the site feel like separate sites. It is always the brand's grounded
+   dark mass, so crossing from the landing into a document never feels like
+   leaving. Pages keep their own voice inside the frame: the landing is a
+   poster set in monospace, the documents are documents set in sans. */
+
+:root {
+  --shell-mass: #1b1a18;
+  --shell-edge: #302c28;
+  --shell-ink: #f0eee6;
+  --shell-dim: #a29890;
+  --shell-terra: #d97757;
+}
+
+.shell-bar {
+  position: sticky; top: 0; z-index: 60;
+  background: var(--shell-mass);
+  border-bottom: 1px solid var(--shell-edge);
+  font-family: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+}
+.shell-in {
+  width: min(100% - 32px, 1180px); margin-inline: auto;
+  display: flex; align-items: center; gap: 10px 20px; padding: 11px 0;
+}
+.shell-brand {
+  display: flex; align-items: center; gap: 9px;
+  color: var(--shell-ink); text-decoration: none;
+  font-size: 0.86rem; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap;
+}
+.shell-brand svg { width: 21px; height: 21px; display: block; }
+.shell-links { display: flex; align-items: center; gap: 18px; margin-left: auto; flex-wrap: wrap; }
+.shell-links a {
+  color: var(--shell-dim); text-decoration: none; font-size: 0.76rem;
+  letter-spacing: 0.04em; white-space: nowrap;
+}
+.shell-links a:hover { color: var(--shell-terra); }
+.shell-links a[aria-current="page"] { color: var(--shell-ink); }
+.shell-cta {
+  border: 1px solid var(--shell-terra); border-radius: 999px; padding: 6px 15px;
+  color: var(--shell-terra) !important;
+}
+.shell-cta:hover { background: var(--shell-terra); color: var(--shell-mass) !important; }
+
+/* Theme control — the three named looks, reachable from every page rather
+   than only from the landing. */
+.shell-theme { position: relative; }
+.shell-theme > button {
+  background: none; border: 1px solid var(--shell-edge); color: var(--shell-dim);
+  border-radius: 999px; padding: 6px 13px; font: inherit; font-size: 0.72rem;
+  letter-spacing: 0.05em; cursor: pointer; white-space: nowrap;
+}
+.shell-theme > button:hover { color: var(--shell-terra); border-color: var(--shell-terra); }
+.shell-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); min-width: 232px;
+  background: var(--shell-mass); border: 1px solid var(--shell-edge);
+  border-radius: 10px; padding: 6px; z-index: 70;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+}
+.shell-menu[hidden] { display: none; }
+.shell-menu button {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  background: none; border: 0; border-radius: 7px; padding: 8px 10px;
+  color: var(--shell-ink); font: inherit; font-size: 0.76rem; cursor: pointer;
+}
+.shell-menu button:hover { background: rgba(217,119,87,0.14); }
+.shell-menu button.on { color: var(--shell-terra); }
+.shell-menu small { color: var(--shell-dim); font-size: 0.68rem; margin-left: auto; }
+.shell-sw { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.shell-sw.auto { background: linear-gradient(135deg, #2f9be0 50%, #26211f 50%); }
+
+/* The landing's own section links: a second, quieter row, so the site nav
+   above it is always the primary way to move. */
+.shell-sub {
+  background: var(--shell-mass); border-bottom: 1px solid var(--shell-edge);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+.shell-sub .shell-in { padding: 7px 0; gap: 18px; }
+.shell-sub a {
+  color: var(--shell-dim); text-decoration: none; font-size: 0.72rem;
+  letter-spacing: 0.06em; white-space: nowrap;
+}
+.shell-sub a:hover { color: var(--shell-terra); }
+
+/* One footer, everywhere. */
+.shell-foot {
+  background: var(--shell-mass); color: var(--shell-dim);
+  border-top: 1px solid var(--shell-edge);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  padding: 34px 0 46px; margin-top: 0;
+}
+.shell-foot .shell-in { display: block; padding: 0; }
+.shell-foot .cols { display: flex; flex-wrap: wrap; gap: 12px 30px; margin-bottom: 20px; }
+.shell-foot a { color: var(--shell-dim); text-decoration: none; font-size: 0.76rem; }
+.shell-foot a:hover { color: var(--shell-terra); }
+.shell-foot p { margin: 0 0 8px; font-size: 0.71rem; line-height: 1.65; max-width: 78ch; }
+.shell-foot .mark { display: flex; align-items: center; gap: 9px; color: var(--shell-ink); font-size: 0.8rem; font-weight: 700; margin-bottom: 16px; }
+.shell-foot .mark svg { width: 19px; height: 19px; }
+
+@media (max-width: 760px) {
+  .shell-links { gap: 12px; }
+  .shell-links a { font-size: 0.72rem; }
+  .shell-sub { display: none; }
+}

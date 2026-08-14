@@ -51,6 +51,20 @@
     --ground:#faf9f5; --panel:#f0eee6; --ink:#1f1e1d; --soft:#55514b; --muted:#8a847a;
     --line:#d8d4c8; --accent:#a6522a; --accent-bright:#c05f31; --accent-soft:rgba(166,82,42,.1);
   }
+  /* The three named looks, understood here too, so a choice made anywhere on
+     the site survives the jump into this page. */
+  :root[data-theme="notte"] {
+    --ground:#1a1918; --panel:#262624; --ink:#faf9f5; --soft:#c9c3b8; --muted:#8f897e;
+    --line:#3a3835; --accent:#d97757; --accent-bright:#e8926f; --accent-soft:rgba(217,119,87,.12);
+  }
+  :root[data-theme="bottega"] {
+    --ground:#faf9f5; --panel:#f0eee6; --ink:#1f1e1d; --soft:#55514b; --muted:#8a847a;
+    --line:#d8d4c8; --accent:#a6522a; --accent-bright:#c05f31; --accent-soft:rgba(166,82,42,.1);
+  }
+  :root[data-theme="cielo"] {
+    --ground:#f8f6f0; --panel:#eef3f8; --ink:#0e2a45; --soft:#3f5a72; --muted:#5b6b7c;
+    --line:#dbe3ea; --accent:#0f70b8; --accent-bright:#2f9be0; --accent-soft:rgba(15,112,184,.1);
+  }
 
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans); line-height: 1.55; }
@@ -143,22 +157,28 @@
   footer a { color: var(--muted); }
   @media (prefers-reduced-motion: reduce) { .cell { animation: none; } .ledger-item { transition: none; } }
 </style>
-<script>try{var t=localStorage.getItem("sovereign-theme");if(t==="notte")document.documentElement.dataset.theme="dark";else if(t==="cielo"||t==="bottega")document.documentElement.dataset.theme="light";}catch(e){}</script>
+<link rel="stylesheet" href="/shell.css" />
+<script src="/shell.js"></script>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="wrap">
-    <a class="home" href="/"><span class="hexmark" aria-hidden="true"></span> SovereignAI</a>
-    <nav>
-      <a href="/film">The film</a>
+<header class="shell-bar">
+  <div class="shell-in">
+    <a class="shell-brand" href="/">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+      SovereignAI
+    </a>
+    <nav class="shell-links">
+      <a href="/film">Film</a>
       <a href="/playground">Playground</a>
-      <a href="/sovereignty">Sovereignty ledger</a>
-      <a href="/why">The thesis</a>
+      <a href="/sovereignty">Ledger</a>
+      <a href="/why">Thesis</a>
       <a href="/faq">FAQ</a>
+      <span class="shell-theme" data-theme-mount></span>
+      <a class="shell-cta" href="/#install">Run it</a>
     </nav>
   </div>
-</div>
+</header>
 
 <header class="page wrap">
   <p class="eyebrow">The experience · free, nothing installed</p>
@@ -281,16 +301,22 @@
   </div>
 </section>
 
-<footer>
-  <div class="wrap">
-    <nav>
+<footer class="shell-foot">
+  <div class="shell-in">
+    <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg> SovereignAI</div>
+    <div class="cols">
       <a href="/">Home</a>
       <a href="/film">The film</a>
+      <a href="/a-day">A day with it</a>
       <a href="/playground">Playground</a>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/why">The thesis</a>
       <a href="/sovereignty">Sovereignty ledger</a>
       <a href="/faq">FAQ</a>
-    </nav>
-    <p>SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years · Own every layer you can. Rent nothing you can't walk away from.</p>
+      <a href="/#install">Run the trial</a>
+      <a href="/#access">Request access</a>
+    </div>
+    <p>Own every layer you can. Rent nothing you can&#39;t walk away from. · SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years.</p>
     <p>This website counts visits with Vercel Web Analytics — cookie-less, aggregate, no cross-site tracking. Your SovereignAI instance reports nothing to anyone, ever.</p>
   </div>
 </footer>

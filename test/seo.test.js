@@ -126,6 +126,39 @@ test('the public site never claims to be open source, and never links the privat
   assert.doesNotMatch(llms, /github(?:usercontent)?\.com\/mlmrx/);
 });
 
+test('one shell frames every page: same header, same footer, same theme control', () => {
+  // The site felt like separate sites because it was: four hand-rolled headers,
+  // three link orders, and a theme picker that existed only on the landing.
+  const NAV = ['/film', '/playground', '/sovereignty', '/why', '/faq'];
+  for (const [file] of [...PAGES, ['film.html']]) {
+    const html = pub(file);
+    assert.match(html, /<header class="shell-bar">/, `${file} must carry the shared header`);
+    assert.match(html, /<footer class="shell-foot">/, `${file} must carry the shared footer`);
+    assert.match(html, /shell\.css/, `${file} must load the shell styles`);
+    assert.match(html, /shell\.js/, `${file} must load the shell behaviour`);
+    // The theme choice is reachable from every page, not just the landing.
+    assert.match(html, /data-theme-mount/, `${file} needs the theme control`);
+    // Identical link set, in identical order, so nothing moves as you browse.
+    const links = html.match(/<nav class="shell-links">([\s\S]*?)<\/nav>/)[1];
+    const hrefs = [...links.matchAll(/href="([^"]+)"/g)].map((m) => m[1]).filter((h) => h.startsWith('/') && !h.includes('#'));
+    assert.deepEqual(hrefs, NAV, `${file} nav must match the canonical order`);
+  }
+  // Every surface that paints its own tokens understands the named themes, so
+  // a choice survives the jump between pages. (film.css is exempt on purpose:
+  // a cinema commits to one look.)
+  for (const sheet of ['doc.css', 'land.html', 'a-day.html']) {
+    for (const theme of ['cielo', 'bottega', 'notte']) {
+      assert.ok(pub(sheet).includes(`:root[data-theme="${theme}"]`), `${sheet} must define ${theme}`);
+    }
+    // A mistyped token silently falls back to the default look; catch it here.
+    for (const [, value] of pub(sheet).matchAll(/--[\w-]+:\s*(#[0-9a-zA-Z]+)/g)) {
+      assert.match(value, /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/, `${sheet} has a malformed colour ${value}`);
+    }
+  }
+  assert.match(pub('shell.js'), /sovereign-theme/, 'the shell owns the stored choice');
+  assert.doesNotMatch(pub('land.js'), /theme-menu|localStorage\.setItem\('sovereign-theme'/, 'the landing must not keep a second theme system');
+});
+
 test('visitor counting is cookie-less and disclosed on every page that carries it', () => {
   for (const [file] of PAGES) {
     const html = pub(file);

@@ -8,59 +8,9 @@ async function typeInto(el, text, speed = 13) {
   for (const ch of text) { el.textContent += ch; await sleep(speed); }
 }
 
-/* ------- themes: yours to choose, remembered only on this device -------
-   Cielo (openness) / Bottega (ownership) / Notte (sovereignty) / Auto.
-   Legacy stored "dark"/"light" values migrate to Notte/Bottega. */
-(() => {
-  const THEMES = ['auto', 'cielo', 'bottega', 'notte'];
-  const LEGACY = { dark: 'notte', light: 'bottega' };
-  const btn = $('#theme-btn');
-  const menu = $('#theme-menu');
-  let current = 'auto';
-  try {
-    const stored = localStorage.getItem('sovereign-theme') || 'auto';
-    current = THEMES.includes(stored) ? stored : LEGACY[stored] ?? 'auto';
-  } catch { /* fine */ }
-  // Shareable preview: ?theme=cielo|bottega|notte shows a theme without
-  // persisting it — links can carry a look, the visitor keeps their choice.
-  const preview = new URLSearchParams(location.search).get('theme');
-  if (preview && THEMES.includes(preview)) current = preview;
-
-  const apply = () => {
-    if (current === 'auto') delete document.documentElement.dataset.theme;
-    else document.documentElement.dataset.theme = current;
-    btn.textContent = `theme: ${current}`;
-    menu.querySelectorAll('[data-theme-pick]').forEach((item) => {
-      item.classList.toggle('on', item.dataset.themePick === current);
-    });
-    if (window.__grid) window.__grid.recolor();
-  };
-
-  const close = () => {
-    menu.hidden = true;
-    btn.setAttribute('aria-expanded', 'false');
-  };
-  btn.addEventListener('click', () => {
-    const open = menu.hidden;
-    menu.hidden = !open;
-    btn.setAttribute('aria-expanded', String(open));
-  });
-  menu.querySelectorAll('[data-theme-pick]').forEach((item) => {
-    item.addEventListener('click', () => {
-      current = item.dataset.themePick;
-      try { localStorage.setItem('sovereign-theme', current); } catch { /* fine */ }
-      apply();
-      close();
-    });
-  });
-  document.addEventListener('click', (event) => {
-    if (!menu.hidden && !event.target.closest('.theme-pick')) close();
-  });
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && !menu.hidden) { close(); btn.focus(); }
-  });
-  apply();
-})();
+/* Themes live in shell.js now — one picker, identical on every page, so a
+   choice made here follows the reader into the documents. The hero canvas
+   still exposes __grid.recolor(), which the shell calls on every change. */
 
 /* ------- value-prop ledger ------- */
 const PROPS = [
