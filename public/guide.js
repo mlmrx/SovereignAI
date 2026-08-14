@@ -1,5 +1,5 @@
 'use strict';
-/* ---------- shared plumbing (same contracts as every XBrain surface) ---------- */
+/* ---------- shared plumbing (same contracts as every Bottega surface) ---------- */
 /* On the public demo host (the marketing site) no instance can exist, so no
    token is ever read, stored, or sent on that origin — a real install's
    #token= link pasted there must not persist a credential. The hash is still
@@ -133,13 +133,13 @@ const WAYPOINTS = [
   {
     id: 'mindfield',
     name: 'Enter the Mind Field',
-    why: 'XBrain is the honest interface: every hexagon is a real memory or document, and the cells your AI truly recalls ignite and thread into the answer.',
+    why: 'The Mind Field is the honest interface: every hexagon is a real memory or document, and the cells your AI truly recalls ignite and thread into the answer.',
     steps: `<li>Open the <a href="/xbrain.html" data-visit="mindfield">Mind Field</a> and ask something about a document you fed it — watch the recall.</li>
       <li>Flip an answer's three faces: <b>voice</b>, <b>recall</b>, <b>trace</b>.</li>
       <li>Select a phrase in an answer and press <b>⬡ keep</b> — you'll watch the memory being born.</li>
       <li>Probe your terrain in the <a href="/xbrain-atlas.html" data-visit="mindfield">Knowledge Atlas</a> before asking anything.</li>`,
     manual: true,
-    manualLabel: 'clicking either XBrain link marks this waypoint',
+    manualLabel: 'clicking either Mind Field link marks this waypoint',
   },
   {
     id: 'semantic',
@@ -278,7 +278,7 @@ function render() {
   }
 }
 
-/* clicking an XBrain link is itself the evidence for the mindfield waypoint */
+/* clicking a Mind Field link is itself the evidence for the mindfield waypoint */
 document.addEventListener('click', (event) => {
   const visit = event.target.closest('[data-visit]');
   if (visit && !state.manual[visit.dataset.visit]) {

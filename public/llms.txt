@@ -77,8 +77,8 @@ feature.
 
 Four of the product's real interfaces are playable at
 https://mysovereign.ai/playground on honestly-labeled fictional demo data:
-the XBrain mind field (/xbrain), the Memory Ledger (/xbrain-ledger), the
-Knowledge Atlas (/xbrain-atlas), and the Sovereign Path guide (/guide). The
+the Mind Field (/mind-field), the Memory Ledger (/memory-ledger), the
+Knowledge Atlas (/knowledge-atlas), and the Sovereign Path guide (/guide). The
 interface files are the same ones a live install serves; only the data is
 staged, and each page says so with a visible demo badge.
 

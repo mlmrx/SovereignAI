@@ -55,7 +55,7 @@ Training is disabled by default and has no hosted fallback. The workflow never c
 - **Memory you control** — add, search, edit, or forget durable context; automatic extraction is an explicit opt-in.
 - **Weights you control** — curate immutable datasets and run actual LoRA/QLoRA training through a trainer you operate, with consent, holdout, lineage, and deployment gates.
 - **Responsive and accessible** — full mobile navigation, keyboard-visible actions, labeled controls, live generation status, and reduced-motion support.
-- **XBrain (experimental)** — a reimagined three-surface interface: `/xbrain.html` (the Mind Field: a full-viewport constellation where every hexagonal cell is a real memory or document — the cells your AI truly recalls ignite and thread into the answer while it streams, with voice/recall/trace faces and select-to-keep consented memory), `/xbrain-ledger.html` (the Memory Ledger: every kept memory as an auditable line you can amend or strike), and `/xbrain-atlas.html` (the Knowledge Atlas: probe your documents with real retrieval scores before asking anything). Design brief: [`docs/XBRAIN_DESIGN_BRIEF.md`](docs/XBRAIN_DESIGN_BRIEF.md).
+- **Bottega surfaces (experimental)** — a reimagined three-surface interface: `/xbrain.html` (the Mind Field: a full-viewport constellation where every hexagonal cell is a real memory or document — the cells your AI truly recalls ignite and thread into the answer while it streams, with voice/recall/trace faces and select-to-keep consented memory), `/xbrain-ledger.html` (the Memory Ledger: every kept memory as an auditable line you can amend or strike), and `/xbrain-atlas.html` (the Knowledge Atlas: probe your documents with real retrieval scores before asking anything). Design brief: [`docs/XBRAIN_DESIGN_BRIEF.md`](docs/XBRAIN_DESIGN_BRIEF.md).
 - **Race-safe streaming** — stop generation, switch views safely, copy answers or code, and keep a persona consistent for each conversation.
 
 ## Why sovereign
@@ -161,7 +161,7 @@ src/
   ingest/               zero-dep file ingestion: ZIP reader → DOCX · PDF · text
   rag/                  chunker · BM25 · hybrid retriever
   byoc/                 SSH connector: preflight · provision · upgrade/rollback · verifiable delete
-public/                 command center + wizard + Fine-Tuning Studio + XBrain triptych + guide + landing page (land.html)
+public/                 command center + wizard + Fine-Tuning Studio + Bottega triptych + guide + landing page (land.html)
 integrations/           mcp · vscode · jetbrains · browser · chatgpt · trainer protocol
 scripts/                install.ps1 · install.sh · build-sea.mjs (single binary) · make-icons.mjs
 Dockerfile / compose    container distribution (ghcr.io image via CI)
@@ -203,7 +203,7 @@ The suite includes 130+ core, UI-contract, integration, API, security, config, p
 - [x] Guided local/self-hosted LoRA/QLoRA workflow with reviewed JSONL export
 - [x] Mobile-friendly command center, visible citations, editable memory, and safe streaming controls
 - [x] Single-binary builds (Node SEA) for Windows, macOS, and Linux
-- [x] XBrain experimental triptych (Mind Field · Memory Ledger · Knowledge Atlas) with honest recall reporting
+- [x] Bottega experimental triptych (Mind Field · Memory Ledger · Knowledge Atlas) with honest recall reporting
 - [x] Interactive self-verifying user guide (`/guide.html`, The Sovereign Path)
 - [x] BYOC rail #1: SSH deploy to any Docker host you own, with health-verified upgrades, auto-rollback, export-to-owner, and verifiable delete
 - [~] BYOC rail 1.5: rent a GPU instance (RunPod, Vast.ai, Lambda Cloud) instead of bringing your own box — built and tested against mocked APIs, but **unverified against live provider infrastructure** ([details](docs/BYOC_SSH_CONNECTOR.md#rail-15--gpu-marketplace-provisioning))

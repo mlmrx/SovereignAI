@@ -22,11 +22,13 @@ const PAGES = [
 ];
 
 // The playground: the product's real interface files, publicly hosted in
-// their honestly-badged demo mode.
+// their honestly-badged demo mode. Surfaces stand under their own names; the
+// xbrain* filenames are internal fossils (the local server serves them at
+// those paths), and the retired umbrella must never resurface in public copy.
 const DEMO_SURFACES = [
-  ['xbrain.html', 'xbrain.js', '/xbrain'],
-  ['xbrain-ledger.html', 'xbrain-ledger.js', '/xbrain-ledger'],
-  ['xbrain-atlas.html', 'xbrain-atlas.js', '/xbrain-atlas'],
+  ['xbrain.html', 'xbrain.js', '/mind-field'],
+  ['xbrain-ledger.html', 'xbrain-ledger.js', '/memory-ledger'],
+  ['xbrain-atlas.html', 'xbrain-atlas.js', '/knowledge-atlas'],
   ['guide.html', 'guide.js', '/guide'],
 ];
 
@@ -158,6 +160,24 @@ test('the playground ships real interfaces, guarded for the public origin', () =
   }
   // The internal note about how the founder works stays out of public demo data.
   assert.doesNotMatch(pub('xbrain.js'), /flag only strategic business calls/, 'no internal operating notes in demo memories');
+  // Old umbrella URLs redirect permanently to the surface names.
+  const redirects = new Map((config.redirects || []).map((r) => [r.source, r]));
+  for (const [oldPath, target] of [
+    ['/xbrain', '/mind-field'], ['/xbrain.html', '/mind-field'],
+    ['/xbrain-ledger', '/memory-ledger'], ['/xbrain-ledger.html', '/memory-ledger'],
+    ['/xbrain-atlas', '/knowledge-atlas'], ['/xbrain-atlas.html', '/knowledge-atlas'],
+  ]) {
+    const rule = redirects.get(oldPath);
+    assert.ok(rule && rule.destination === target && rule.permanent === true, `${oldPath} must 301 to ${target}`);
+  }
+  // The retired umbrella never resurfaces where the public reads: page titles,
+  // the hub, the sitemap, or what we hand to answer engines.
+  for (const file of ['playground.html', 'llms.txt', 'sitemap.xml']) {
+    assert.doesNotMatch(pub(file), /xbrain/i, `${file} must not carry the retired umbrella name`);
+  }
+  for (const [html] of DEMO_SURFACES) {
+    assert.doesNotMatch(pub(html).match(/<title>[^<]*<\/title>/)[0], /xbrain/i, `${html} title must use the surface's own name`);
+  }
 });
 
 test('every public page is reachable: routes are wired and internal links resolve', () => {

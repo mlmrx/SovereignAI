@@ -477,7 +477,7 @@ async function bootLive() {
   const statusPayload = await api('GET', '/api/status');
   $('#brain-name').textContent = statusPayload.name || 'Sovereign AI';
   $('#mode-badge').textContent = `live · v${statusPayload.version}`;
-  document.title = `XBrain — ${statusPayload.name || 'SovereignAI'}`;
+  document.title = `The Mind Field — ${statusPayload.name || 'SovereignAI'}`;
 
   state.personas = await api('GET', '/api/personas').catch(() => []);
   renderPersonas();
@@ -591,12 +591,12 @@ const DEMO_CELLS = [
   ['document', 'trainer protocol v1 — content-addressed blobs, idempotent jobs, attested artifacts.'],
   ['document', 'OPERATIONS.md — one stable home, portable exports, binaries that behave like installs.'],
   ['memory', 'The interface never fakes machinery: nothing glows that did not rank.'],
-  ['document', 'XBRAIN_DESIGN_BRIEF.md — the standing prompt: the cognition is the interface.'],
+  ['document', 'BOTTEGA_DESIGN_BRIEF.md — the standing prompt: the cognition is the interface.'],
 ];
 const DEMO_ANSWERS = [
   {
     match: /xbrain|interface|design|ux|field|this/i,
-    text: 'You are inside the Mind Field — XBrain\'s third form.\n\nEvery hexagon drifting around this page is a **real thing I hold**: a memory you let me keep, a document you gave me. When you ask, the cells I truly reach for ignite and thread into the answer while it streams. The *recall* face shows the exact excerpts; *trace* shows what the answer cost, down to the first-token millisecond.\n\nNothing here is theatre: in the live product every glow is driven by genuine retrieval ids, and the silence when nothing ranks is shown honestly too.',
+    text: 'You are inside the Mind Field — the third of these surfaces.\n\nEvery hexagon drifting around this page is a **real thing I hold**: a memory you let me keep, a document you gave me. When you ask, the cells I truly reach for ignite and thread into the answer while it streams. The *recall* face shows the exact excerpts; *trace* shows what the answer cost, down to the first-token millisecond.\n\nNothing here is theatre: in the live product every glow is driven by genuine retrieval ids, and the silence when nothing ranks is shown honestly too.',
   },
   {
     match: /memory|remember|keep/i,

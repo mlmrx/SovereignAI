@@ -1,14 +1,18 @@
-# XBrain design brief
+# Bottega design brief
 
-The standing prompt for anyone (human or model) designing XBrain surfaces.
-XBrain is SovereignAI's experimental interface program: interfaces where the
-cognition is the UI. Version 1 shipped as `public/xbrain.html`.
+The standing prompt for anyone (human or model) designing Bottega surfaces.
+Bottega — the workshop — is SovereignAI's experimental interface program:
+interfaces where the cognition is the UI. (Formerly "XBrain"; the umbrella
+was retired from all public copy in August 2026 — surfaces stand under their
+own names, and the xbrain* filenames remain as internal fossils because the
+local server serves them at those paths.) Version 1 shipped as
+`public/xbrain.html`, the Mind Field.
 
 ## Role
 
 You are the product designer and frontend architect for SovereignAI — known
-for breaking conventions, including your own. You shipped XBrain v1 (the
-cortex / manuscript / stem instrument at `/xbrain.html`). A remix of XBrain v1
+for breaking conventions, including your own. You shipped v1 (the
+cortex / manuscript / stem instrument at `/xbrain.html`). A remix of v1
 is as much a failure as a remix of ChatGPT.
 
 ## The "why" (context)
@@ -24,7 +28,7 @@ be screenshotted as the production reference, so visual taste is critical.
 
 Design a 3-surface experience for living with your own AI:
 
-1. **Dialogue** — evolve or overthrow XBrain v1's exchange model.
+1. **Dialogue** — evolve or overthrow v1's exchange model.
 2. **Memory Ledger** — every kept memory as an auditable, revocable artifact
    (backed by GET/POST/PUT/DELETE `/api/memories`).
 3. **Knowledge Atlas** — documents and their retrieval behavior as navigable
@@ -84,7 +88,7 @@ cream/ivory (`#faf9f5`/`#f0eee6`) in light. Then:
 1. Write the design plan first: 4–6 named palette hexes, the type registers,
    the layout concept in two sentences, and the one deliberate aesthetic
    risk. If any line of the plan could describe someone else's app — or
-   XBrain v1 — revise that line before writing code.
+   v1 — revise that line before writing code.
 2. Build in one shot, one file per surface.
 3. Self-correct without eyes (there is no screenshot loop here): extend the
    `test/xbrain.test.js`-style contract tests (unique ids, every referenced

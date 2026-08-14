@@ -1,5 +1,13 @@
 {
   "trailingSlash": false,
+  "redirects": [
+    { "source": "/xbrain", "destination": "/mind-field", "permanent": true },
+    { "source": "/xbrain.html", "destination": "/mind-field", "permanent": true },
+    { "source": "/xbrain-ledger", "destination": "/memory-ledger", "permanent": true },
+    { "source": "/xbrain-ledger.html", "destination": "/memory-ledger", "permanent": true },
+    { "source": "/xbrain-atlas", "destination": "/knowledge-atlas", "permanent": true },
+    { "source": "/xbrain-atlas.html", "destination": "/knowledge-atlas", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/", "destination": "/land.html" },
     { "source": "/what-is-sovereign-ai", "destination": "/what-is-sovereign-ai.html" },
@@ -7,9 +15,9 @@
     { "source": "/why", "destination": "/why.html" },
     { "source": "/faq", "destination": "/faq.html" },
     { "source": "/playground", "destination": "/playground.html" },
-    { "source": "/xbrain", "destination": "/xbrain.html" },
-    { "source": "/xbrain-ledger", "destination": "/xbrain-ledger.html" },
-    { "source": "/xbrain-atlas", "destination": "/xbrain-atlas.html" },
+    { "source": "/mind-field", "destination": "/xbrain.html" },
+    { "source": "/memory-ledger", "destination": "/xbrain-ledger.html" },
+    { "source": "/knowledge-atlas", "destination": "/xbrain-atlas.html" },
     { "source": "/guide", "destination": "/guide.html" }
   ],
   "headers": [
