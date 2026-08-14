@@ -15,6 +15,8 @@
     { "source": "/why", "destination": "/why.html" },
     { "source": "/faq", "destination": "/faq.html" },
     { "source": "/playground", "destination": "/playground.html" },
+    { "source": "/film", "destination": "/film.html" },
+    { "source": "/a-day", "destination": "/a-day.html" },
     { "source": "/mind-field", "destination": "/xbrain.html" },
     { "source": "/memory-ledger", "destination": "/xbrain-ledger.html" },
     { "source": "/knowledge-atlas", "destination": "/xbrain-atlas.html" },

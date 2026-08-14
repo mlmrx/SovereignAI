@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The film — SovereignAI in sixty seconds</title>
+<meta name="description" content="A sixty-second film: you are scattered across forty companies, each holding a monetizable sliver. Now the machines remember you too. Here is the opposite — one mind on your own hardware, with receipts, a tested exit, and an honest ledger of what still isn't sovereign." />
+<link rel="canonical" href="https://mysovereign.ai/film" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<meta property="og:type" content="video.other" />
+<meta property="og:title" content="The film — SovereignAI in sixty seconds" />
+<meta property="og:description" content="Ten shots: the fragmentation, the moat that remembers you, the convergence, and the ledger of what still isn't sovereign." />
+<meta property="og:url" content="https://mysovereign.ai/film" />
+<meta property="og:site_name" content="SovereignAI" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="The film — SovereignAI in sixty seconds" />
+<meta name="twitter:description" content="Ten shots, sixty seconds, no video file: the whole argument, drawn live in your browser." />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "The SovereignAI film",
+  "description": "A sixty-second animated argument for personal AI sovereignty, rendered live in the browser: the fragmentation of a person across services, the memory moat, the convergence onto owned hardware, receipts, a verifiable exit, and a published ledger of unsolved layers.",
+  "url": "https://mysovereign.ai/film",
+  "inLanguage": "en",
+  "isPartOf": { "@type": "WebSite", "name": "SovereignAI", "url": "https://mysovereign.ai" },
+  "publisher": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" }
+}
+</script>
+<link rel="stylesheet" href="/film.css" />
+<script>try{var t=localStorage.getItem("sovereign-theme");if(t==="notte")document.documentElement.dataset.theme="dark";else if(t==="cielo"||t==="bottega")document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body>
+
+<!-- The film. Hidden until the script confirms it can run it; with no
+     JavaScript, or under prefers-reduced-motion, the written version below
+     stays on screen instead — the argument never depends on the animation. -->
+<div class="film" id="film" hidden>
+  <canvas class="stage" id="stage" aria-hidden="true"></canvas>
+
+  <div class="scrim" aria-hidden="true"></div>
+
+  <div class="caption" id="caption" role="region" aria-live="polite" aria-label="Film narration">
+    <p class="line serif" id="line"></p>
+    <p class="sub" id="sub"></p>
+  </div>
+
+  <div class="hud">
+    <div class="rail" id="rail" role="tablist" aria-label="Shots"></div>
+    <div class="controls">
+      <button type="button" id="playpause" aria-label="Pause">❚❚</button>
+      <button type="button" id="sound" aria-pressed="false" aria-label="Play the om while it runs">⬡ sound</button>
+      <a class="skip" href="#read">Read it instead</a>
+    </div>
+  </div>
+
+  <a class="brandmark" href="/" aria-label="SovereignAI home">
+    <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#12110f" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+    <span>SovereignAI</span>
+  </a>
+</div>
+
+<!-- The written cut: every shot, in order, readable without a single frame
+     of animation. This is the fallback and the transcript at once. -->
+<article class="read" id="read">
+  <div class="wrap">
+    <nav class="topnav">
+      <a class="home" href="/"><span class="hexmark" aria-hidden="true"></span> SovereignAI</a>
+      <span class="spacer"></span>
+      <a href="/a-day">A day with it</a>
+      <a href="/playground">Playground</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/faq">FAQ</a>
+    </nav>
+
+    <p class="eyebrow">The film · sixty seconds · no video file, drawn live</p>
+    <h1 class="serif">The whole argument, in ten shots.</h1>
+    <p class="lede">If the animation isn't playing — because you asked for reduced motion, or scripts are off — nothing is lost. This is the same film, written down.</p>
+
+    <ol class="shots">
+      <li><b>You are the most fragmented database on earth.</b> Email, banks, the broker, the mortgage, the pharmacy, the wearable, the airline, the school portal, every AI you have ever typed a thought into. Forty-odd services, each holding a shard of you.</li>
+      <li><b>Every company owns a complete profile of their sliver.</b> Complete enough to monetize. Too partial to understand your life.</li>
+      <li><b>Nobody owns the whole person — including you.</b> Your bank knows what you spent, not why. Your doctor has the labs, not the sleep or the stress that shows in both.</li>
+      <li><b>The joins are where your life actually is.</b> Subscriptions against usage. Renewals against a calendar. What you were told, against what you decided, against why. No vendor can build them; no vendor should hold them.</li>
+      <li><b>And now the thing collecting you remembers you.</b> Every conversation makes the product better at knowing you and more expensive to leave. That isn't a flaw in the business model. It <em>is</em> the business model. The moat is the memory.</li>
+      <li><b>So we built the opposite.</b> One file on hardware you own. No account, no cloud, works offline. Zero runtime dependencies, so "audit the code" is an invitation you can actually accept.</li>
+      <li><b>Every memory carries a receipt.</b> How it entered, which conversation it came from, which model wrote it. If we cannot say where a memory came from, we do not keep it — and records older than that tracking say "unknown" rather than a backfilled guess.</li>
+      <li><b>Deleting deletes.</b> Zeroed on disk, not hidden behind a filter. You should be able to feel a delete, not trust one.</li>
+      <li><b>The exit is a feature, not a promise.</b> One checksummed export, encrypted with a passphrase only you hold, verifiable without importing it anywhere, in a format documented well enough to outlive us.</li>
+      <li><b>And we publish what still isn't sovereign.</b> The database isn't encrypted at rest. The model layer is borrowed — even open weights are someone else's artifact. An unknown is reported as unknown, never rounded up to a feature.</li>
+    </ol>
+
+    <p class="closer serif">Own every layer you can.<br>Rent nothing you can't walk away from.</p>
+
+    <div class="endcta">
+      <p>The trial is the real product, one command, no account.</p>
+      <p>
+        <a class="btn" href="/#install">Run it now</a>
+        <a class="btn ghost" href="/playground">Or play with the interfaces</a>
+      </p>
+    </div>
+
+    <footer>
+      <p>SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years.</p>
+      <p>This website counts visits with Vercel Web Analytics — cookie-less, aggregate, no cross-site tracking. Your SovereignAI instance reports nothing to anyone, ever.</p>
+    </footer>
+  </div>
+</article>
+
+<script src="/film.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

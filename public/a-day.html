@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>A day with a sovereign AI — one mind, every screen</title>
+<meta name="description" content="Press play on a day of living with your own AI: the morning arrival, saving from your editor, Claude reading your memory over MCP, the renewals radar on your phone, the exit drill, and the memory ledger. Every scene is shipped behavior, replayed." />
+<link rel="canonical" href="https://mysovereign.ai/a-day" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="A day with a sovereign AI — one mind, every screen" />
+<meta property="og:description" content="Don't read about the product — press play on it. Six scenes from one day, each a replay of shipped behavior." />
+<meta property="og:url" content="https://mysovereign.ai/a-day" />
+<meta property="og:site_name" content="SovereignAI" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="A day with a sovereign AI" />
+<meta name="twitter:description" content="Six playable scenes from one day of owning your AI." />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "A day with a sovereign AI",
+  "description": "Six interactive scenes replaying one day of living with a self-hosted AI: arrival, editor capture, MCP, phone access, the exit drill, and the memory ledger.",
+  "url": "https://mysovereign.ai/a-day",
+  "inLanguage": "en",
+  "isPartOf": { "@type": "WebSite", "name": "SovereignAI", "url": "https://mysovereign.ai" },
+  "publisher": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" }
+}
+</script>
+<style>
+  :root {
+    --ground: #faf9f5; --panel: #f0eee6; --ink: #1f1e1d;
+    --soft: #55514b; --muted: #8a847a; --line: #d8d4c8;
+    --accent: #a6522a; --accent-bright: #c05f31; --accent-soft: rgba(166,82,42,.1);
+    --screen: #191817; --screen-line: #3a3835; --screen-ink: #d9d4c9; --screen-muted: #8f897e;
+    --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#1a1918; --panel:#262624; --ink:#faf9f5; --soft:#c9c3b8; --muted:#8f897e;
+      --line:#3a3835; --accent:#d97757; --accent-bright:#e8926f; --accent-soft:rgba(217,119,87,.12);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#1a1918; --panel:#262624; --ink:#faf9f5; --soft:#c9c3b8; --muted:#8f897e;
+    --line:#3a3835; --accent:#d97757; --accent-bright:#e8926f; --accent-soft:rgba(217,119,87,.12);
+  }
+  :root[data-theme="light"] {
+    --ground:#faf9f5; --panel:#f0eee6; --ink:#1f1e1d; --soft:#55514b; --muted:#8a847a;
+    --line:#d8d4c8; --accent:#a6522a; --accent-bright:#c05f31; --accent-soft:rgba(166,82,42,.1);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans); line-height: 1.55; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 22px; }
+  :focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
+
+  .topbar { background: #1f1e1d; color: #f0eee6; }
+  .topbar .wrap { display: flex; align-items: center; gap: 16px; padding: 14px 22px; flex-wrap: wrap; }
+  .topbar a { color: #f0eee6; text-decoration: none; font-size: 0.8rem; opacity: .72; white-space: nowrap; }
+  .topbar a:hover { opacity: 1; color: #e9a086; }
+  .topbar .home { display: flex; align-items: center; gap: 9px; opacity: 1; font-weight: 650; }
+  .topbar nav { display: flex; gap: 16px; margin-left: auto; flex-wrap: wrap; }
+  .hexmark { width: 22px; height: 22px; background: #d97757; clip-path: polygon(25% 5%,75% 5%,100% 50%,75% 95%,25% 95%,0% 50%); }
+
+  .eyebrow { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
+  h1 { font-family: var(--serif); font-size: clamp(30px, 5.2vw, 48px); font-weight: 600; line-height: 1.08; letter-spacing: -.02em; margin: 0 0 16px; text-wrap: balance; }
+  h2 { font-family: var(--serif); font-size: clamp(21px, 3.2vw, 28px); font-weight: 600; margin: 0 0 10px; text-wrap: balance; }
+  p { max-width: 62ch; }
+  .lede { font-size: 16.5px; color: var(--soft); }
+  header.page { padding: 54px 0 8px; }
+
+  .day { border-left: 2px solid var(--line); margin: 40px 0 0 7px; padding: 4px 0 30px; }
+  .scene { position: relative; padding: 26px 0 26px 32px; }
+  .scene::before { content: ""; position: absolute; left: -8px; top: 36px; width: 14px; height: 14px; background: var(--accent); clip-path: polygon(25% 5%,75% 5%,100% 50%,75% 95%,25% 95%,0% 50%); }
+  .clock { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--accent-bright); letter-spacing: .08em; }
+  .scene h2 { margin-top: 4px; }
+  .where { font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+  .caption { font-size: 13px; color: var(--muted); max-width: 60ch; margin-top: 10px; }
+  .caption b { color: var(--soft); }
+
+  .frame { background: var(--screen); border: 1px solid var(--screen-line); border-radius: 12px; overflow: hidden; margin-top: 16px; color: var(--screen-ink); font-size: 13px; }
+  .frame-bar { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-bottom: 1px solid var(--screen-line); font-family: var(--mono); font-size: 10.5px; color: var(--screen-muted); }
+  .frame-bar .dots { display: flex; gap: 5px; }
+  .frame-bar .dots span { width: 9px; height: 9px; border-radius: 50%; background: var(--screen-line); }
+  .frame-body { padding: 16px 18px; min-height: 130px; }
+  .play { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 8px 16px; border-radius: 9px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent-bright); font: 650 13px var(--sans); cursor: pointer; }
+  .play:hover { background: var(--accent); color: #1f1e1d; }
+  .play[disabled] { opacity: .45; cursor: default; }
+  .mono { font-family: var(--mono); }
+
+  .ignite-cells { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0; min-height: 20px; }
+  .cell { width: 13px; height: 13px; border-radius: 3px 6px 3px 6px; background: rgba(217,119,87,.35); border: 1px solid #d97757; animation: pop .4s ease; }
+  @keyframes pop { from { transform: scale(.2); } 60% { transform: scale(1.3); } to { transform: scale(1); } }
+  .greeting { border-left: 3px solid #d97757; padding: 8px 12px; margin-top: 10px; font-style: italic; color: #e6e1d6; background: rgba(217,119,87,.08); border-radius: 0 8px 8px 0; min-height: 20px; }
+  .status-line { font-family: var(--mono); font-size: 11.5px; color: var(--screen-muted); min-height: 17px; }
+
+  .code { font-family: var(--mono); font-size: 12px; line-height: 1.7; }
+  .code .sel { background: rgba(217,119,87,.22); outline: 1px solid rgba(217,119,87,.5); }
+  .ctx { display: inline-block; margin-top: 10px; border: 1px solid var(--screen-line); border-radius: 8px; overflow: hidden; }
+  .ctx button { display: block; width: 100%; text-align: left; padding: 7px 14px; background: #201f1e; border: 0; color: var(--screen-ink); font: 12px var(--sans); cursor: pointer; }
+  .ctx button:hover { background: rgba(217,119,87,.15); color: #e8926f; }
+  .toast { font-family: var(--mono); font-size: 11.5px; color: #8aa87e; min-height: 17px; margin-top: 8px; }
+
+  .bubble { max-width: 85%; padding: 9px 13px; border-radius: 11px; margin: 8px 0; }
+  .bubble.user { background: #2d2c2a; margin-left: auto; }
+  .bubble.claude { background: rgba(217,119,87,.1); border: 1px solid rgba(217,119,87,.25); }
+  .toolchip { display: inline-block; font-family: var(--mono); font-size: 10.5px; color: #d9a557; border: 1px dashed #d9a557; border-radius: 999px; padding: 2px 9px; margin: 6px 0; }
+  .cite { font-family: var(--mono); font-size: 10.5px; color: var(--screen-muted); display: block; margin-top: 6px; }
+  .cite b { color: #e8926f; font-weight: 600; }
+
+  .phone { width: min(290px, 100%); border: 1px solid var(--screen-line); border-radius: 22px; background: var(--screen); padding: 14px 12px; margin-top: 16px; }
+  .phone .notch { width: 70px; height: 5px; border-radius: 999px; background: var(--screen-line); margin: 0 auto 12px; }
+  .radar-item { border: 1px solid var(--screen-line); border-left: 3px solid #d9a557; border-radius: 9px; padding: 8px 11px; margin: 7px 0; font-size: 12px; color: var(--screen-ink); }
+  .radar-item .mono { font-size: 10.5px; color: #d9a557; }
+
+  .frame pre { margin: 0; font-family: var(--mono); font-size: 12.3px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+  .t-cmd { color: #e8926f; font-weight: 700; } .t-ok { color: #8aa87e; } .t-dim { color: var(--screen-muted); }
+
+  .ledger-item { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; border: 1px solid var(--screen-line); border-left: 3px solid #d97757; border-radius: 9px; padding: 9px 12px; margin: 8px 0; transition: opacity .5s ease, transform .5s ease; }
+  .ledger-item .receipt { display: block; font-family: var(--mono); font-size: 10.5px; color: var(--screen-muted); margin-top: 4px; }
+  .strike { border: 1px solid var(--screen-line); background: transparent; color: var(--screen-muted); font: 11px var(--mono); padding: 4px 10px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+  .strike:hover { border-color: #c4685a; color: #c4685a; }
+  .ledger-item.gone { opacity: 0; transform: translateX(24px); }
+
+  section.channels { padding: 66px 0; border-top: 1px solid var(--line); margin-top: 50px; }
+  .channel-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-top: 26px; }
+  .cgroup { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 18px 20px; }
+  .cgroup h3 { font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-bright); margin: 0 0 12px; }
+  .chiplist { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip { font-family: var(--mono); font-size: 11.5px; padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--ground); color: var(--soft); cursor: pointer; }
+  .chip:hover, .chip.on { border-color: var(--accent); color: var(--accent-bright); background: var(--accent-soft); }
+  .channel-detail { margin-top: 14px; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 10px; font-size: 13px; color: var(--soft); min-height: 44px; }
+  .channel-detail b { color: var(--ink); }
+
+  .endcta { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 24px; margin: 10px 0 0; }
+  .endcta > *:last-child { margin-bottom: 0; }
+  .btn { display: inline-block; background: var(--accent); color: #fff; text-decoration: none; border-radius: 8px; padding: 11px 22px; font-size: .9rem; font-weight: 650; }
+  footer { padding: 46px 0 70px; border-top: 1px solid var(--line); margin-top: 26px; font-size: 13px; color: var(--muted); }
+  footer nav { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
+  footer a { color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) { .cell { animation: none; } .ledger-item { transition: none; } }
+</style>
+<script>try{var t=localStorage.getItem("sovereign-theme");if(t==="notte")document.documentElement.dataset.theme="dark";else if(t==="cielo"||t==="bottega")document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <a class="home" href="/"><span class="hexmark" aria-hidden="true"></span> SovereignAI</a>
+    <nav>
+      <a href="/film">The film</a>
+      <a href="/playground">Playground</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/why">The thesis</a>
+      <a href="/faq">FAQ</a>
+    </nav>
+  </div>
+</div>
+
+<header class="page wrap">
+  <p class="eyebrow">The experience · free, nothing installed</p>
+  <h1>One mind. Every screen. Your whole&nbsp;day.</h1>
+  <p class="lede">Don't read about the product — press play on it. Every scene below is a replay of shipped behavior, with the mechanism named underneath. The data is illustrative; the machinery is not.</p>
+</header>
+
+<div class="wrap"><div class="day">
+
+  <div class="scene">
+    <span class="clock">07:04</span> <span class="where">· web UI · the arrival</span>
+    <h2>Your AI learns who you are — in front of you.</h2>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span> localhost:4321 — bring your history home</div>
+      <div class="frame-body">
+        <div class="status-line" id="s1-status">chatgpt-export.zip ready. Parsed on this machine — nothing leaves it.</div>
+        <div class="ignite-cells" id="s1-cells" aria-hidden="true"></div>
+        <div class="greeting" id="s1-greeting" aria-live="polite"></div>
+      </div>
+    </div>
+    <button class="play" id="s1-play">▶ Drop the export</button>
+    <p class="caption"><b>The mechanism:</b> <span class="mono">sovereign import-chat</span> parses ChatGPT, Claude, and Gemini exports locally, then <span class="mono">distill</span> sweeps them into durable memories that name the conversation they came from. If nothing durable is found, it says so — the memory is never padded to look impressive.</p>
+  </div>
+
+  <div class="scene">
+    <span class="clock">09:12</span> <span class="where">· VS Code extension</span>
+    <h2>Feed it without leaving your editor.</h2>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span> retry-policy.ts — myproject</div>
+      <div class="frame-body">
+        <div class="code">
+          <div><span class="t-dim">14</span>  export const RETRY = {</div>
+          <div class="sel"><span class="t-dim">15</span>    baseDelayMs: 250, maxAttempts: 5,   <span class="t-dim">// decided after the Nov outage</span></div>
+          <div class="sel"><span class="t-dim">16</span>    jitter: "full",</div>
+          <div><span class="t-dim">17</span>  };</div>
+        </div>
+        <div class="ctx"><button id="s2-play">SovereignAI: Save selection to knowledge</button></div>
+        <div class="toast" id="s2-toast" aria-live="polite"></div>
+      </div>
+    </div>
+    <p class="caption"><b>The mechanism:</b> the VS Code and JetBrains extensions add ask-about-selection and save-selection-to-knowledge to the editor you already use; the browser extension does the same on any web page. All of it writes to the store on your machine.</p>
+  </div>
+
+  <div class="scene">
+    <span class="clock">11:30</span> <span class="where">· Claude Desktop · via MCP</span>
+    <h2>When you do rent a frontier model, it reads <em>your</em> memory.</h2>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span> Claude — connected: sovereign (MCP)</div>
+      <div class="frame-body">
+        <div class="bubble user">When does the team want demos scheduled?</div>
+        <div id="s3-out" aria-live="polite"></div>
+      </div>
+    </div>
+    <button class="play" id="s3-play">▶ Ask it</button>
+    <p class="caption"><b>The mechanism:</b> <span class="mono">sovereign mcp</span> exposes your memory and knowledge as tools to any MCP client — Claude Desktop and Code, Cursor, Windsurf, Codex CLI, Gemini CLI. The frontier model answers; the context it answers from never leaves your machine, and the citation proves where it came from.</p>
+  </div>
+
+  <div class="scene">
+    <span class="clock">14:45</span> <span class="where">· your phone · LAN or tailnet</span>
+    <h2>The radar travels with you. The data doesn't.</h2>
+    <div class="phone">
+      <div class="notch" aria-hidden="true"></div>
+      <div class="mono" style="font-size:10.5px; color: var(--screen-muted); margin-bottom: 8px;">http://192.168.1.20:4321 · Mind → life signals</div>
+      <div id="s4-out"></div>
+    </div>
+    <button class="play" id="s4-play">▶ Open on your phone</button>
+    <p class="caption"><b>The mechanism:</b> <span class="mono">sovereign start --lan</span> binds every interface and protects remote requests with a generated bearer token, printing a ready <span class="mono">#token=</span> URL for each address. Same instance, same mind — and <span class="mono">import-email</span> is what put those renewals on the radar in the first place.</p>
+  </div>
+
+  <div class="scene">
+    <span class="clock">18:20</span> <span class="where">· terminal · the exit drill</span>
+    <h2>Prove you can leave. That's why you stay.</h2>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span> sovereign — exit drill</div>
+      <div class="frame-body"><pre id="s5-out"><span class="t-dim">The whole workspace, checksummed, in a documented open format.</span></pre></div>
+    </div>
+    <button class="play" id="s5-play">▶ Run the drill</button>
+    <p class="caption"><b>The mechanism:</b> <span class="mono">export</span> writes every table with a SHA-256 manifest and an archive digest, optionally encrypted with a passphrase we never see; <span class="mono">verify</span> checks an archive without importing it, so you can test a year-old backup without touching live data.</p>
+  </div>
+
+  <div class="scene">
+    <span class="clock">21:00</span> <span class="where">· web UI · the memory ledger</span>
+    <h2>Every memory answers to you.</h2>
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><span></span><span></span><span></span></span> Memory — every entry with receipts</div>
+      <div class="frame-body" id="s6-out">
+        <div class="ledger-item"><div>Prefers Friday demos with the whole team
+          <span class="receipt">added by you · Jul 9</span></div>
+          <button class="strike">strike</button></div>
+        <div class="ledger-item"><div>Ships on Windows 11, tests against WSL Ubuntu
+          <span class="receipt">auto-extracted · from "Morning standup" · written by ollama/llama3.1</span></div>
+          <button class="strike">strike</button></div>
+        <div class="ledger-item"><div>Drinks too much espresso
+          <span class="receipt">recorded before provenance tracking — origin honestly unknown</span></div>
+          <button class="strike">strike</button></div>
+      </div>
+    </div>
+    <p class="caption"><b>The mechanism:</b> every memory records how it entered, which conversation it came from, which model wrote it, and when it changed — and records older than that tracking say "unknown" rather than a backfilled guess. Striking one zeroes the bytes on disk. Try it above.</p>
+  </div>
+
+</div></div>
+
+<section class="channels">
+  <div class="wrap">
+    <p class="eyebrow">The access map</p>
+    <h2>One mind, reachable from everywhere you already work.</h2>
+    <p class="lede">Tap any channel. The grouping is the whole argument: where it runs, where you reach it, and how you leave — all yours.</p>
+    <div class="channel-groups">
+      <div class="cgroup"><h3>Run it anywhere</h3><div class="chiplist" data-group="run"></div></div>
+      <div class="cgroup"><h3>Reach it from anything</h3><div class="chiplist" data-group="reach"></div></div>
+      <div class="cgroup"><h3>Leave anytime</h3><div class="chiplist" data-group="leave"></div></div>
+    </div>
+    <div class="channel-detail" id="channel-detail">Tap a channel to see the interaction it enables.</div>
+
+    <div class="endcta">
+      <h2 style="margin-top:0">That day starts with one command.</h2>
+      <p style="color:var(--soft)">The open trial runs the real product on your machine — no account, and deleting the container deletes every trace.</p>
+      <p><a class="btn" href="/#install">Run it now</a></p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <nav>
+      <a href="/">Home</a>
+      <a href="/film">The film</a>
+      <a href="/playground">Playground</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/faq">FAQ</a>
+    </nav>
+    <p>SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years · Own every layer you can. Rent nothing you can't walk away from.</p>
+    <p>This website counts visits with Vercel Web Analytics — cookie-less, aggregate, no cross-site tracking. Your SovereignAI instance reports nothing to anyone, ever.</p>
+  </div>
+</footer>
+
+<script src="/a-day.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

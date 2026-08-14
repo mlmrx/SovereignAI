@@ -19,6 +19,8 @@ const PAGES = [
   ['why.html', '/why'],
   ['faq.html', '/faq'],
   ['playground.html', '/playground'],
+  ['film.html', '/film'],
+  ['a-day.html', '/a-day'],
 ];
 
 // The playground: the product's real interface files, publicly hosted in
@@ -178,6 +180,31 @@ test('the playground ships real interfaces, guarded for the public origin', () =
   for (const [html] of DEMO_SURFACES) {
     assert.doesNotMatch(pub(html).match(/<title>[^<]*<\/title>/)[0], /xbrain/i, `${html} title must use the surface's own name`);
   }
+});
+
+test('the film and the day replay argue without a video file, and read without motion', () => {
+  const film = pub('film.html');
+  const filmJs = pub('film.js');
+  // No video asset anywhere: the film is code, which is the argument.
+  // Extension boundaries matter here: canvas drawing is full of .moveTo().
+  assert.doesNotMatch(film + filmJs, /<video[\s>]|\.mp4\b|\.webm\b|\.mov\b/i, 'the film ships as code, not as a media file');
+  // The written cut is in the markup itself, so it survives no JS and reduced
+  // motion — and the honesty beat is never the part that gets cut.
+  assert.match(film, /<article class="read"/, 'the written cut must exist in the markup');
+  assert.match(film, /isn’t sovereign|isn't sovereign/, 'the film must carry the not-yet-sovereign beat');
+  assert.match(filmJs, /prefers-reduced-motion/, 'the film must respect reduced motion');
+  assert.match(filmJs, /if \(!REDUCE\) start\(\);/, 'reduced motion keeps the written cut instead of animating');
+  // Sound stays behind a press, per the standing decision against autoplay.
+  assert.match(filmJs, /soundOn = !soundOn/, 'sound is a toggle the viewer presses');
+  assert.doesNotMatch(filmJs, /autoplay/i, 'nothing about this page autoplays sound');
+
+  const day = pub('a-day.html');
+  // Every scene names a shipped mechanism; these are the ones it claims.
+  for (const cli of ['import-chat', 'sovereign mcp', 'start --lan', 'import-email']) {
+    assert.ok(day.includes(cli), `a-day claims ${cli} — keep the claim or drop the scene`);
+  }
+  // The rival framing stays out of the copy that describes renting a model.
+  assert.doesNotMatch(day, /rent the intelligence/i, 'never concede the model layer in copy');
 });
 
 test('every public page is reachable: routes are wired and internal links resolve', () => {

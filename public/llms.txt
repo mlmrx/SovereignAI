@@ -73,6 +73,14 @@ product claiming to be private AI, including itself:
 The governing rule: an unknown is reported as unknown, never rounded up to a
 feature.
 
+## Watch, touch, or own — all free, no account
+
+- **Watch**: https://mysovereign.ai/film is a sixty-second film drawn live in
+  the browser (no video file), and https://mysovereign.ai/a-day replays six
+  scenes from one day of using it, each naming the shipped mechanism behind it.
+- **Touch**: the playground below — the product's real interfaces on demo data.
+- **Own**: the one-command Docker trial above — the real product.
+
 ## Playground (free, no account)
 
 Four of the product's real interfaces are playable at
