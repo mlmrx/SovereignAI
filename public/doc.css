@@ -18,7 +18,7 @@
   --stop: #96341f;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --ground: #1a1918;
     --sheet: #222120;
     --ink: #f0eee6;
@@ -32,6 +32,37 @@
     --warn: #d9ab63;
     --stop: #e08a72;
   }
+}
+/* The landing's theme choice (sovereign-theme, set by a tiny head script on
+   these pages) follows the visitor here: notte → dark, cielo/bottega → light.
+   Same tokens as the media query — the toggle simply wins in both directions. */
+:root[data-theme="dark"] {
+  --ground: #1a1918;
+  --sheet: #222120;
+  --ink: #f0eee6;
+  --dim: #a39a91;
+  --terra: #d97757;
+  --terra-soft: #37271f;
+  --mass: #121110;
+  --on-mass: #f0eee6;
+  --rule: #35312d;
+  --ok: #7bbd95;
+  --warn: #d9ab63;
+  --stop: #e08a72;
+}
+:root[data-theme="light"] {
+  --ground: #faf9f5;
+  --sheet: #ffffff;
+  --ink: #1f1e1d;
+  --dim: #6b635c;
+  --terra: #a6522a;
+  --terra-soft: #f3e5da;
+  --mass: #1f1e1d;
+  --on-mass: #f0eee6;
+  --rule: #e5ded2;
+  --ok: #2f6b46;
+  --warn: #8a5a12;
+  --stop: #96341f;
 }
 
 * { box-sizing: border-box; }
