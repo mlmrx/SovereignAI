@@ -68,15 +68,23 @@ test('the demo says what it is, and points at the real thing', () => {
 test('the demo is wired: route, deploy allowlist, script order, hub card', () => {
   const config = JSON.parse(pub('vercel.json'));
   const routes = new Map(config.rewrites.map((r) => [r.source, r.destination]));
-  assert.equal(routes.get('/demo'), '/index.html', '/demo must serve the app itself');
+  assert.equal(routes.get('/demo'), '/app.html', '/demo must serve the app itself');
 
   const ignore = pub('.vercelignore');
-  for (const file of ['index.html', 'app.js', 'style.css', 'demo-api.js', 'wizard.js', 'finetune.js']) {
+  for (const file of ['app.html', 'app.js', 'style.css', 'demo-api.js', 'wizard.js', 'finetune.js']) {
     assert.ok(ignore.includes(`!${file}`), `${file} must be deployed for the demo to run`);
   }
 
+  // The regression this cost us once: Vercel serves a matching static file
+  // BEFORE it applies rewrites, so shipping a file named index.html into the
+  // web root silently claims "/" and shadows the landing page. The app shell
+  // is app.html precisely so the front door stays the front door.
+  assert.equal(routes.get('/'), '/land.html', 'the site root must serve the landing page');
+  assert.ok(!fs.existsSync(path.join(root, 'public', 'index.html')), 'no index.html may sit in the web root');
+  assert.ok(!ignore.includes('!index.html'), 'index.html must never be added to the deploy');
+
   // Order is load-bearing: the fixture must be installed before the app boots.
-  const html = pub('index.html');
+  const html = pub('app.html');
   assert.ok(
     html.indexOf('/demo-api.js') < html.indexOf('/app.js'),
     'demo-api.js must load before app.js or the first calls escape'

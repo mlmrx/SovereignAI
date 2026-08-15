@@ -7,7 +7,7 @@ import path from 'node:path';
 import { createApp } from '../src/server.js';
 
 const root = path.resolve(import.meta.dirname, '..');
-const html = fs.readFileSync(path.join(root, 'public', 'index.html'), 'utf8');
+const html = fs.readFileSync(path.join(root, 'public', 'app.html'), 'utf8');
 const appJs = fs.readFileSync(path.join(root, 'public', 'app.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'public', 'style.css'), 'utf8');
 
@@ -241,7 +241,7 @@ test('Mind view and Arrival markup are wired: ids resolve, handlers bound, style
     'view-mind', 'mind-ignition', 'mind-ledger-list', 'mind-imports-body', 'mind-distill-btn',
     'arrival', 'arrival-drop', 'arrival-file', 'arrival-feed', 'arrival-greeting', 'arrival-skip',
   ]) {
-    assert.ok(ids.includes(required), `missing #${required} in index.html`);
+    assert.ok(ids.includes(required), `missing #${required} in app.html`);
   }
   for (const [id, event] of Object.entries({
     'mind-arrival-btn': 'click',

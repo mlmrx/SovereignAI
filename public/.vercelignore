@@ -5,7 +5,7 @@
 # demo-api.js is inert anywhere else. Everything still absent below is absent
 # on purpose.
 *
-!index.html
+!app.html
 !app.js
 !style.css
 !demo-api.js

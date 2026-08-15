@@ -1444,11 +1444,14 @@ function safeBrowserOrigin(origin, host, config) {
 }
 
 function serveStatic(pathname, res) {
-  let rel = pathname === '/' ? 'index.html' : pathname.slice(1);
+  // The app shell is app.html, not index.html: this directory is also the
+  // web root of mysovereign.ai, where index.html would be claimed by the
+  // site's front door and shadow the landing page.
+  let rel = pathname === '/' ? 'app.html' : pathname.slice(1);
   let body = readPublicFile(rel);
   if (body === null) {
     // SPA fallback
-    rel = 'index.html';
+    rel = 'app.html';
     body = readPublicFile(rel);
   }
   res.writeHead(200, { 'content-type': MIME[path.extname(rel)] ?? 'application/octet-stream' });

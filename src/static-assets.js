@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 // In a source checkout the web UI is read from public/ on disk. In a
 // single-executable (SEA) build there is no source tree: the boot stub
 // installs a reader under this well-known symbol that resolves the same
-// repo-relative keys (e.g. "public/index.html") from embedded assets.
+// repo-relative keys (e.g. "public/app.html") from embedded assets.
 export const SEA_ASSET_READER = Symbol.for('sovereignai.sea-assets');
 
 // In a SEA binary this module has a virtual (non-file:) URL and no public/

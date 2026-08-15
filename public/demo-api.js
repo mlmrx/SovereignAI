@@ -5,7 +5,7 @@
  * host: on your own machine it returns immediately and the real server answers
  * every call, byte for byte as before. On mysovereign.ai there is no server at
  * all, so it answers the app's own fetches from a fixture — which means the
- * page a visitor clicks through is the product's real index.html and app.js,
+ * page a visitor clicks through is the product's real app.html and app.js,
  * not a mock-up of them. Only the data is invented, and the banner says so.
  *
  * The fixture's resident is Atlas, the same scripted persona the other demo
@@ -169,7 +169,7 @@
       match: /.*/,
       sources: [],
       memories: [],
-      text: 'This is the **real command centre** — the same `index.html` and `app.js` a running SovereignAI serves — but there is no server behind this page, so my voice is scripted and the workspace is invented.\n\nWhat is genuinely real is everything around this message: the navigation, the Mind view and its provenance counts, the memory ledger with its receipts, the knowledge atlas, the settings.\n\nTry asking about **the lease**, **subscriptions**, or **what you remember about me** — or run the real thing with one command and ask it anything at all.',
+      text: 'This is the **real command centre** — the same `app.html` and `app.js` a running SovereignAI serves — but there is no server behind this page, so my voice is scripted and the workspace is invented.\n\nWhat is genuinely real is everything around this message: the navigation, the Mind view and its provenance counts, the memory ledger with its receipts, the knowledge atlas, the settings.\n\nTry asking about **the lease**, **subscriptions**, or **what you remember about me** — or run the real thing with one command and ask it anything at all.',
     },
   ];
 

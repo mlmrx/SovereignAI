@@ -1,6 +1,6 @@
 // Regenerates the checked-in brand icons for the web UI favicon geometry:
 // a Claude-terracotta hexagon (#d97757) carrying the warm-charcoal glyph
-// (#1f1e1d) from public/index.html. Zero dependencies — polygons are
+// (#1f1e1d) from public/app.html. Zero dependencies — polygons are
 // rasterized with 4x4 supersampling and encoded as PNG by hand.
 //
 //   node scripts/make-icons.mjs

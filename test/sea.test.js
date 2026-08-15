@@ -22,7 +22,7 @@ test('SEA manifest embeds the full module graph and the entire web UI', () => {
     'src/mcp.js',
     'src/personas.js',
     'src/providers/index.js',
-    'public/index.html',
+    'public/app.html',
   ]) {
     assert.ok(assets[required], `missing required asset ${required}`);
   }
@@ -43,7 +43,7 @@ test('SEA embed and the static server both refuse deploy scaffolding and hidden 
   for (const scaffolding of ['.vercel/project.json', '.vercelignore', '.env.local', '.gitignore', 'vercel.json', 'api/access-request.js']) {
     assert.equal(isPublicUiPath(scaffolding), false, `${scaffolding} must not count as web UI`);
   }
-  assert.ok(isPublicUiPath('land.html') && isPublicUiPath('index.html'), 'the real UI must still count');
+  assert.ok(isPublicUiPath('land.html') && isPublicUiPath('app.html'), 'the real UI must still count');
 });
 
 test('SEA module graph walker sees every import form and rejects bad specifiers', () => {
@@ -94,7 +94,7 @@ test('static assets read from disk, reject traversal, and prefer an installed SE
     assert.equal(normalizeRelPath(bad), null, `"${bad}" must be rejected`);
   }
 
-  const index = readPublicFile('index.html');
+  const index = readPublicFile('app.html');
   assert.ok(index.toString('utf8').startsWith('<!doctype html>'));
   assert.equal(readPublicFile('does-not-exist.html'), null);
   assert.equal(readPublicFile('../src/config.js'), null);
@@ -102,11 +102,11 @@ test('static assets read from disk, reject traversal, and prefer an installed SE
   globalThis[SEA_ASSET_READER] = (key) => (key === 'public/embedded.txt' ? new TextEncoder().encode('from-sea') : undefined);
   try {
     assert.equal(readPublicFile('embedded.txt').toString('utf8'), 'from-sea');
-    assert.equal(readPublicFile('index.html'), null, 'SEA mode must not fall back to the source tree');
+    assert.equal(readPublicFile('app.html'), null, 'SEA mode must not fall back to the source tree');
   } finally {
     delete globalThis[SEA_ASSET_READER];
   }
-  assert.ok(readPublicFile('index.html'), 'disk mode must return after the reader is removed');
+  assert.ok(readPublicFile('app.html'), 'disk mode must return after the reader is removed');
 });
 
 test('CI and release workflows build, smoke-test, and publish the single binaries', () => {

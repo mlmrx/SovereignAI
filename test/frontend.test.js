@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import { createApp } from '../src/server.js';
 
 const root = path.resolve(import.meta.dirname, '..');
-const html = fs.readFileSync(path.join(root, 'public', 'index.html'), 'utf8');
+const html = fs.readFileSync(path.join(root, 'public', 'app.html'), 'utf8');
 const appJs = fs.readFileSync(path.join(root, 'public', 'app.js'), 'utf8');
 const finetuneJs = fs.readFileSync(path.join(root, 'public', 'finetune.js'), 'utf8');
 const wizardJs = fs.readFileSync(path.join(root, 'public', 'wizard.js'), 'utf8');
@@ -20,7 +20,7 @@ test('command center markup has unique ids and every app selector resolves', () 
 
   const referencedIds = [...appJs.matchAll(/\$\(['"]#([A-Za-z][\w-]*)['"]/g)].map((match) => match[1]);
   const missing = [...new Set(referencedIds.filter((id) => !ids.includes(id)))];
-  assert.deepEqual(missing, [], `app selectors missing from index.html: ${missing.join(', ')}`);
+  assert.deepEqual(missing, [], `app selectors missing from app.html: ${missing.join(', ')}`);
 
   for (const required of ['view-home', 'readiness-panel', 'source-panel', 'drop-zone', 'memory-form', 'confirm-dialog']) {
     if (required === 'source-panel') assert.match(appJs, /className = 'source-panel'/);
