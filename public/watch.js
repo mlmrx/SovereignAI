@@ -535,20 +535,18 @@ function goTo(i) {
   if (SHOTS[index].id === 'ignite') playOm();
 }
 
+// The stage holds on its closing shot rather than vanishing: the header and
+// the written cut are both still there, so nothing needs to be dismissed.
 function finish() {
   running = false;
   cancelAnimationFrame(raf);
-  film.style.transition = 'opacity 700ms ease';
-  film.style.opacity = '0';
-  setTimeout(dismiss, 700);
+  playBtn.textContent = '↻';
+  playBtn.setAttribute('aria-label', 'Play again');
+  playBtn.dataset.replay = 'true';
 }
 
-function dismiss() {
-  running = false;
-  cancelAnimationFrame(raf);
-  film.hidden = true;
-  document.body.style.overflow = '';
-  read.scrollIntoView({ block: 'start' });
+function toRead() {
+  read.scrollIntoView({ behavior: REDUCE ? 'auto' : 'smooth', block: 'start' });
 }
 
 function frame(now) {
@@ -573,15 +571,19 @@ function frame(now) {
 
 function start() {
   film.hidden = false;
-  document.body.style.overflow = 'hidden';
   layout();
   running = true;
+  paused = false;
   last = 0;
+  delete playBtn.dataset.replay;
+  playBtn.textContent = '❚❚';
+  playBtn.setAttribute('aria-label', 'Pause');
   goTo(0);
   raf = requestAnimationFrame(frame);
 }
 
 playBtn.addEventListener('click', () => {
+  if (playBtn.dataset.replay) { start(); return; }
   paused = !paused;
   playBtn.textContent = paused ? '▶' : '❚❚';
   playBtn.setAttribute('aria-label', paused ? 'Play' : 'Pause');
@@ -592,13 +594,13 @@ soundBtn.addEventListener('click', () => {
   soundBtn.textContent = soundOn ? '⬡ sound on' : '⬡ sound';
   if (soundOn) playOm();
 });
-document.querySelector('.skip').addEventListener('click', (e) => { e.preventDefault(); dismiss(); });
+document.querySelector('.skip').addEventListener('click', (e) => { e.preventDefault(); toRead(); });
 
 addEventListener('keydown', (e) => {
-  if (film.hidden) return;
+  if (film.hidden || !running) return;
   if (e.key === 'ArrowRight') goTo(index + 1);
   else if (e.key === 'ArrowLeft') goTo(index - 1);
-  else if (e.key === 'Escape') dismiss();
+  else if (e.key === 'Escape') toRead();
   else if (e.key === ' ') { e.preventDefault(); playBtn.click(); }
 });
 addEventListener('resize', () => { if (running) layout(); });

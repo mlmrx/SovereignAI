@@ -75,7 +75,7 @@ feature.
 
 ## Watch, touch, or own — all free, no account
 
-- **Watch**: https://mysovereign.ai/film is a sixty-second film drawn live in
+- **Watch**: https://mysovereign.ai/watch is a sixty-second sequence drawn live in
   the browser (no video file), and https://mysovereign.ai/a-day replays six
   scenes from one day of using it, each naming the shipped mechanism behind it.
 - **Touch**: the playground below — the product's real interfaces on demo data.

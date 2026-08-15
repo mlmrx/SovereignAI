@@ -1,6 +1,8 @@
 {
   "trailingSlash": false,
   "redirects": [
+    { "source": "/film", "destination": "/watch", "permanent": true },
+    { "source": "/film.html", "destination": "/watch", "permanent": true },
     { "source": "/xbrain", "destination": "/mind-field", "permanent": true },
     { "source": "/xbrain.html", "destination": "/mind-field", "permanent": true },
     { "source": "/xbrain-ledger", "destination": "/memory-ledger", "permanent": true },
@@ -15,7 +17,7 @@
     { "source": "/why", "destination": "/why.html" },
     { "source": "/faq", "destination": "/faq.html" },
     { "source": "/playground", "destination": "/playground.html" },
-    { "source": "/film", "destination": "/film.html" },
+    { "source": "/watch", "destination": "/watch.html" },
     { "source": "/a-day", "destination": "/a-day.html" },
     { "source": "/mind-field", "destination": "/xbrain.html" },
     { "source": "/memory-ledger", "destination": "/xbrain-ledger.html" },

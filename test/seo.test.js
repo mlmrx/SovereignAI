@@ -19,7 +19,7 @@ const PAGES = [
   ['why.html', '/why'],
   ['faq.html', '/faq'],
   ['playground.html', '/playground'],
-  ['film.html', '/film'],
+  ['watch.html', '/watch'],
   ['a-day.html', '/a-day'],
 ];
 
@@ -132,8 +132,8 @@ test('one shell frames every page: same header, same footer, same theme control'
   // Deliberately short: brand, three destinations, one call to action. Depth
   // pages (thesis, what-is, a-day, access) live in the footer, which carries
   // every link — a nav is a choice, not an inventory.
-  const NAV = ['/film', '/playground', '/sovereignty', '/faq'];
-  for (const [file] of [...PAGES, ['film.html']]) {
+  const NAV = ['/watch', '/playground', '/sovereignty', '/faq'];
+  for (const [file] of [...PAGES, ['watch.html']]) {
     const html = pub(file);
     assert.match(html, /<header class="shell-bar">/, `${file} must carry the shared header`);
     assert.match(html, /<footer class="shell-foot">/, `${file} must carry the shared footer`);
@@ -225,17 +225,20 @@ test('the playground ships real interfaces, guarded for the public origin', () =
   }
 });
 
-test('the film and the day replay argue without a video file, and read without motion', () => {
-  const film = pub('film.html');
-  const filmJs = pub('film.js');
+test('the watch page and the day replay argue without a video file, and read without motion', () => {
+  const film = pub('watch.html');
+  const filmJs = pub('watch.js');
   // No video asset anywhere: the film is code, which is the argument.
   // Extension boundaries matter here: canvas drawing is full of .moveTo().
   assert.doesNotMatch(film + filmJs, /<video[\s>]|\.mp4\b|\.webm\b|\.mov\b/i, 'the film ships as code, not as a media file');
   // The written cut is in the markup itself, so it survives no JS and reduced
   // motion — and the honesty beat is never the part that gets cut.
   assert.match(film, /<article class="read"/, 'the written cut must exist in the markup');
-  assert.match(film, /isn’t sovereign|isn't sovereign/, 'the film must carry the not-yet-sovereign beat');
-  assert.match(filmJs, /prefers-reduced-motion/, 'the film must respect reduced motion');
+  // The shared header sits above the stage, so navigation never disappears.
+  assert.ok(film.indexOf('shell-bar') < film.indexOf('class="film"'), 'the header must come before the stage');
+  assert.doesNotMatch(pub('watch.css'), /\.film \{[^}]*position: fixed/, 'the stage must not cover the page');
+  assert.match(film, /isn’t sovereign|isn't sovereign/, 'the sequence must carry the not-yet-sovereign beat');
+  assert.match(filmJs, /prefers-reduced-motion/, 'it must respect reduced motion');
   assert.match(filmJs, /if \(!REDUCE\) start\(\);/, 'reduced motion keeps the written cut instead of animating');
   // Sound stays behind a press, per the standing decision against autoplay.
   assert.match(filmJs, /soundOn = !soundOn/, 'sound is a toggle the viewer presses');

@@ -1,4 +1,4 @@
-// The film runs on requestAnimationFrame, which headless browsers do not
+// The watch sequence runs on requestAnimationFrame, which headless browsers do not
 // advance under a virtual clock — screenshots of it are frozen on shot one no
 // matter how long the budget. So the projector is verified here instead: the
 // real film.js is executed against a stub document and a clock this test
@@ -10,7 +10,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 
 const root = path.resolve(import.meta.dirname, '..');
-const source = fs.readFileSync(path.join(root, 'public', 'film.js'), 'utf8');
+const source = fs.readFileSync(path.join(root, 'public', 'watch.js'), 'utf8');
 
 // A canvas context that accepts every drawing call and remembers nothing.
 const stubCtx = new Proxy({}, {
@@ -26,6 +26,7 @@ function makeEl(id) {
     textContent: '',
     innerHTML: '',
     style: { setProperty() {}, transition: '', opacity: '', overflow: '' },
+    dataset: {},
     classList: { add() {}, remove() {}, toggle() {} },
     setAttribute() {}, getAttribute: () => null,
     appendChild() {}, scrollIntoView() {},
@@ -69,7 +70,7 @@ function runFilm({ reduced = false } = {}) {
   };
   sandbox.window = sandbox;
   sandbox.globalThis = sandbox;
-  vm.runInNewContext(source, sandbox, { filename: 'public/film.js' });
+  vm.runInNewContext(source, sandbox, { filename: 'public/watch.js' });
 
   // Drive the clock ourselves: 16ms a frame, capped well past the film's run.
   let now = 0;
@@ -96,7 +97,7 @@ test('the projector advances through every shot, in order, and ends', () => {
   assert.match(shots[9], /Own every layer/, 'it closes on the line');
   // A film nobody sits through is not a film: keep it around a minute.
   assert.ok(runtimeMs > 45_000 && runtimeMs < 90_000, `run time ${Math.round(runtimeMs / 1000)}s is outside 45–90s`);
-  assert.equal(film.hidden, true, 'the film hands the page back when it ends');
+  assert.equal(film.hidden, false, 'the stage holds its closing shot rather than vanishing');
 });
 
 test('reduced motion never starts the projector — the written cut stands alone', () => {
