@@ -81,7 +81,12 @@ test('the arrival can be heard: a retro om, synthesized in-page, only ever behin
   assert.doesNotMatch(script, /sovereign-om/, 'no sound preference is stored — every om is freshly asked for');
 });
 
-test('the first-week story: exactly ten moments, each visual and each backed by a shipped receipt', () => {
+test('the repossession story: exactly ten moments, each visual and each backed by a shipped receipt', () => {
+  // The frame is acquisition copy, not an onboarding diary: the reader takes
+  // themselves back, and the headline says so.
+  assert.match(html, /Take <em>yourself<\/em> back\./, 'the band leads with the repossession');
+  assert.match(html, /Seven days · one repossession/i, 'the eyebrow frames the week as a recovery');
+  assert.doesNotMatch(html, /The first week it's actually yours/, 'the diary headline stays retired');
   assert.match(html, /id="week"/, 'the story band exists');
   assert.equal((html.match(/class="moment"/g) ?? []).length, 10, 'the story tells exactly ten unlocks');
   assert.equal((html.match(/class="m-ic"/g) ?? []).length, 10, 'every moment carries a pictogram');
