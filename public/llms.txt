@@ -78,7 +78,9 @@ feature.
 - **Watch**: https://mysovereign.ai/watch is a sixty-second sequence drawn live in
   the browser (no video file), and https://mysovereign.ai/a-day replays six
   scenes from one day of using it, each naming the shipped mechanism behind it.
-- **Touch**: the playground below — the product's real interfaces on demo data.
+- **Touch**: https://mysovereign.ai/demo is the product's own command centre
+  running clickably on an invented workspace (real interface files, scripted
+  data), plus the playground below — the product's real interfaces on demo data.
 - **Own**: the one-command Docker trial above — the real product.
 
 ## Playground (free, no account)

@@ -1,8 +1,16 @@
-# The public web deploy is the marketing site plus the playground: four demo
-# surfaces that ship the product's real interface files running in their
-# honestly-badged demo mode. Everything else in this directory is the live app
-# UI, served only by the local sovereign server — never hosted.
+# The public web deploy is the marketing site plus the playground, which now
+# includes the command centre itself: index.html and app.js ship byte-identical
+# to what a running instance serves, answered by demo-api.js from a fixture.
+# No instance is exposed by that — there is no server on this host at all, and
+# demo-api.js is inert anywhere else. Everything still absent below is absent
+# on purpose.
 *
+!index.html
+!app.js
+!style.css
+!demo-api.js
+!wizard.js
+!finetune.js
 !land.html
 !land.js
 !doc.css

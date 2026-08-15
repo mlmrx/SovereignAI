@@ -56,7 +56,12 @@ const state = {
   settingsLoaded: false,
 };
 
-/* Accept an auth token once, keep it out of proxy logs, and send it on API calls. */
+/* Accept an auth token once, keep it out of proxy logs, and send it on API calls.
+   On the public demo host no instance can exist, so no token is ever read,
+   stored, or sent there: a real install's #token= link pasted into the demo
+   must not leave a credential behind on a marketing origin. The fragment is
+   still scrubbed, so the secret does not linger in history either. */
+window.SOVEREIGN_PUBLIC_DEMO = /(^|\.)mysovereign\.ai$|\.vercel\.app$/.test(location.hostname);
 window.SOVEREIGN_HEADERS = (() => {
   let memoryToken = '';
   let url = null;
@@ -66,6 +71,10 @@ window.SOVEREIGN_HEADERS = (() => {
     if (!token && url.hash.startsWith('#token=')) {
       try { token = decodeURIComponent(url.hash.slice(7)); }
       catch { token = url.hash.slice(7); }
+    }
+    if (token && window.SOVEREIGN_PUBLIC_DEMO) {
+      token = '';
+      try { url.hash = '#/home'; history.replaceState(null, '', url); } catch { /* fine */ }
     }
     if (token) {
       memoryToken = token;
@@ -81,6 +90,7 @@ window.SOVEREIGN_HEADERS = (() => {
     } catch { /* Authentication still works even if history mutation is blocked. */ }
   }
   return () => {
+    if (window.SOVEREIGN_PUBLIC_DEMO) return {};
     try {
       const token = localStorage.getItem('sovereign-token');
       return memoryToken || token ? { authorization: `Bearer ${memoryToken || token}` } : {};

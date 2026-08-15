@@ -17,6 +17,7 @@
     { "source": "/why", "destination": "/why.html" },
     { "source": "/faq", "destination": "/faq.html" },
     { "source": "/playground", "destination": "/playground.html" },
+    { "source": "/demo", "destination": "/index.html" },
     { "source": "/watch", "destination": "/watch.html" },
     { "source": "/a-day", "destination": "/a-day.html" },
     { "source": "/mind-field", "destination": "/xbrain.html" },

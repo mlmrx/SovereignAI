@@ -49,6 +49,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://mysovereign.ai/demo</loc>
+    <lastmod>2026-08-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://mysovereign.ai/mind-field</loc>
     <lastmod>2026-08-17</lastmod>
     <changefreq>monthly</changefreq>
