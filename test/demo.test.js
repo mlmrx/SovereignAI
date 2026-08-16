@@ -10,6 +10,12 @@ import vm from 'node:vm';
 
 const root = path.resolve(import.meta.dirname, '..');
 const pub = (file) => fs.readFileSync(path.join(root, 'public', file), 'utf8');
+// vercel.json lives at the repo root, not in public/ — that's where Vercel's
+// Root Directory setting actually looks for it, and public/ is only the
+// Output Directory it serves from. Conflating the two once took the site's
+// routing down silently: every rewrite, redirect, and header stopped
+// applying while the static files kept serving fine.
+const rootFile = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const demo = pub('demo-api.js');
 
 test('the demo layer is inert anywhere but the public host', () => {
@@ -76,7 +82,7 @@ test('the demo is never a dead end: the site frame goes on top of the app', () =
 });
 
 test('the demo says what it is, and points at the real thing', () => {
-  assert.match(demo, /what it is<\/b> — the real interface, an invented workspace/, 'the banner must state the fiction');
+  assert.match(demo, /how it works<\/b> — the real interface, an invented workspace/, 'the banner must state the fiction');
   assert.match(demo, /No server behind this page/, 'and that nothing is running behind it');
   assert.match(demo, /cta\.href = '\/#install'/, 'and offer the real product');
   // Its resident matches every other demo surface, so the playground tells one story.
@@ -84,7 +90,7 @@ test('the demo says what it is, and points at the real thing', () => {
 });
 
 test('the demo is wired: route, deploy allowlist, script order, hub card', () => {
-  const config = JSON.parse(pub('vercel.json'));
+  const config = JSON.parse(rootFile('vercel.json'));
   const routes = new Map(config.rewrites.map((r) => [r.source, r.destination]));
   assert.equal(routes.get('/command-center'), '/app.html', '/demo must serve the app itself');
 
@@ -100,6 +106,14 @@ test('the demo is wired: route, deploy allowlist, script order, hub card', () =>
   assert.equal(routes.get('/'), '/land.html', 'the site root must serve the landing page');
   assert.ok(!fs.existsSync(path.join(root, 'public', 'index.html')), 'no index.html may sit in the web root');
   assert.ok(!ignore.includes('!index.html'), 'index.html must never be added to the deploy');
+
+  // A second, quieter regression this cost us: Vercel's Root Directory is the
+  // repo root, not public/, so a vercel.json sitting inside public/ is never
+  // read as config — it just becomes a stray file Vercel serves verbatim,
+  // while every rewrite, redirect, and header silently stops applying. The
+  // config must live at the true root and declare public/ as its output.
+  assert.ok(!fs.existsSync(path.join(root, 'public', 'vercel.json')), 'vercel.json must not sit in public/ — Vercel never reads it there');
+  assert.equal(config.outputDirectory, 'public', 'the root config must say where the static files actually are');
 
   // Order is load-bearing: the fixture must be installed before the app boots.
   const html = pub('app.html');

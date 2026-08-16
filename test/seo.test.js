@@ -9,6 +9,10 @@ import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
 const pub = (file) => fs.readFileSync(path.join(root, 'public', file), 'utf8');
+// Vercel reads vercel.json from the project's Root Directory, not from the
+// Output Directory it serves — the two were confused once, and it took the
+// site's routing down silently. The file lives at the repo root on purpose.
+const rootFile = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
 const SITE = 'https://mysovereign.ai';
 // Every public page, with the clean path it is served at.
@@ -133,10 +137,12 @@ test('one shell frames every page: same header, same footer, same theme control'
   // pages (thesis, what-is, a-day, access) live in the footer, which carries
   // every link — a nav is a choice, not an inventory.
   // The bar reads as the order a visitor actually asks in: Why should I care
-  // (the argument) -> What is it (the product itself) -> How does it work
-  // (the pieces, each explainable) -> Ledger (what we cannot claim) -> Run it.
-  // What must precede How: you learn what a thing is before how it works.
-  const NAV = ['/', '/watch', '/command-center', '/playground', '/sovereignty'];
+  // (the argument) -> What is it (the pieces, each explained on their own
+  // terms) -> How does it work (the live interface, in practice) -> Ledger
+  // (what we cannot claim) -> Run it. What must precede How: you learn what
+  // a thing is before how it works — so Playground (the explainer) sits at
+  // What, and the command center (the hands-on interface) sits at How.
+  const NAV = ['/', '/watch', '/playground', '/command-center', '/sovereignty'];
   for (const [file] of [...PAGES, ['watch.html']]) {
     const html = pub(file);
     assert.match(html, /<header class="shell-bar">/, `${file} must carry the shared header`);
@@ -185,7 +191,7 @@ test('visitor counting is cookie-less and disclosed on every page that carries i
 });
 
 test('the playground ships real interfaces, guarded for the public origin', () => {
-  const config = JSON.parse(pub('vercel.json'));
+  const config = JSON.parse(rootFile('vercel.json'));
   const routes = new Map(config.rewrites.map((r) => [r.source, r.destination]));
   const ignore = pub('.vercelignore');
   const hub = pub('playground.html');
@@ -258,7 +264,7 @@ test('the watch page and the day replay argue without a video file, and read wit
 });
 
 test('every public page is reachable: routes are wired and internal links resolve', () => {
-  const config = JSON.parse(pub('vercel.json'));
+  const config = JSON.parse(rootFile('vercel.json'));
   const routes = new Map(config.rewrites.map((r) => [r.source, r.destination]));
   for (const [file, route] of PAGES) {
     assert.equal(routes.get(route), `/${file}`, `${route} must serve ${file}`);

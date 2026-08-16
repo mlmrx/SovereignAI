@@ -271,8 +271,8 @@
   const NAV = [
     ['/', 'Home'],
     ['/watch', 'Why'],
-    ['/command-center', 'What'],
-    ['/playground', 'How'],
+    ['/playground', 'What'],
+    ['/command-center', 'How'],
     ['/sovereignty', 'Ledger'],
   ];
 
@@ -318,13 +318,13 @@
   function honestyBar() {
     const bar = document.createElement('div');
     bar.setAttribute('role', 'status');
-    bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9998;display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;padding:9px 16px;background:#12110f;border-top:1px solid #d97757;color:#f0eee6;font:12.5px/1.5 ui-monospace,Consolas,monospace';
+    bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9998;display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;padding:9px 16px;background:var(--shell-mass);border-top:1px solid var(--shell-terra);color:var(--shell-ink);font:12.5px/1.5 ui-monospace,Consolas,monospace';
     const label = document.createElement('span');
-    label.innerHTML = '<b style="color:#d97757">what it is</b> — the real interface, an invented workspace. No server behind this page.';
+    label.innerHTML = '<b style="color:var(--shell-terra)">how it works</b> — the real interface, an invented workspace. No server behind this page.';
     const back = document.createElement('a');
     back.href = '/playground';
     back.textContent = '⬡ more of the playground';
-    back.style.cssText = 'color:#a49a90;text-decoration:none';
+    back.style.cssText = 'color:var(--shell-dim);text-decoration:none';
     bar.append(label, back);
     document.body.appendChild(bar);
   }

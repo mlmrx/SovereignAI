@@ -4,6 +4,14 @@
 # No instance is exposed by that — there is no server on this host at all, and
 # demo-api.js is inert anywhere else. Everything still absent below is absent
 # on purpose.
+#
+# NOTE: Vercel's Root Directory is the repo root, so this file — sitting
+# inside the Output Directory it serves — is never actually read by Vercel as
+# ignore rules; the real one lives at the repo root and only excludes secrets
+# and build clutter, since Output Directory already scopes serving to this
+# folder's contents regardless. This file survives as the tested manifest of
+# what's meant to be public: the list below is exactly what test/demo.test.js
+# and test/seo.test.js check was deliberately shipped.
 *
 !app.html
 !app.js
@@ -37,7 +45,6 @@
 !robots.txt
 !sitemap.xml
 !llms.txt
-!vercel.json
 !api
 !api/**
 !60843ede0c48da2ef8cb5ee9bc4ce065.txt

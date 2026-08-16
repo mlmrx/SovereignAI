@@ -1,0 +1,16 @@
+# This is the ignore file Vercel actually reads — Root Directory is the repo
+# root, not public/, so a .vercelignore sitting inside public/ (there is one,
+# kept as a tested manifest of the deploy's public surface) is never
+# consulted. outputDirectory already scopes what's SERVED to public/ alone;
+# this file only trims what gets uploaded, and above all keeps secrets that
+# happen to sit at the repo root off Vercel's servers entirely.
+.env
+.env.*
+!.env.example
+sovereign.config.json
+sovereign.config.*.json
+*.log
+data
+models
+node_modules
+.git
