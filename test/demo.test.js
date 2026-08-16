@@ -66,7 +66,7 @@ test('the demo is never a dead end: the site frame goes on top of the app', () =
   // The app puts its own brand mark beside ours, so "Home" is spelled out
   // rather than left to the logo.
   assert.match(demo, /\['\/', 'Home'\]/, 'the injected header must name Home explicitly');
-  for (const [href] of [['/watch'], ['/sovereignty'], ['/faq'], ['/playground']]) {
+  for (const [href] of [['/watch'], ['/sovereignty'], ['/playground']]) {
     assert.ok(demo.includes(`'${href}'`), `the frame must still reach ${href}`);
   }
   assert.match(demo, /paddingTop = '47px'/, 'the app must be pushed clear of the header, not covered by it');
@@ -76,7 +76,7 @@ test('the demo is never a dead end: the site frame goes on top of the app', () =
 });
 
 test('the demo says what it is, and points at the real thing', () => {
-  assert.match(demo, /demo<\/b> — the real interface, an invented workspace/, 'the banner must state the fiction');
+  assert.match(demo, /how it works<\/b> — the real interface, an invented workspace/, 'the banner must state the fiction');
   assert.match(demo, /No server behind this page/, 'and that nothing is running behind it');
   assert.match(demo, /cta\.href = '\/#install'/, 'and offer the real product');
   // Its resident matches every other demo surface, so the playground tells one story.

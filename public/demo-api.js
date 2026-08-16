@@ -270,10 +270,10 @@
      UI that has its own appearance. */
   const NAV = [
     ['/', 'Home'],
-    ['/watch', 'Watch'],
-    ['/command-center', 'Command center'],
+    ['/watch', 'Why'],
+    ['/command-center', 'How'],
+    ['/playground', 'What'],
     ['/sovereignty', 'Ledger'],
-    ['/faq', 'FAQ'],
   ];
 
   function siteHeader() {
@@ -320,7 +320,7 @@
     bar.setAttribute('role', 'status');
     bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9998;display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;padding:9px 16px;background:#12110f;border-top:1px solid #d97757;color:#f0eee6;font:12.5px/1.5 ui-monospace,Consolas,monospace';
     const label = document.createElement('span');
-    label.innerHTML = '<b style="color:#d97757">demo</b> — the real interface, an invented workspace. No server behind this page.';
+    label.innerHTML = '<b style="color:#d97757">how it works</b> — the real interface, an invented workspace. No server behind this page.';
     const back = document.createElement('a');
     back.href = '/playground';
     back.textContent = '⬡ more of the playground';
