@@ -132,7 +132,7 @@ test('one shell frames every page: same header, same footer, same theme control'
   // Deliberately short: brand, three destinations, one call to action. Depth
   // pages (thesis, what-is, a-day, access) live in the footer, which carries
   // every link — a nav is a choice, not an inventory.
-  const NAV = ['/watch', '/command-center', '/sovereignty', '/faq'];
+  const NAV = ['/', '/watch', '/command-center', '/sovereignty', '/faq'];
   for (const [file] of [...PAGES, ['watch.html']]) {
     const html = pub(file);
     assert.match(html, /<header class="shell-bar">/, `${file} must carry the shared header`);

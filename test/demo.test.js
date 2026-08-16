@@ -63,6 +63,9 @@ test('the demo is never a dead end: the site frame goes on top of the app', () =
   assert.match(demo, /className = 'shell-bar'/, 'the shared header must be injected');
   assert.match(demo, /link\.href = '\/shell\.css'/, 'it must use the shared stylesheet, not a copy of it');
   assert.match(demo, /brand\.href = '\/'/, 'the brand must lead home');
+  // The app puts its own brand mark beside ours, so "Home" is spelled out
+  // rather than left to the logo.
+  assert.match(demo, /\['\/', 'Home'\]/, 'the injected header must name Home explicitly');
   for (const [href] of [['/watch'], ['/sovereignty'], ['/faq'], ['/playground']]) {
     assert.ok(demo.includes(`'${href}'`), `the frame must still reach ${href}`);
   }

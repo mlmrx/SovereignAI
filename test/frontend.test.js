@@ -154,3 +154,17 @@ test('static app is served with restrictive browser security headers', async () 
     fs.rmSync(home, { recursive: true, force: true });
   }
 });
+
+test('moving between views is real navigation: back and forward retrace it', () => {
+  const script = fs.readFileSync(path.join(root, 'public', 'app.js'), 'utf8');
+  // replaceState left no history entry, so the browser's back button jumped
+  // straight out of the app instead of to the previous view.
+  assert.match(
+    script,
+    /if \(updateHash && location\.hash !== `#\/\$\{name\}`\) history\.pushState/,
+    'a view change must push a history entry'
+  );
+  assert.doesNotMatch(script, /history\.replaceState\(null, '', `#\/\$\{name\}`\)/, 'no view change may replace the entry');
+  // Restoring a route must not add one, or back would need two presses.
+  assert.match(script, /showView\(route, \{ updateHash: false \}\)/, 'hash-driven restores add no entry');
+});

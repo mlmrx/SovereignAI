@@ -269,6 +269,7 @@
      shell.js is deliberately NOT loaded: it would stamp a data-theme onto a
      UI that has its own appearance. */
   const NAV = [
+    ['/', 'Home'],
     ['/watch', 'Watch'],
     ['/command-center', 'Command center'],
     ['/sovereignty', 'Ledger'],

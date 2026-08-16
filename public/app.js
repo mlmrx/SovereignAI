@@ -380,7 +380,12 @@ function showView(name, { updateHash = true, focus = false } = {}) {
     else button.removeAttribute('aria-current');
   });
   $('#mobile-view-title').textContent = VIEW_TITLES[name];
-  if (updateHash && location.hash !== `#/${name}`) history.replaceState(null, '', `#/${name}`);
+  // pushState, not replaceState: moving between views is navigation, and the
+  // browser's own back and forward buttons are how people expect to retrace
+  // it. Replacing the entry left no trail, so Back from any view jumped
+  // straight out of the app instead of to the view before it. Restoring a
+  // route (boot, or a popstate) passes updateHash: false and adds nothing.
+  if (updateHash && location.hash !== `#/${name}`) history.pushState(null, '', `#/${name}`);
   closeSidebar();
   if (name === 'mind') loadMind().catch(showLoadError);
   if (name === 'knowledge') loadDocuments().catch(showLoadError);
