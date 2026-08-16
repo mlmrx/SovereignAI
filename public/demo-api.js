@@ -1,5 +1,5 @@
 'use strict';
-/* The command centre, running in public on a workspace that does not exist.
+/* The command center, running in public on a workspace that does not exist.
  *
  * This file ships with the app but is INERT anywhere except the public demo
  * host: on your own machine it returns immediately and the real server answers
@@ -169,7 +169,7 @@
       match: /.*/,
       sources: [],
       memories: [],
-      text: 'This is the **real command centre** — the same `app.html` and `app.js` a running SovereignAI serves — but there is no server behind this page, so my voice is scripted and the workspace is invented.\n\nWhat is genuinely real is everything around this message: the navigation, the Mind view and its provenance counts, the memory ledger with its receipts, the knowledge atlas, the settings.\n\nTry asking about **the lease**, **subscriptions**, or **what you remember about me** — or run the real thing with one command and ask it anything at all.',
+      text: 'This is the **real command center** — the same `app.html` and `app.js` a running SovereignAI serves — but there is no server behind this page, so my voice is scripted and the workspace is invented.\n\nWhat is genuinely real is everything around this message: the navigation, the Mind view and its provenance counts, the memory ledger with its receipts, the knowledge atlas, the settings.\n\nTry asking about **the lease**, **subscriptions**, or **what you remember about me** — or run the real thing with one command and ask it anything at all.',
     },
   ];
 

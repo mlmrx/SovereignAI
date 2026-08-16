@@ -1,4 +1,4 @@
-// The public command-centre demo ships the app's real interface files and
+// The public command-center demo ships the app's real interface files and
 // answers their calls from a fixture. That is only safe if the demo layer is
 // provably inert on a real instance and provably incapable of carrying a
 // credential on the public origin — both pinned here.
@@ -68,7 +68,7 @@ test('the demo says what it is, and points at the real thing', () => {
 test('the demo is wired: route, deploy allowlist, script order, hub card', () => {
   const config = JSON.parse(pub('vercel.json'));
   const routes = new Map(config.rewrites.map((r) => [r.source, r.destination]));
-  assert.equal(routes.get('/demo'), '/app.html', '/demo must serve the app itself');
+  assert.equal(routes.get('/command-center'), '/app.html', '/demo must serve the app itself');
 
   const ignore = pub('.vercelignore');
   for (const file of ['app.html', 'app.js', 'style.css', 'demo-api.js', 'wizard.js', 'finetune.js']) {
@@ -89,5 +89,5 @@ test('the demo is wired: route, deploy allowlist, script order, hub card', () =>
     html.indexOf('/demo-api.js') < html.indexOf('/app.js'),
     'demo-api.js must load before app.js or the first calls escape'
   );
-  assert.match(pub('playground.html'), /href="\/demo"/, 'the playground must link the command centre');
+  assert.match(pub('playground.html'), /href="\/command-center"/, 'the playground must link the command center');
 });

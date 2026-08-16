@@ -1,42 +1,132 @@
 {
   "trailingSlash": false,
   "redirects": [
-    { "source": "/film", "destination": "/watch", "permanent": true },
-    { "source": "/film.html", "destination": "/watch", "permanent": true },
-    { "source": "/xbrain", "destination": "/mind-field", "permanent": true },
-    { "source": "/xbrain.html", "destination": "/mind-field", "permanent": true },
-    { "source": "/xbrain-ledger", "destination": "/memory-ledger", "permanent": true },
-    { "source": "/xbrain-ledger.html", "destination": "/memory-ledger", "permanent": true },
-    { "source": "/xbrain-atlas", "destination": "/knowledge-atlas", "permanent": true },
-    { "source": "/xbrain-atlas.html", "destination": "/knowledge-atlas", "permanent": true }
+    {
+      "source": "/demo",
+      "destination": "/command-center",
+      "permanent": true
+    },
+    {
+      "source": "/film",
+      "destination": "/watch",
+      "permanent": true
+    },
+    {
+      "source": "/film.html",
+      "destination": "/watch",
+      "permanent": true
+    },
+    {
+      "source": "/xbrain",
+      "destination": "/mind-field",
+      "permanent": true
+    },
+    {
+      "source": "/xbrain.html",
+      "destination": "/mind-field",
+      "permanent": true
+    },
+    {
+      "source": "/xbrain-ledger",
+      "destination": "/memory-ledger",
+      "permanent": true
+    },
+    {
+      "source": "/xbrain-ledger.html",
+      "destination": "/memory-ledger",
+      "permanent": true
+    },
+    {
+      "source": "/xbrain-atlas",
+      "destination": "/knowledge-atlas",
+      "permanent": true
+    },
+    {
+      "source": "/xbrain-atlas.html",
+      "destination": "/knowledge-atlas",
+      "permanent": true
+    }
   ],
   "rewrites": [
-    { "source": "/", "destination": "/land.html" },
-    { "source": "/what-is-sovereign-ai", "destination": "/what-is-sovereign-ai.html" },
-    { "source": "/sovereignty", "destination": "/sovereignty.html" },
-    { "source": "/why", "destination": "/why.html" },
-    { "source": "/faq", "destination": "/faq.html" },
-    { "source": "/playground", "destination": "/playground.html" },
-    { "source": "/demo", "destination": "/app.html" },
-    { "source": "/watch", "destination": "/watch.html" },
-    { "source": "/a-day", "destination": "/a-day.html" },
-    { "source": "/mind-field", "destination": "/xbrain.html" },
-    { "source": "/memory-ledger", "destination": "/xbrain-ledger.html" },
-    { "source": "/knowledge-atlas", "destination": "/xbrain-atlas.html" },
-    { "source": "/guide", "destination": "/guide.html" }
+    {
+      "source": "/",
+      "destination": "/land.html"
+    },
+    {
+      "source": "/what-is-sovereign-ai",
+      "destination": "/what-is-sovereign-ai.html"
+    },
+    {
+      "source": "/sovereignty",
+      "destination": "/sovereignty.html"
+    },
+    {
+      "source": "/why",
+      "destination": "/why.html"
+    },
+    {
+      "source": "/faq",
+      "destination": "/faq.html"
+    },
+    {
+      "source": "/playground",
+      "destination": "/playground.html"
+    },
+    {
+      "source": "/command-center",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/watch",
+      "destination": "/watch.html"
+    },
+    {
+      "source": "/a-day",
+      "destination": "/a-day.html"
+    },
+    {
+      "source": "/mind-field",
+      "destination": "/xbrain.html"
+    },
+    {
+      "source": "/memory-ledger",
+      "destination": "/xbrain-ledger.html"
+    },
+    {
+      "source": "/knowledge-atlas",
+      "destination": "/xbrain-atlas.html"
+    },
+    {
+      "source": "/guide",
+      "destination": "/guide.html"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
       ]
     },
     {
       "source": "/llms.txt",
-      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        }
+      ]
     }
   ]
 }

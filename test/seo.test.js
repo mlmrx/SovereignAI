@@ -132,7 +132,7 @@ test('one shell frames every page: same header, same footer, same theme control'
   // Deliberately short: brand, three destinations, one call to action. Depth
   // pages (thesis, what-is, a-day, access) live in the footer, which carries
   // every link — a nav is a choice, not an inventory.
-  const NAV = ['/watch', '/playground', '/sovereignty', '/faq'];
+  const NAV = ['/watch', '/command-center', '/sovereignty', '/faq'];
   for (const [file] of [...PAGES, ['watch.html']]) {
     const html = pub(file);
     assert.match(html, /<header class="shell-bar">/, `${file} must carry the shared header`);
@@ -147,7 +147,7 @@ test('one shell frames every page: same header, same footer, same theme control'
     assert.deepEqual(hrefs, NAV, `${file} nav must match the canonical order`);
     // Everything cut from the bar must still be reachable from the footer.
     const foot = html.match(/<footer class="shell-foot">([\s\S]*?)<\/footer>/)[1];
-    for (const href of ['/why', '/what-is-sovereign-ai', '/a-day', '/#access']) {
+    for (const href of ['/why', '/what-is-sovereign-ai', '/a-day', '/playground', '/#access']) {
       assert.ok(foot.includes(`href="${href}"`), `${file} footer must still reach ${href}`);
     }
   }
