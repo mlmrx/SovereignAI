@@ -132,8 +132,10 @@ test('one shell frames every page: same header, same footer, same theme control'
   // Deliberately short: brand, three destinations, one call to action. Depth
   // pages (thesis, what-is, a-day, access) live in the footer, which carries
   // every link — a nav is a choice, not an inventory.
-  // The bar reads as a funnel: Why (the argument) -> How (the product) ->
-// What (the pieces) -> Ledger (what we can't claim) -> Run it.
+  // The bar reads as the order a visitor actually asks in: Why should I care
+  // (the argument) -> What is it (the product itself) -> How does it work
+  // (the pieces, each explainable) -> Ledger (what we cannot claim) -> Run it.
+  // What must precede How: you learn what a thing is before how it works.
   const NAV = ['/', '/watch', '/command-center', '/playground', '/sovereignty'];
   for (const [file] of [...PAGES, ['watch.html']]) {
     const html = pub(file);

@@ -76,7 +76,7 @@ test('the demo is never a dead end: the site frame goes on top of the app', () =
 });
 
 test('the demo says what it is, and points at the real thing', () => {
-  assert.match(demo, /how it works<\/b> — the real interface, an invented workspace/, 'the banner must state the fiction');
+  assert.match(demo, /what it is<\/b> — the real interface, an invented workspace/, 'the banner must state the fiction');
   assert.match(demo, /No server behind this page/, 'and that nothing is running behind it');
   assert.match(demo, /cta\.href = '\/#install'/, 'and offer the real product');
   // Its resident matches every other demo surface, so the playground tells one story.
