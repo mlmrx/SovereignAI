@@ -57,10 +57,25 @@ test('the demo can never carry a credential or reach a network', () => {
   assert.doesNotMatch(demo, /XMLHttpRequest|navigator\.sendBeacon|new WebSocket|EventSource/, 'no side channel out of the page');
 });
 
+test('the demo is never a dead end: the site frame goes on top of the app', () => {
+  // The app owns the viewport, so without this a visitor who clicked in had
+  // no way back out to the website.
+  assert.match(demo, /className = 'shell-bar'/, 'the shared header must be injected');
+  assert.match(demo, /link\.href = '\/shell\.css'/, 'it must use the shared stylesheet, not a copy of it');
+  assert.match(demo, /brand\.href = '\/'/, 'the brand must lead home');
+  for (const [href] of [['/watch'], ['/sovereignty'], ['/faq'], ['/playground']]) {
+    assert.ok(demo.includes(`'${href}'`), `the frame must still reach ${href}`);
+  }
+  assert.match(demo, /paddingTop = '47px'/, 'the app must be pushed clear of the header, not covered by it');
+  // The site's theme script would stamp a data-theme onto a UI that has its
+  // own appearance, so the frame is styles only — never that script.
+  assert.doesNotMatch(demo, /['"]\/shell\.js['"]/, 'the app must not load the site theme script');
+});
+
 test('the demo says what it is, and points at the real thing', () => {
   assert.match(demo, /demo<\/b> — the real interface, an invented workspace/, 'the banner must state the fiction');
   assert.match(demo, /No server behind this page/, 'and that nothing is running behind it');
-  assert.match(demo, /href = '\/#install'/, 'and offer the real product');
+  assert.match(demo, /cta\.href = '\/#install'/, 'and offer the real product');
   // Its resident matches every other demo surface, so the playground tells one story.
   assert.match(demo, /name: 'Atlas'/, 'the demo workspace is Atlas, like the other surfaces');
 });

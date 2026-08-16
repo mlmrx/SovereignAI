@@ -260,23 +260,81 @@
     return json({ error: REFUSED }, 501);
   };
 
+  /* ---------------- put the demo inside the website ----------------
+     The app owns the whole viewport by design, which on the public host left
+     a visitor with no way back out to the site. The same shared header every
+     other page carries is injected above it — real links, not a back button —
+     and the app is pushed down to make room. The shell's own stylesheet is
+     used rather than a copy, so this frame can never drift from the others.
+     shell.js is deliberately NOT loaded: it would stamp a data-theme onto a
+     UI that has its own appearance. */
+  const NAV = [
+    ['/watch', 'Watch'],
+    ['/command-center', 'Command center'],
+    ['/sovereignty', 'Ledger'],
+    ['/faq', 'FAQ'],
+  ];
+
+  function siteHeader() {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '/shell.css';
+    document.head.appendChild(link);
+
+    const header = document.createElement('header');
+    header.className = 'shell-bar';
+    header.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9998';
+
+    const inner = document.createElement('div');
+    inner.className = 'shell-in';
+
+    const brand = document.createElement('a');
+    brand.className = 'shell-brand';
+    brand.href = '/';
+    brand.innerHTML = '<svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg> SovereignAI';
+
+    const nav = document.createElement('nav');
+    nav.className = 'shell-links';
+    for (const [href, label] of NAV) {
+      const a = document.createElement('a');
+      a.href = href;
+      a.textContent = label;
+      if (href === '/command-center') a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    }
+    const cta = document.createElement('a');
+    cta.className = 'shell-cta';
+    cta.href = '/#install';
+    cta.textContent = 'Run it';
+    nav.appendChild(cta);
+
+    inner.append(brand, nav);
+    header.appendChild(inner);
+    document.body.prepend(header);
+  }
+
   /* ---------------- say what this is, unmissably ---------------- */
-  addEventListener('DOMContentLoaded', () => {
+  function honestyBar() {
     const bar = document.createElement('div');
     bar.setAttribute('role', 'status');
-    bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9999;display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;padding:9px 16px;background:#12110f;border-top:1px solid #d97757;color:#f0eee6;font:12.5px/1.5 ui-monospace,Consolas,monospace';
+    bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9998;display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;padding:9px 16px;background:#12110f;border-top:1px solid #d97757;color:#f0eee6;font:12.5px/1.5 ui-monospace,Consolas,monospace';
     const label = document.createElement('span');
     label.innerHTML = '<b style="color:#d97757">demo</b> — the real interface, an invented workspace. No server behind this page.';
-    const run = document.createElement('a');
-    run.href = '/#install';
-    run.textContent = 'Run the real one →';
-    run.style.cssText = 'color:#d97757;font-weight:700;text-decoration:none';
     const back = document.createElement('a');
     back.href = '/playground';
-    back.textContent = '⬡ playground';
+    back.textContent = '⬡ more of the playground';
     back.style.cssText = 'color:#a49a90;text-decoration:none';
-    bar.append(label, run, back);
+    bar.append(label, back);
     document.body.appendChild(bar);
-    document.body.style.paddingBottom = '46px';
+  }
+
+  addEventListener('DOMContentLoaded', () => {
+    siteHeader();
+    honestyBar();
+    // The app sizes itself to the viewport, so give the two bars their room
+    // out of the body box rather than letting them cover the interface.
+    document.body.style.boxSizing = 'border-box';
+    document.body.style.paddingTop = '47px';
+    document.body.style.paddingBottom = '40px';
   });
 })();
