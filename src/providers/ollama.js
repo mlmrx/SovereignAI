@@ -27,7 +27,11 @@ export const ollama = {
     }));
   },
 
-  /** Yields { type: 'delta', text } then { type: 'done', usage, stopReason }. */
+  /**
+   * Yields { type: 'reasoning', text } (0..n — Ollama >= 0.9 emits message.thinking
+   * for thinking models; absent otherwise), { type: 'delta', text } (0..n), then
+   * { type: 'done', usage, stopReason }.
+   */
   async *chatStream({ cfg, model, system, messages, temperature, maxTokens = 32000, signal }) {
     const body = {
       model,
@@ -44,15 +48,21 @@ export const ollama = {
     });
     await ensureOk(res, 'Ollama');
     let usage = {};
+    let stopReason = 'end_turn';
     for await (const line of ndjsonLines(res.body)) {
       if (line.error) throw new Error(`Ollama error: ${line.error}`);
+      const thinking = line.message?.thinking;
+      if (typeof thinking === 'string' && thinking) yield { type: 'reasoning', text: thinking };
       const text = line.message?.content;
-      if (text) yield { type: 'delta', text };
+      if (typeof text === 'string' && text) yield { type: 'delta', text };
       if (line.done) {
         usage = { input_tokens: line.prompt_eval_count ?? null, output_tokens: line.eval_count ?? null };
+        // Ollama says why it stopped in done_reason ('stop' | 'length'); a budget cut is
+        // the one case the client diagnoses differently.
+        stopReason = line.done_reason === 'length' ? 'length' : 'end_turn';
       }
     }
-    yield { type: 'done', usage, stopReason: 'end_turn' };
+    yield { type: 'done', usage, stopReason };
   },
 
   /**

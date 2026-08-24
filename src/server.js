@@ -28,7 +28,8 @@ import {
 } from './model-recipes.js';
 import { HfCatalogError, searchGgufModels, listGgufFiles } from './hf-catalog.js';
 import { buildModelRecommendation } from './model-recommendation.js';
-import { shelfWithFit } from './model-shelf.js';
+import { shelfWithFit, sparseCandidates } from './model-shelf.js';
+import { createGpuProbe } from './hardware.js';
 import { ChatImportError, importChatExport, supportedPlatforms as supportedChatPlatforms } from './chat-import/index.js';
 import { buildExport, isEncryptedExport, verifyExportManifest } from './portability.js';
 import { buildPortfolio } from './portfolio.js';
@@ -61,8 +62,11 @@ const MIME = {
   '.ico': 'image/x-icon',
 };
 
-export function createApp(rootDir, { env = process.env } = {}) {
+export function createApp(rootDir, { env = process.env, hardware } = {}) {
   const config = loadConfig(rootDir, { env });
+  // GPU probe for sizing sparse models. Injectable (`hardware.detectGpu`) so
+  // tests never shell out; the default is memoized and never throws.
+  const probe = hardware?.detectGpu ?? createGpuProbe({ env });
   const store = openDb(path.join(rootDir, 'data'));
   seedPersonas(store);
   const startedAt = Date.now();
@@ -315,16 +319,34 @@ export function createApp(rootDir, { env = process.env } = {}) {
   // Heuristic guidance: what model size/quant should run comfortably here,
   // and whether the workspace's training investment is worth an actual LoRA
   // run yet. See model-recommendation.js for the (pure, unit-tested) rules.
+  // Sparse (MoE) entries on the shelf are served by FreeToken, so they are
+  // sized against this machine only when THAT engine is local. Read its
+  // config defensively: the key is absent on installs that predate it.
+  const sparseEngines = () => {
+    const ft = config.providers?.freetoken ?? {};
+    return { freetoken: { enabled: Boolean(ft.enabled), local: loopbackUrl(ft.baseUrl || 'http://127.0.0.1:1919') } };
+  };
+  const detectGpuSafely = async () => {
+    try {
+      return (await probe()) ?? null;
+    } catch {
+      return null;
+    }
+  };
+
   // The curated small-model starter shelf, sized against this machine.
   route('GET', '/api/model-shelf', async () => shelfWithFit({
     totalMemoryBytes: os.totalmem(),
     endpointLocal: loopbackUrl(config.providers.ollama.baseUrl),
+    engines: sparseEngines(),
+    gpu: await detectGpuSafely(),
   }));
 
   route('GET', '/api/model-recommendation', async () => {
     const documents = store.listDocuments();
     const counts = store.getCounts();
     const { maxTrainCount } = store.getFineTuningReadiness();
+    const engines = sparseEngines();
     return buildModelRecommendation({
       totalMemoryBytes: os.totalmem(),
       endpointLocal: loopbackUrl(config.providers.ollama.baseUrl),
@@ -334,6 +356,8 @@ export function createApp(rootDir, { env = process.env } = {}) {
         memories: counts.memories,
       },
       maxTrainCount,
+      gpu: await detectGpuSafely(),
+      sparse: { engineLocal: engines.freetoken.local, candidates: sparseCandidates() },
     });
   });
 

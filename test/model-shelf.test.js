@@ -44,7 +44,7 @@ test('shelfWithFit sizes against RAM and says nothing when it cannot know', () =
 test('GET /api/model-shelf serves the sized shelf', async (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sovereign-shelf-'));
   fs.writeFileSync(path.join(dir, 'sovereign.config.json'), JSON.stringify({ embeddings: { provider: 'ollama', model: '' }, providers: { ollama: { enabled: false } } }));
-  const app = createApp(dir, { env: {} });
+  const app = createApp(dir, { env: {}, hardware: { detectGpu: async () => null } });
   await new Promise((resolve) => app.server.listen(0, '127.0.0.1', resolve));
   t.after(async () => {
     await new Promise((resolve) => app.server.close(resolve));

@@ -51,7 +51,7 @@ test('safeFetch refuses to follow redirects (SSRF via 3xx bypass)', async () => 
 });
 
 test('every provider routes outbound calls through safeFetch, not bare fetch', () => {
-  for (const file of ['src/providers/ollama.js', 'src/providers/openai.js', 'src/providers/anthropic.js']) {
+  for (const file of ['src/providers/ollama.js', 'src/providers/freetoken.js', 'src/providers/openai.js', 'src/providers/anthropic.js']) {
     const source = read(file);
     assert.doesNotMatch(source, /await fetch\(/, `${file} must not call bare fetch()`);
     assert.match(source, /safeFetch\(/, `${file} must use safeFetch()`);

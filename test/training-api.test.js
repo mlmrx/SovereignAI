@@ -75,7 +75,7 @@ test('guided fine-tuning API freezes reviewed data, runs a self-hosted trainer, 
     providers: { ollama: { enabled: true, baseUrl: origin(ollama) } },
     training: { enabled: true, baseUrl: origin(trainer) },
   }));
-  const app = createApp(root, { env: {} });
+  const app = createApp(root, { env: {}, hardware: { detectGpu: async () => null } });
   await new Promise((resolve) => app.server.listen(0, '127.0.0.1', resolve));
   const base = origin(app.server);
 
@@ -331,7 +331,7 @@ test('an indeterminate submission blocks duplicate runs and retries the same ide
     providers: { ollama: { enabled: false } },
     training: { enabled: true, baseUrl: origin(trainer) },
   }));
-  const app = createApp(root, { env: {} });
+  const app = createApp(root, { env: {}, hardware: { detectGpu: async () => null } });
   await new Promise((resolve) => app.server.listen(0, '127.0.0.1', resolve));
   const base = origin(app.server);
 

@@ -21,7 +21,7 @@ compromise disclosed, every exit built before the door.*
 | **Retrieval / knowledge** | 🟢 Sovereign | Zero-dep local parsing (PDF/DOCX/ZIP), BM25 always works offline | Semantic embeddings require an embedding model (see Model layer) | Keyword search degrades gracefully; documents re-export as-is |
 | **Distribution** | 🟡 Conditional | `SHA256SUMS.txt` on every release; minisign signature when configured; reproducible path = clone and run from source | Binaries are unsigned by an OS vendor; GitHub/GHCR is a single distribution point owned by Microsoft | Source checkout — the zero-trust install that needs none of our artifacts |
 | **Compute (BYOC)** | 🟡 Conditional | Rail #1: hardware you own, host-key pinning, token hashes only, verifiable delete | Rail 1.5 (rented GPUs) is tenancy: the marketplace owns the disk, and container-style deploys expose the instance token to the provisioning CLI (disclosed in the deploy plan) | `export-to-owner` streams your data home; `destroy --purge-data` verifies removal |
-| **The model** | 🔴 Borrowed | Where inference runs (local Ollama / any OpenAI-compatible server / BYO-key Anthropic), which model, per persona | The weights are someone else's artifact — trained on unknown data with unknown priors, unauditable in practice. Ollama is a de-facto dependency with its own registry; any OpenAI-compatible local server (llama.cpp, vLLM) works without it | Models are swappable per persona in minutes; Model Studio recipes and fine-tuning lineage are portable data |
+| **The model** | 🔴 Borrowed | Where inference runs (local Ollama / FreeToken for frontier-class sparse MoE models on the GPU you own / any OpenAI-compatible server / BYO-key Anthropic), which model, per persona. A model's chain-of-thought is shown live and never stored | The weights are someone else's artifact — trained on unknown data with unknown priors, unauditable in practice. Ollama is a de-facto dependency with its own registry; FreeToken is weeks old, NVIDIA-only, and has no request auth (keep it on loopback); any OpenAI-compatible local server (llama.cpp, vLLM) works without either | Models are swappable per persona in minutes; Model Studio recipes and fine-tuning lineage are portable data |
 | **Cognition (who writes your memory)** | 🟡 Conditional | Machine-written memories name their author model (`author_provider/author_model`). The **"cognition stays home"** switch restricts memory-writing model calls to local endpoints even when chat uses a remote provider | With the switch off and a remote chat provider, a third party's model is the lens deciding what is durable about you — disclosed at the point of use | Turn the switch on; or delete any machine-written memory — the ledger shows exactly which those are |
 
 ## The ownership map — everything an individual owns here, as built
@@ -41,8 +41,9 @@ mechanism that delivers it — not an aspiration.
    where deleted means zeroed (`secure_delete`), not soft-hidden.
 4. **Your AI's identity** — its name, personas, and system prompts are
    records you edit and export, not settings a vendor hosts.
-5. **Your models** — local open weights, swappable per persona; Model
-   Studio recipes build named artifacts on the Ollama endpoint you control.
+5. **Your models** — local open weights, swappable per persona, up to
+   frontier-class sparse MoE models on the GPU you already own (FreeToken);
+   Model Studio recipes build named artifacts on the Ollama endpoint you control.
 6. **Your fine-tuning** — datasets you curated, consent you recorded,
    adapters trained on a trainer you operate, lineage kept end to end.
 7. **Your memory** — every durable fact carries its origin, source

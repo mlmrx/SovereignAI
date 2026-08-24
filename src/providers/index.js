@@ -1,8 +1,11 @@
 import { ollama } from './ollama.js';
+import { freetoken } from './freetoken.js';
 import { openai } from './openai.js';
 import { anthropic } from './anthropic.js';
 
-export const providers = { ollama, openai, anthropic };
+// Local engines first: this order drives the /api/providers rows and the status
+// pills in the UI (the doctor prints its provider lines in completion order).
+export const providers = { ollama, freetoken, openai, anthropic };
 
 export function getProvider(id) {
   // Object.hasOwn, not a truthy lookup, so 'constructor'/'__proto__' can't

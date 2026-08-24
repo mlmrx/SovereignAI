@@ -126,7 +126,7 @@ test('chat records the exact weights that answered: model digest flows to the me
       providers: { ollama: { enabled: true, baseUrl: `http://127.0.0.1:${ollama.address().port}` } },
     })
   );
-  const app = createApp(dir, { env: {} });
+  const app = createApp(dir, { env: {}, hardware: { detectGpu: async () => null } });
   await new Promise((resolve) => app.server.listen(0, '127.0.0.1', resolve));
   t.after(async () => {
     await new Promise((resolve) => app.server.close(resolve));

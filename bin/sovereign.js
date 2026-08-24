@@ -539,11 +539,14 @@ async function importChatCommand(argv) {
 
 async function doctor({ network }) {
   const result = { failures: 0, warnings: 0, actions: [] };
+  // Levels: ok / skip say nothing further; warn / fail count toward the Result
+  // line and exit code; info is a detection ("X is running but not enabled") —
+  // it suggests a next step without ever changing the verdict.
   const report = (level, label, detail, action) => {
     console.log(`  [${level}] ${label}${detail ? ` — ${oneLine(detail)}` : ''}`);
     if (level === 'fail') result.failures++;
     if (level === 'warn') result.warnings++;
-    if ((level === 'fail' || level === 'warn') && action && !result.actions.includes(action)) result.actions.push(action);
+    if ((level === 'fail' || level === 'warn' || level === 'info') && action && !result.actions.includes(action)) result.actions.push(action);
   };
 
   console.log(`SovereignAI doctor v${VERSION}\n`);
@@ -643,7 +646,19 @@ async function inspectProviders(config, { network, report }) {
   const checks = Object.values(providers).map(async (provider) => {
     const cfg = config.providers?.[provider.id] ?? {};
     const isDefault = provider.id === defaultProvider;
+    const hints = providerHints(provider.id, { defaultModel, embeddingModel });
     if (!cfg.enabled) {
+      // FreeToken is off by default, so a running engine goes unnoticed unless
+      // doctor looks. A detection is informational only: nothing about the
+      // verdict changes, the user just learns there is a model to switch on.
+      if (provider.id === 'freetoken' && !isDefault && network) {
+        const running = await detectFreeToken(cfg.baseUrl || 'http://127.0.0.1:1919');
+        if (running) {
+          const served = running.model ? ` (${scrubSecrets(oneLine(String(running.model)), config)})` : '';
+          report('info', provider.label, `running at ${safeEndpoint(running.url)}${served} but not enabled`, 'Enable FreeToken in Settings → Providers to chat with the model it is serving.');
+          return;
+        }
+      }
       report(isDefault ? 'fail' : 'skip', provider.label, 'disabled', isDefault ? 'Enable the default provider or choose another one in Settings.' : undefined);
       return;
     }
@@ -670,18 +685,68 @@ async function inspectProviders(config, { network, report }) {
       const ids = new Set(models.map((model) => model.id));
       if (isDefault && defaultModel) {
         if (ids.has(defaultModel)) report('ok', 'Default model availability', `${oneLine(defaultModel)} is available`);
-        else report('fail', 'Default model availability', `${oneLine(defaultModel)} was not returned by ${provider.label}`, provider.id === 'ollama' ? `Run "ollama pull ${oneLine(defaultModel)}".` : 'Choose an available model in Settings.');
+        else report('fail', 'Default model availability', `${oneLine(defaultModel)} was not returned by ${provider.label}`, hints.defaultModelMissing);
       }
       if (provider.id === embeddingProvider && embeddingModel) {
         if (ids.has(embeddingModel)) report('ok', 'Embedding model availability', `${oneLine(embeddingModel)} is available`);
-        else report('warn', 'Embedding model availability', `${oneLine(embeddingModel)} was not returned by ${provider.label}; search will use keywords`, provider.id === 'ollama' ? `Run "ollama pull ${oneLine(embeddingModel)}" for semantic search.` : 'Choose an available embedding model.');
+        else report('warn', 'Embedding model availability', `${oneLine(embeddingModel)} was not returned by ${provider.label}; search will use keywords`, hints.embeddingModelMissing);
       }
     } catch (err) {
-      report(isDefault ? 'fail' : 'warn', provider.label, scrubSecrets(err.message, config), provider.id === 'ollama' ? 'Start Ollama ("ollama serve") and verify OLLAMA_BASE_URL, or use "sovereign doctor --no-network" for local-only checks.' : 'Check the provider URL/key and network access.');
+      report(isDefault ? 'fail' : 'warn', provider.label, scrubSecrets(err.message, config), hints.unreachable(err));
     }
   });
 
   await Promise.all(checks);
+}
+
+/** Next-step wording per provider. Generic fallbacks apply to everything not listed. */
+function providerHints(providerId, { defaultModel, embeddingModel }) {
+  const hints = {
+    defaultModelMissing: 'Choose an available model in Settings.',
+    // Only Ollama serves embeddings; the others fall back to keyword search.
+    embeddingModelMissing: 'Choose an available embedding model.',
+    unreachable: () => 'Check the provider URL/key and network access.',
+  };
+  if (providerId === 'ollama') {
+    hints.defaultModelMissing = `Run "ollama pull ${oneLine(defaultModel)}".`;
+    hints.embeddingModelMissing = `Run "ollama pull ${oneLine(embeddingModel)}" for semantic search.`;
+    hints.unreachable = () => 'Start Ollama ("ollama serve") and verify OLLAMA_BASE_URL, or use "sovereign doctor --no-network" for local-only checks.';
+  } else if (providerId === 'freetoken') {
+    hints.defaultModelMissing = 'FreeToken serves one model per process — set the default model to the id it reports (GET /v1/models or "ft ctl health").';
+    hints.unreachable = (err) => {
+      // The health error says which it is: not yet serving, broken, not FreeToken, or not there.
+      const message = err?.message ?? '';
+      if (/still loading|not serving right now \((rebuilding|stopping)\)/.test(message)) return 'Wait for FreeToken to finish (check "ft ctl health"), then run doctor again.';
+      if (/engine error|not serving right now \(failed\)/.test(message)) return 'FreeToken reported a failure — check its log, then restart it ("ft serve --model <checkpoint>").';
+      if (/unexpected shape|unknown status/.test(message)) return 'Something other than FreeToken answered at this URL — check the FreeToken Base URL in Settings.';
+      return 'Start FreeToken ("ft serve --model <checkpoint>") so it listens on http://127.0.0.1:1919, or set its URL in Settings.';
+    };
+  }
+  return hints;
+}
+
+/**
+ * Is a FreeToken engine answering at this base URL? Returns { url, model } or
+ * null. Any failure — refused, slow, wrong shape (some other server on the
+ * port) — is null: the disabled line then reads exactly as it always did.
+ */
+async function detectFreeToken(baseUrl) {
+  try {
+    const { safeFetch } = await import('../src/util.js');
+    const { isFreeTokenHealth } = await import('../src/providers/freetoken.js');
+    const { isLocalProviderEndpoint } = await import('../src/providers/index.js');
+    // A disabled provider pointed at a LAN or remote host is left alone: detection is a
+    // courtesy for the engine on this machine, not a reason to contact someone else's.
+    if (!isLocalProviderEndpoint('freetoken', { baseUrl })) return null;
+    const url = `${String(baseUrl).replace(/\/+$/, '')}/health`;
+    const res = await safeFetch(url, { signal: AbortSignal.timeout(1500) });
+    if (!res.ok) return null;
+    const body = await res.json();
+    if (!isFreeTokenHealth(body)) return null;
+    return { url, model: typeof body.model === 'string' ? body.model : null };
+  } catch {
+    return null;
+  }
 }
 
 function finishDoctor(result) {

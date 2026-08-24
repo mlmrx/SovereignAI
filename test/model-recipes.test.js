@@ -221,7 +221,7 @@ test('SQLite owns model recipe CRUD and export/import roundtrips structured sett
 
 test('Model Studio list returns lightweight summaries while item detail retains the full recipe', async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sovereign-recipes-summary-'));
-  const app = createApp(root, { env: {} });
+  const app = createApp(root, { env: {}, hardware: { detectGpu: async () => null } });
   await new Promise((resolve) => app.server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${app.server.address().port}`;
   const largeRecipe = {
@@ -296,7 +296,7 @@ test('Model Studio API persists, builds, and exports the exact advanced Ollama r
     providers: { ollama: { enabled: true, baseUrl: ollamaUrl } },
     embeddings: { model: '' },
   }));
-  const app = createApp(root, { env: {} });
+  const app = createApp(root, { env: {}, hardware: { detectGpu: async () => null } });
   await new Promise((resolve) => app.server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${app.server.address().port}`;
 
@@ -473,7 +473,7 @@ test('Model Studio never marks a changed or deleted recipe as built from a stale
     providers: { ollama: { enabled: true, baseUrl: `http://127.0.0.1:${ollama.address().port}` } },
     embeddings: { model: '' },
   }));
-  const app = createApp(root, { env: {} });
+  const app = createApp(root, { env: {}, hardware: { detectGpu: async () => null } });
   await new Promise((resolve) => app.server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${app.server.address().port}`;
   const send = async (method, url, body) => {

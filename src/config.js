@@ -8,7 +8,11 @@ export const VERSION = '0.5.0';
 // circular import); re-exported here to keep the config.js import path stable.
 export { ssrfBlockedReason } from './util.js';
 
-const PROVIDER_IDS = ['ollama', 'openai', 'anthropic'];
+const PROVIDER_IDS = ['ollama', 'freetoken', 'openai', 'anthropic'];
+// Providers that carry no API key: local engines that answer on loopback
+// without auth. They get no apiKey field at all, so nothing secret-shaped can
+// ever be persisted for them.
+const KEYLESS_PROVIDER_IDS = new Set(['ollama', 'freetoken']);
 const TOP_LEVEL_KEYS = new Set([
   'name',
   'host',
@@ -32,6 +36,8 @@ export const DEFAULT_CONFIG = {
   authToken: null,
   providers: {
     ollama: { enabled: true, baseUrl: 'http://localhost:11434' },
+    // Local MoE engine (github.com/FlashML-org/FreeToken): serves one open-weight model per process on loopback, no auth.
+    freetoken: { enabled: false, baseUrl: 'http://127.0.0.1:1919' },
     // Works with any OpenAI-compatible server: vLLM, llama.cpp, LM Studio, Groq, Mistral, OpenAI…
     openai: { enabled: false, baseUrl: 'https://api.openai.com', apiKey: '' },
     anthropic: { enabled: false, apiKey: '', baseUrl: 'https://api.anthropic.com' },
@@ -110,6 +116,12 @@ function applyEnvOverrides(config, env) {
   if (env.SOVEREIGN_PORT) config.port = Number(env.SOVEREIGN_PORT);
   if (env.SOVEREIGN_TOKEN) config.authToken = env.SOVEREIGN_TOKEN;
   if (env.OLLAMA_BASE_URL) config.providers.ollama.baseUrl = env.OLLAMA_BASE_URL;
+  if (env.FREETOKEN_BASE_URL) {
+    // Unlike OLLAMA_BASE_URL, this also enables the provider: FreeToken is off
+    // by default, so a Docker/compose user who sets its URL clearly wants it on.
+    config.providers.freetoken.baseUrl = env.FREETOKEN_BASE_URL;
+    config.providers.freetoken.enabled = true;
+  }
   if (env.OPENAI_BASE_URL) config.providers.openai.baseUrl = env.OPENAI_BASE_URL;
   if (env.OPENAI_API_KEY) {
     config.providers.openai.apiKey = env.OPENAI_API_KEY;
@@ -156,6 +168,10 @@ export function withoutEnvironmentManagedFields(update, env = process.env) {
     : null;
   if (env.OLLAMA_BASE_URL && provider('ollama') && typeof provider('ollama') === 'object') {
     delete provider('ollama').baseUrl;
+  }
+  if (env.FREETOKEN_BASE_URL && provider('freetoken') && typeof provider('freetoken') === 'object') {
+    delete provider('freetoken').baseUrl;
+    delete provider('freetoken').enabled;
   }
   if (env.OPENAI_BASE_URL && provider('openai') && typeof provider('openai') === 'object') {
     delete provider('openai').baseUrl;
@@ -273,13 +289,14 @@ function normalizeProviders(value) {
   for (const id of PROVIDER_IDS) {
     const provider = value[id];
     assertPlainObject(provider, `providers.${id}`);
-    const allowed = id === 'ollama' ? new Set(['enabled', 'baseUrl']) : new Set(['enabled', 'baseUrl', 'apiKey']);
+    const keyless = KEYLESS_PROVIDER_IDS.has(id);
+    const allowed = keyless ? new Set(['enabled', 'baseUrl']) : new Set(['enabled', 'baseUrl', 'apiKey']);
     assertKnownKeys(provider, allowed, `providers.${id}`);
     out[id] = {
       enabled: booleanValue(provider.enabled, `providers.${id}.enabled`),
       baseUrl: urlValue(provider.baseUrl, `providers.${id}.baseUrl`),
     };
-    if (id !== 'ollama') out[id].apiKey = secretValue(provider.apiKey, `providers.${id}.apiKey`, true);
+    if (!keyless) out[id].apiKey = secretValue(provider.apiKey, `providers.${id}.apiKey`, true);
   }
   return out;
 }

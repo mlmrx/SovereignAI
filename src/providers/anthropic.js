@@ -69,6 +69,11 @@ export const anthropic = {
         case 'content_block_delta':
           if (data.delta?.type === 'text_delta' && data.delta.text) {
             yield { type: 'delta', text: data.delta.text };
+          } else if (data.delta?.type === 'thinking_delta' && typeof data.delta.thinking === 'string' && data.delta.thinking) {
+            // Forward-compat: we do not request extended thinking today, but if the
+            // API streams it (adaptive thinking, or a future opt-in) it is surfaced
+            // as reasoning — shown live, never stored.
+            yield { type: 'reasoning', text: data.delta.thinking };
           }
           break;
         case 'message_delta':

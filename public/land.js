@@ -15,7 +15,7 @@ async function typeInto(el, text, speed = 13) {
 /* ------- value-prop ledger ------- */
 const PROPS = [
   ['The machine', 'Runs as one file on your laptop, homelab, or any box you own. Zero runtime dependencies — the code you audit is the code that runs. Works offline.', 'layer 1 · single binary, readable source'],
-  ['The models', 'Local open weights by default — Ollama, llama.cpp, any compatible server. Rent a frontier model only when you choose, with the disclosure on screen when you do.', 'layer 2 · your dial, per persona'],
+  ['The models', 'Local open weights by default — Ollama for small models, FreeToken for frontier-class sparse ones on the GPU you already own, any compatible server. Rent a frontier model only when you choose, with the disclosure on screen when you do.', 'layer 2 · your dial, per persona'],
   ['The memory', 'Every fact it remembers shows how it entered, which conversation it came from, and which model wrote it. Deleting really deletes — down to the bytes.', 'layer 3 · receipts on every memory'],
   ['The knowledge', 'Your documents, your chat history from other AIs, even the receipts and renewals hiding in your inbox — parsed on your machine, never uploaded anywhere.', 'layer 4 · imports without uploads'],
   ['The exit', 'One checksummed file holds everything, in a format documented well enough to outlive us. Encrypt it with a passphrase only you hold. Verify it without importing.', 'layer 5 · export, verify, leave'],

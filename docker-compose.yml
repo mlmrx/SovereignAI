@@ -22,6 +22,8 @@ services:
       SOVEREIGN_HOME: /state
       # Default is the profiled Ollama service. Override explicitly for host Ollama (above).
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      # FreeToken on the Docker host (start it with `ft serve --host 0.0.0.0`; empty keeps the provider off)
+      FREETOKEN_BASE_URL: ${FREETOKEN_BASE_URL:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

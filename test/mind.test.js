@@ -14,7 +14,7 @@ const css = fs.readFileSync(path.join(root, 'public', 'style.css'), 'utf8');
 async function startTempApp(config = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sovereign-mind-'));
   fs.writeFileSync(path.join(dir, 'sovereign.config.json'), JSON.stringify(config));
-  const instance = createApp(dir, { env: {} });
+  const instance = createApp(dir, { env: {}, hardware: { detectGpu: async () => null } });
   await new Promise((resolve) => instance.server.listen(0, '127.0.0.1', resolve));
   return {
     app: instance,

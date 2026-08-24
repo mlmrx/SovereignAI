@@ -18,7 +18,10 @@ directory.
 
 Use `sovereign doctor` to check the active home, configuration, database
 integrity/counts, provider connectivity, and selected chat/embedding models.
-It never prints bearer tokens or provider API keys. For a local-only check:
+It also notices a local [FreeToken](https://github.com/FlashML-org/FreeToken) engine
+running at its configured URL (`http://127.0.0.1:1919` by default) that is not yet enabled, as an `[info]` line
+with a next step — never a failure. It never prints bearer tokens or provider
+API keys. For a local-only check:
 
 ```bash
 sovereign doctor --no-network
@@ -26,6 +29,12 @@ sovereign doctor --no-network
 
 The command exits non-zero when it finds a failure, making it suitable for
 smoke checks.
+
+Provider environment overrides: `FREETOKEN_BASE_URL` works like
+`OLLAMA_BASE_URL` (it also enables the FreeToken provider, since setting the
+URL is the intent). `SOVEREIGN_HARDWARE_PROBE=off` disables the best-effort GPU
+probe (`nvidia-smi`, then Linux sysfs) that sizes the starter shelf's sparse
+MoE tier; without it the shelf reports the GPU as unknown rather than guessing.
 
 JSON exports restore personas, conversations, messages, memories, documents,
 chunks, Model Studio recipes, and Fine-Tuning Studio projects, reviewed

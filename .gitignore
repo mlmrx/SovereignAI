@@ -44,3 +44,6 @@ logs/
 
 .vercel
 .env*
+
+# Claude Code session state (agent worktrees live here)
+.claude/

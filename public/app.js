@@ -410,13 +410,13 @@ function runtimeInfo(persona = activePersona()) {
   const model = persona?.model || state.config?.defaults?.model || '';
   const providerConfig = state.config?.providers?.[provider] || {};
   let local = false;
-  if (provider === 'ollama' || provider === 'openai') {
+  if (provider === 'ollama' || provider === 'freetoken' || provider === 'openai') {
     try {
       const host = new URL(providerConfig.baseUrl).hostname.toLowerCase().replace(/\.$/, '');
       local = ['localhost', '127.0.0.1', '::1', '[::1]', '0.0.0.0', 'host.docker.internal', 'ollama'].includes(host) || host.startsWith('127.');
     } catch { local = false; }
   }
-  const names = { ollama: 'Ollama', openai: 'OpenAI-compatible', anthropic: 'Anthropic' };
+  const names = { ollama: 'Ollama', freetoken: 'FreeToken', openai: 'OpenAI-compatible', anthropic: 'Anthropic' };
   const status = state.providers.find((item) => item.id === provider);
   const mode = local ? 'local' : 'remote';
   const label = local ? `Local · ${names[provider] || provider}` : `Remote · ${names[provider] || provider}`;
@@ -794,6 +794,29 @@ function addMessage(role, content, { meta = '', sources = [], streaming = false,
   let raw = content || '';
   let renderFrame = null;
   let followAfterRender = false;
+  // Reasoning is stream-only by design: the server relays the model's thinking
+  // live and never stores it, so openConversation() has nothing to re-render.
+  // The panel is created lazily on the first reasoning delta and sits before
+  // the bubble, so Copy still copies only the answer.
+  let reasoningPanel = null;
+  let reasoningBody = null;
+  let reasoningText = '';
+  const appendReasoning = (text) => {
+    if (role !== 'assistant' || !text) return;
+    if (!reasoningPanel) {
+      reasoningPanel = document.createElement('details');
+      reasoningPanel.className = 'message-reasoning';
+      reasoningPanel.open = true;
+      reasoningPanel.innerHTML = '<summary>Reasoning</summary><div class="message-reasoning-body"></div>';
+      reasoningBody = $('.message-reasoning-body', reasoningPanel);
+      bubble.before(reasoningPanel);
+    }
+    reasoningText += text;
+    // A text node needs no escaping; appending keeps each delta O(delta) and the
+    // body follows its own tail while the panel is open.
+    reasoningBody.append(document.createTextNode(text));
+    if (reasoningPanel.open) reasoningBody.scrollTop = reasoningBody.scrollHeight;
+  };
 
   const render = ({ cursor = false } = {}) => {
     renderFrame = null;
@@ -818,6 +841,7 @@ function addMessage(role, content, { meta = '', sources = [], streaming = false,
     if (renderFrame !== null) cancelAnimationFrame(renderFrame);
     render();
     followAfterRender = false;
+    if (reasoningPanel) $('summary', reasoningPanel).textContent = 'Reasoning · shown live, not saved';
     if (role !== 'assistant') {
       if (shouldFollow) maybeScrollToBottom(true);
       return;
@@ -843,9 +867,16 @@ function addMessage(role, content, { meta = '', sources = [], streaming = false,
   return {
     row,
     bubble,
-    append(text, options) { raw += text; scheduleRender(options); },
+    append(text, options) {
+      // The first answer delta folds the reasoning panel so the reply takes over.
+      if (reasoningPanel && !raw && text) reasoningPanel.open = false;
+      raw += text;
+      scheduleRender(options);
+    },
     set(text) { raw = text; scheduleRender(); },
     get text() { return raw; },
+    get reasoningText() { return reasoningText; },
+    appendReasoning,
     finish,
   };
 }
@@ -934,6 +965,8 @@ async function sendMessage(overrideText) {
   setStreamingUI(true);
   let metadata = null;
   let usage = null;
+  let reasoningChars = 0;
+  let stopReason = null;
   let streamError = null;
   let completionStatus = 'Response complete';
 
@@ -963,19 +996,33 @@ async function sendMessage(overrideText) {
       } else if (packet.event === 'delta') {
         const shouldScroll = nearBottom();
         pending.append(packet.data.text || '', { follow: shouldScroll });
+      } else if (packet.event === 'reasoning') {
+        pending.appendReasoning(packet.data.text || '');
       } else if (packet.event === 'done') {
         usage = packet.data.usage || null;
+        reasoningChars = Number(packet.data.reasoningChars) || 0;
+        stopReason = packet.data.stopReason || null;
         state.lastModelDigest = packet.data.modelDigest || null;
       } else if (packet.event === 'error') {
         streamError = packet.data.message || 'The model request failed.';
         completionStatus = 'Response interrupted';
       }
     }
-    if (!pending.text) throw new Error(streamError || 'The model returned an empty response.');
+    if (!pending.text) {
+      if (!streamError && pending.reasoningText) {
+        // Only blame the reply budget when the provider said so (finish_reason 'length' /
+        // 'max_tokens'); the limit lives in sovereign.config.json, not in this UI.
+        throw new Error(stopReason === 'length' || stopReason === 'max_tokens'
+          ? 'The model spent its whole output budget on reasoning and returned no answer — raise limits.maxTokens in sovereign.config.json or try a model that thinks less.'
+          : `The model returned reasoning but no answer (stop reason: ${stopReason || 'unknown'}). Try again or pick a different model.`);
+      }
+      throw new Error(streamError || 'The model returned an empty response.');
+    }
     const metaBits = [];
     if (usage?.input_tokens != null) metaBits.push(`${usage.input_tokens} in · ${usage.output_tokens ?? '?'} out`);
     if (metadata?.model) metaBits.push(`${metadata.provider}/${metadata.model}`);
     if (state.lastModelDigest) metaBits.push(`weights ${state.lastModelDigest.slice(0, 12)}`);
+    if (reasoningChars > 0) metaBits.push('reasoning shown, not saved');
     if (streamError) metaBits.push('stream interrupted');
     pending.finish({ nextMeta: metaBits.join(' · '), nextSources: metadata?.sources || [], wasError: Boolean(streamError) });
     if (streamError) toast(streamError, { type: 'error', title: 'Response interrupted' });
@@ -1322,6 +1369,8 @@ async function loadSettings() {
   $('#cfg-name').value = state.config.name || '';
   $('#cfg-ollama-enabled').checked = Boolean(state.config.providers?.ollama?.enabled);
   $('#cfg-ollama-url').value = state.config.providers?.ollama?.baseUrl || '';
+  $('#cfg-freetoken-enabled').checked = Boolean(state.config.providers?.freetoken?.enabled);
+  $('#cfg-freetoken-url').value = state.config.providers?.freetoken?.baseUrl || '';
   $('#cfg-openai-enabled').checked = Boolean(state.config.providers?.openai?.enabled);
   $('#cfg-openai-url').value = state.config.providers?.openai?.baseUrl || '';
   $('#cfg-openai-key').value = state.config.providers?.openai?.apiKey || '';
@@ -1353,7 +1402,10 @@ async function loadModelRecommendation() {
 function renderModelFitHint() {
   const hint = $('#model-fit-hint');
   const fit = state.modelRecommendation?.modelFit;
-  hint.textContent = fit ? fit.reasoning : '';
+  const sparse = state.modelRecommendation?.sparseFit;
+  // The sparse (MoE) ceiling is appended only when it actually applies here;
+  // a remote engine or unreadable memory says nothing rather than hedging.
+  hint.textContent = fit ? fit.reasoning + (sparse?.applies && sparse.reasoning ? ` ${sparse.reasoning}` : '') : '';
 }
 
 function markSettingsDirty(dirty = true) {
@@ -2012,30 +2064,83 @@ async function loadModelShelf() {
     const shelf = await api.get('/api/model-shelf');
     $('#model-shelf-note').textContent = `Curated ${shelf.curatedAt}. ${shelf.note}`;
     const FIT = { fits: ['fits here', 'ok'], tight: ['tight fit', 'warn'], 'too-big': ['needs more RAM', 'bad'] };
+    const GPU_FIT = { fits: ['GPU: fits', 'ok'], tight: ['GPU: tight', 'warn'], 'too-big': ['GPU: needs more VRAM', 'bad'] };
+    const pill = (css, [label, tone], title) => `<span class="${css} ${tone}"${title ? ` title="${escapeHtml(title)}"` : ''}>${escapeHtml(label)}</span>`;
     host.innerHTML = shelf.roles.map((group) => `
       <div class="shelf-group">
         <h4>${escapeHtml(group.label)}</h4>
         <p class="shelf-job">${escapeHtml(group.job)}</p>
         ${group.models.map((model) => {
           const fit = model.fit ? FIT[model.fit] : null;
-          const action = group.role === 'memory-cognition' ? 'Use for cognition' : group.role === 'embeddings' ? 'Use for search' : 'Use as base';
+          const engine = model.engine || 'ollama';
+          const sparse = model.architecture === 'moe';
+          const action = engine === 'freetoken' ? 'Use as default model' : group.role === 'memory-cognition' ? 'Use for cognition' : group.role === 'embeddings' ? 'Use for search' : 'Use as base';
+          // Sparse entries: total params live in RAM, the active set hits the GPU — say both numbers.
+          const size = sparse
+            ? `${escapeHtml(String(model.paramsB))}B total · ${escapeHtml(String(model.activeParamsB))}B active · ~${escapeHtml(String(model.approxGBAtQ4))} GB RAM · ~${escapeHtml(String(model.approxActiveGBAtQ4))} GB VRAM`
+            : `${escapeHtml(String(model.paramsB))}B · ~${escapeHtml(String(model.approxGBAtQ4))} GB at Q4`;
+          const gpuFit = sparse && model.gpuFit && GPU_FIT[model.gpuFit] ? GPU_FIT[model.gpuFit] : null;
+          const enginePill = engine === 'freetoken' ? shelfEnginePill() : null;
+          const pills = [
+            fit ? pill('shelf-fit', fit) : '',
+            gpuFit ? pill('shelf-fit', gpuFit) : '',
+            enginePill ? pill('shelf-engine', [enginePill.label, enginePill.tone], enginePill.title) : '',
+          ].filter(Boolean);
           return `<div class="shelf-model">
             <div><strong>${escapeHtml(model.base)}</strong>
-              <span class="shelf-meta">${model.paramsB}B · ~${model.approxGBAtQ4} GB at Q4${fit ? ` · <span class="shelf-fit ${fit[1]}">${fit[0]}</span>` : ''}</span>
+              <span class="shelf-meta">${size}${pills.map((markup) => ` · ${markup}`).join('')}</span>
               <span class="shelf-meta">license: ${escapeHtml(model.license)}</span>
               <span class="shelf-why">${escapeHtml(model.why)}</span></div>
-            <button class="btn small shelf-apply" type="button" data-role="${escapeHtml(group.role)}" data-base="${escapeHtml(model.base)}">${action}</button>
+            <button class="btn small shelf-apply" type="button" data-role="${escapeHtml(group.role)}" data-engine="${escapeHtml(engine)}" data-base="${escapeHtml(model.base)}" data-hf="${escapeHtml(model.hf || model.base)}">${action}</button>
           </div>`;
         }).join('')}
       </div>`).join('');
-    $$('.shelf-apply', host).forEach((button) => button.addEventListener('click', () => applyShelfModel(button.dataset.role, button.dataset.base)));
+    $$('.shelf-apply', host).forEach((button) => button.addEventListener('click', () => applyShelfModel(button.dataset.role, button.dataset.base, button.dataset)));
   } catch (error) {
     host.innerHTML = `<p class="model-studio-status">${escapeHtml(error.message)}</p>`;
   }
 }
 
-async function applyShelfModel(role, base) {
+/** The FreeToken engine's live status, from the last /api/providers check, as a pill. */
+function shelfEnginePill() {
+  const row = state.providers.find((provider) => provider.id === 'freetoken');
+  if (row?.ok === true) return { label: 'FreeToken ready', tone: 'ok', title: row.detail || '' };
+  if (row && (row.enabled || row.configured)) return { label: 'FreeToken unavailable', tone: 'bad', title: row.detail || '' };
+  return { label: 'needs FreeToken', tone: 'warn', title: 'Enable FreeToken in Settings → Providers' };
+}
+
+/** Re-render an already-open shelf so the engine pill tracks provider status. */
+function refreshModelShelf() {
+  if (!shelfLoaded) return;
+  shelfLoaded = false;
+  if ($('.model-shelf')?.open) loadModelShelf().catch(() => {});
+}
+
+async function applyShelfModel(role, base, { engine = 'ollama', hf = base } = {}) {
   try {
+    if (engine === 'freetoken') {
+      // A sparse model is not an Ollama recipe base: it becomes the default
+      // model on the FreeToken provider, which serves it directly.
+      const updated = await api.send('PUT', '/api/config', { defaults: { provider: 'freetoken', model: base } });
+      state.config = updated;
+      // The shelf sits inside Settings: mirror the new default into the already-
+      // populated form (so a later Save keeps it) and into the runtime badges.
+      $('#cfg-default-provider').value = 'freetoken';
+      $('#cfg-default-model').value = base;
+      refreshModelOptions().catch(() => {});
+      updateRuntimeUI();
+      renderDashboard();
+      const row = state.providers.find((provider) => provider.id === 'freetoken');
+      toast(
+        row?.ok === true
+          ? `Default model set to ${base} on FreeToken.`
+          : row && (row.enabled || row.configured)
+            ? `Default model set to ${base}. FreeToken is enabled but not reachable — serve it with: ft serve --model ${hf}`
+            : `Default model set to ${base}. Enable FreeToken in Settings → Providers and serve it with: ft serve --model ${hf}`,
+        { type: 'success' }
+      );
+      return;
+    }
     if (role === 'memory-cognition') {
       const updated = await api.send('PUT', '/api/config', { memory: { ...state.config.memory, extractionModel: base } });
       state.config = updated;
@@ -2109,6 +2214,7 @@ async function checkProviders() {
     renderProviderStatus();
     updateRuntimeUI();
     renderDashboard();
+    refreshModelShelf();
   } catch (error) { toast(error.message, { type: 'error', title: 'Provider check failed' }); }
   finally { button.disabled = false; button.textContent = 'Test connections'; }
 }
@@ -2136,6 +2242,7 @@ $('#settings-save').addEventListener('click', async () => {
     name: $('#cfg-name').value.trim(),
     providers: {
       ollama: { enabled: $('#cfg-ollama-enabled').checked, baseUrl: $('#cfg-ollama-url').value.trim() },
+      freetoken: { enabled: $('#cfg-freetoken-enabled').checked, baseUrl: $('#cfg-freetoken-url').value.trim() },
       openai: { enabled: $('#cfg-openai-enabled').checked, baseUrl: $('#cfg-openai-url').value.trim(), apiKey: $('#cfg-openai-key').value },
       anthropic: { enabled: $('#cfg-anthropic-enabled').checked, apiKey: $('#cfg-anthropic-key').value },
     },
@@ -2145,7 +2252,8 @@ $('#settings-save').addEventListener('click', async () => {
   };
   try {
     if (update.defaults.provider !== 'anthropic' && !update.defaults.model) {
-      throw new Error(`Choose a default model ID for ${update.defaults.provider === 'ollama' ? 'Ollama' : 'the OpenAI-compatible provider'}.`);
+      const providerNames = { ollama: 'Ollama', freetoken: 'FreeToken', openai: 'the OpenAI-compatible provider' };
+      throw new Error(`Choose a default model ID for ${providerNames[update.defaults.provider] || update.defaults.provider}.`);
     }
     const personaChanges = collectPersonaChanges(update.defaults);
     state.config = await api.send('PUT', '/api/config', update);
@@ -2187,7 +2295,7 @@ function personaCard(persona = {}) {
       <div class="form-grid">
         <label>Name<input class="p-name" maxlength="80" value="${escapeHtml(persona.name || '')}" /></label>
         <label>Description<input class="p-desc" maxlength="240" value="${escapeHtml(persona.description || '')}" /></label>
-        <label>Provider<select class="p-provider"><option value="">Use workspace default</option><option value="ollama">Ollama</option><option value="openai">OpenAI-compatible</option><option value="anthropic">Anthropic</option></select></label>
+        <label>Provider<select class="p-provider"><option value="">Use workspace default</option><option value="ollama">Ollama</option><option value="freetoken">FreeToken</option><option value="openai">OpenAI-compatible</option><option value="anthropic">Anthropic</option></select></label>
         <label>Model<input class="p-model" value="${escapeHtml(persona.model || '')}" placeholder="Required when overriding provider" /></label>
         <label>Temperature<input class="p-temperature" type="number" min="0" max="2" step="0.1" value="${escapeHtml(persona.temperature ?? '')}" placeholder="Provider default" /></label>
         <label class="span-2">System prompt<textarea class="p-prompt" rows="6">${escapeHtml(persona.system_prompt || '')}</textarea></label>

@@ -214,7 +214,7 @@ test('life records round-trip through export/import and reject unknown kinds', (
 test('GET /api/life serves counts, audit, and radar', async (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sovereign-life-api-'));
   fs.writeFileSync(path.join(dir, 'sovereign.config.json'), JSON.stringify({ embeddings: { provider: 'ollama', model: '' }, providers: { ollama: { enabled: false } } }));
-  const app = createApp(dir, { env: {} });
+  const app = createApp(dir, { env: {}, hardware: { detectGpu: async () => null } });
   await new Promise((resolve) => app.server.listen(0, '127.0.0.1', resolve));
   t.after(async () => {
     await new Promise((resolve) => app.server.close(resolve));

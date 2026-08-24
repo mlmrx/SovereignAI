@@ -594,6 +594,7 @@
               <label>Default provider
                 <select id="cfg-default-provider">
                   <option value="ollama">Ollama · configured endpoint</option>
+                  <option value="freetoken">FreeToken · local MoE engine</option>
                   <option value="openai">OpenAI-compatible · remote or self-hosted</option>
                   <option value="anthropic">Anthropic · remote</option>
                 </select>
@@ -610,6 +611,11 @@
                 <legend><span class="provider-mark">O</span><span><strong>Ollama</strong><small>Local or remote · follows the Base URL</small></span><label class="switch"><input type="checkbox" id="cfg-ollama-enabled" /><span></span><em>Enabled</em></label></legend>
                 <label>Base URL<input id="cfg-ollama-url" inputmode="url" placeholder="http://localhost:11434" /></label>
                 <p class="field-note">A loopback URL can stay fully local. Prompts and selected context are sent to whatever endpoint this Base URL identifies.</p>
+              </fieldset>
+              <fieldset class="provider-card local-card">
+                <legend><span class="provider-mark">FT</span><span><strong>FreeToken</strong><small>Local MoE engine · follows the Base URL</small></span><label class="switch"><input type="checkbox" id="cfg-freetoken-enabled" /><span></span><em>Enabled</em></label></legend>
+                <label>Base URL<input id="cfg-freetoken-url" inputmode="url" placeholder="http://127.0.0.1:1919" /></label>
+                <p class="field-note">Local MoE engine — sparse 20B–120B+ open-weight models on one gaming GPU plus host RAM (NVIDIA RTX 30-series or newer). No API key: FreeToken serves on loopback without auth. Serves one model per process — pick it as the default model below.</p>
               </fieldset>
               <fieldset class="provider-card remote-card">
                 <legend><span class="provider-mark">OAI</span><span><strong>OpenAI-compatible</strong><small>Remote or self-hosted · you choose the endpoint</small></span><label class="switch"><input type="checkbox" id="cfg-openai-enabled" /><span></span><em>Enabled</em></label></legend>
@@ -671,7 +677,7 @@
                   <label class="span-2">Base model<input id="model-base" maxlength="2048" list="ollama-model-options" autocomplete="off" placeholder="e.g. llama3.1:latest or hf.co/owner/repo:Q4_K_M" required /></label>
                   <datalist id="ollama-model-options"></datalist>
                   <details class="model-advanced model-shelf span-2">
-                    <summary><span><strong>Starter shelf: curated small models by job</strong><small>Dated picks with licenses and fit for this machine — chat, cognition, reasoning, coding, embeddings</small></span><svg class="icon"><use href="#i-chevron"/></svg></summary>
+                    <summary><span><strong>Starter shelf: curated small models by job</strong><small>Dated picks with licenses and fit for this machine — chat, cognition, reasoning, coding, embeddings — plus a frontier MoE tier served by FreeToken</small></span><svg class="icon"><use href="#i-chevron"/></svg></summary>
                     <div class="model-advanced-body">
                       <div id="model-shelf-body" aria-live="polite"><p class="model-studio-status">Loading the shelf…</p></div>
                       <p id="model-shelf-note" class="model-studio-status"></p>

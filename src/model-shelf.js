@@ -15,13 +15,17 @@
  * Pure data + pure functions; the server route supplies live RAM numbers.
  */
 
+import { GB_PER_BILLION_AT_Q4, USABLE_MEMORY_FRACTION } from './model-recommendation.js';
+
 export const SHELF_CURATED_AT = '2026-08';
 
-// Same sizing rule of thumb as model-recommendation.js: ~0.6 GB per billion
-// params at Q4, against ~60% of system RAM usable. Net effect: a model
-// roughly fits when its parameter count (in B) ≤ total RAM (in GB).
-const Q4_GB_PER_B = 0.6;
-const USABLE_FRACTION = 0.6;
+// Same sizing rule of thumb as model-recommendation.js (imported, so the two
+// cannot drift): ~0.6 GB per billion params at Q4, against ~60% of system
+// RAM usable. Net effect: a model roughly fits when its parameter count (in
+// B) ≤ total RAM (in GB). The same fraction is applied to GPU memory for the
+// active set of a sparse model — the KV cache and activations need room too.
+const Q4_GB_PER_B = GB_PER_BILLION_AT_Q4;
+const USABLE_FRACTION = USABLE_MEMORY_FRACTION;
 
 export const MODEL_SHELF = [
   {
@@ -80,26 +84,96 @@ export const MODEL_SHELF = [
       { base: 'gemma3:12b', hf: 'google/gemma-3-12b-it', paramsB: 12, license: 'Gemma Terms of Use (Google — use restrictions apply)', why: 'Multimodal chat with real quality, if you have the RAM.' },
     ],
   },
+  // Sparse mixture-of-experts models served by FreeToken rather than Ollama.
+  // `paramsB` stays the TOTAL parameter count — that is what has to live in
+  // host RAM — and `activeParamsB` is the per-token active set that actually
+  // hits the GPU — both as stated on each model card (Aug 2026). `base` is the Hugging Face id, which is what
+  // `ft serve --model` takes. Keep this group LAST: the shelf's dense
+  // ordering (and its tests) assume the first big entry is a dense one.
+  {
+    role: 'frontier-moe',
+    label: 'Frontier-class, locally (sparse MoE)',
+    engine: 'freetoken',
+    job: 'Big sparse models on one gaming GPU plus host RAM: the experts live in RAM and only the few active per token hit the GPU. Served by FreeToken, not Ollama — pick one as your default model rather than as a recipe base.',
+    models: [
+      { base: 'Qwen/Qwen3.6-35B-A3B', hf: 'Qwen/Qwen3.6-35B-A3B', paramsB: 35, activeParamsB: 3, architecture: 'moe', license: 'Apache-2.0', why: 'The model FreeToken was built around: 35B of knowledge, about 3B active per token — comfortable from 48 GB of RAM, borderline at 32.' },
+      { base: 'openai/gpt-oss-20b', hf: 'openai/gpt-oss-20b', paramsB: 21, activeParamsB: 3.6, architecture: 'moe', license: 'Apache-2.0', why: 'OpenAI’s open-weight reasoning model in its native MXFP4 — about 13 GB on disk, with real chain-of-thought.' },
+      { base: 'google/gemma-4-26B-A4B-it', hf: 'google/gemma-4-26B-A4B-it', paramsB: 25.2, activeParamsB: 3.8, architecture: 'moe', license: 'Apache-2.0', why: 'Google’s sparse Gemma 4: strong multilingual chat; multimodal upstream, served text-only here.' },
+      { base: 'openai/gpt-oss-120b', hf: 'openai/gpt-oss-120b', paramsB: 117, activeParamsB: 5.1, architecture: 'moe', license: 'Apache-2.0', why: 'Near-frontier reasoning on a single desktop GPU — its experts are ~70 GB at Q4, and every one of them must live in host RAM.' },
+    ],
+  },
 ];
 
-/** Annotate the shelf with what fits THIS machine. Pure; RAM injected. */
-export function shelfWithFit({ totalMemoryBytes, endpointLocal }) {
+/** The sparse candidates the recommendation sizes against: { base, paramsB, activeParamsB }. */
+export function sparseCandidates() {
+  const group = MODEL_SHELF.find((entry) => entry.role === 'frontier-moe');
+  return group ? group.models.map(({ base, paramsB, activeParamsB }) => ({ base, paramsB, activeParamsB })) : [];
+}
+
+function round1(value) {
+  return Math.round(value * 10) / 10;
+}
+
+/**
+ * Three-valued fit of `needGB` against a memory budget: comfortable, tight, or
+ * not at all. Thresholds are rounded to the same one decimal as the need
+ * values so binary float noise (4 × 0.6 × 0.75 is 1.7999…98) cannot flip a
+ * boundary case.
+ */
+function fitWithin(needGB, budgetGB) {
+  return needGB <= round1(budgetGB * 0.75) ? 'fits' : needGB <= round1(budgetGB) ? 'tight' : 'too-big';
+}
+
+/**
+ * Annotate the shelf with what fits THIS machine. Pure; RAM (and, when known,
+ * the GPU) injected.
+ *
+ * - `endpointLocal`: whether the Ollama endpoint is on this device — the
+ *   locality gate for every dense entry.
+ * - `engines`: `{ [engine]: { enabled, local } }` for non-Ollama engines
+ *   (today: freetoken). An entry served by such an engine is sized against
+ *   this machine only when THAT engine is local; unknown engines fall back to
+ *   `endpointLocal`.
+ * - `gpu`: `{ vramBytes, name, unifiedMemory, source }` from hardware.js, or
+ *   null when nothing was probed.
+ *
+ * `fit` is always computed on TOTAL params against RAM — for a sparse model
+ * that is the honest number, because FreeToken keeps every expert in host
+ * memory. `gpuFit` (sparse entries only) sizes the active set against VRAM.
+ */
+export function shelfWithFit({ totalMemoryBytes, endpointLocal, engines = {}, gpu = null }) {
   const totalGB = Number.isFinite(totalMemoryBytes) && totalMemoryBytes > 0 ? totalMemoryBytes / 1024 ** 3 : null;
   const budgetGB = totalGB === null ? null : totalGB * USABLE_FRACTION;
+  const vramGB = gpu && Number.isFinite(gpu.vramBytes) && gpu.vramBytes > 0 ? gpu.vramBytes / 1024 ** 3 : null;
+  const vramBudgetGB = vramGB !== null && !gpu.unifiedMemory ? vramGB * USABLE_FRACTION : null;
   return {
     curatedAt: SHELF_CURATED_AT,
     note:
       'A dated, opinionated starter shelf — not a leaderboard. The landscape churns monthly: verify current versions and licenses on Hugging Face before relying on an entry. Weight licenses belong to their publishers.',
-    sizedAgainst: endpointLocal ? 'this machine' : null,
+    // Sized against this machine when a local engine is on it: Ollama for the
+    // dense entries, FreeToken for the sparse tier.
+    sizedAgainst: endpointLocal || Object.values(engines).some((engine) => engine?.local) ? 'this machine' : null,
+    gpu: gpu
+      ? { vramGB: vramGB === null ? null : round1(vramGB), name: gpu.name ?? null, unifiedMemory: Boolean(gpu.unifiedMemory), source: gpu.source ?? null }
+      : null,
     roles: MODEL_SHELF.map((group) => ({
       ...group,
       models: group.models.map((model) => {
-        const needGB = Math.round(model.paramsB * Q4_GB_PER_B * 10) / 10;
-        let fit = null;
-        if (budgetGB !== null && endpointLocal) {
-          fit = needGB <= budgetGB * 0.75 ? 'fits' : needGB <= budgetGB ? 'tight' : 'too-big';
+        const architecture = model.architecture ?? 'dense';
+        const engine = model.engine ?? group.engine ?? 'ollama';
+        const engineInfo = engines[engine];
+        const local = engine === 'ollama' ? Boolean(endpointLocal) : (engineInfo?.local ?? Boolean(endpointLocal));
+        const needGB = round1(model.paramsB * Q4_GB_PER_B);
+        const fit = budgetGB !== null && local ? fitWithin(needGB, budgetGB) : null;
+        const sized = { ...model, architecture, engine, approxGBAtQ4: needGB, fit, engineEnabled: engineInfo ? Boolean(engineInfo.enabled) : null };
+        if (architecture === 'moe') {
+          const activeGB = round1(model.activeParamsB * Q4_GB_PER_B);
+          sized.activeParamsB = model.activeParamsB;
+          sized.approxActiveGBAtQ4 = activeGB;
+          // Same locality gate as `fit`: a remote engine's active set is not this GPU's problem.
+          sized.gpuFit = vramBudgetGB !== null && local ? fitWithin(activeGB, vramBudgetGB) : null;
         }
-        return { ...model, approxGBAtQ4: needGB, fit };
+        return sized;
       }),
     })),
   };

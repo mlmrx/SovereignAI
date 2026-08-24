@@ -140,7 +140,7 @@ test('chat and responsive UX contracts remain wired', () => {
 
 test('static app is served with restrictive browser security headers', async () => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'sovereign-frontend-'));
-  const { server, store } = createApp(home);
+  const { server, store } = createApp(home, { hardware: { detectGpu: async () => null } });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   try {
     const response = await fetch(`http://127.0.0.1:${server.address().port}/`);

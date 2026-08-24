@@ -24,6 +24,9 @@ const QUANT_GB_PER_BILLION_PARAMS = {
   F16: 2.1,
 };
 const DEFAULT_QUANT = 'Q4_K_M';
+// Single source of the Q4 rule of thumb: model-shelf.js imports this so the
+// two sizing surfaces can never disagree by a decimal.
+export const GB_PER_BILLION_AT_Q4 = QUANT_GB_PER_BILLION_PARAMS[DEFAULT_QUANT];
 
 // Common open-weight parameter counts, smallest to largest. The
 // recommendation snaps to one of these — "~6.3B" isn't a size anyone ships.
@@ -32,7 +35,7 @@ const COMMON_PARAM_TIERS_B = [1, 3, 7, 8, 13, 14, 32, 34, 70, 405];
 // Fraction of total system RAM assumed available for model weights: reserves
 // room for the OS, SovereignAI itself, the KV cache/context window, and
 // whatever else is running. A rule-of-thumb safety margin, not a measurement.
-const USABLE_MEMORY_FRACTION = 0.6;
+export const USABLE_MEMORY_FRACTION = 0.6;
 
 // Commonly-cited practical floor for a LoRA run to produce a noticeable
 // style/format shift. Not a hard requirement — smaller sets can still work
@@ -63,7 +66,7 @@ export function estimateModelFit({ totalMemoryBytes, endpointLocal }) {
     return {
       applies: false,
       reasoning:
-        'The configured Ollama endpoint is not on this device, so this device’s memory does not constrain model size — size against that host’s resources instead.',
+        'The default model endpoint is not on this device, so this device’s memory does not constrain model size — size against that host’s resources instead.',
     };
   }
   if (!Number.isFinite(totalMemoryBytes) || totalMemoryBytes <= 0) {
@@ -84,6 +87,86 @@ export function estimateModelFit({ totalMemoryBytes, endpointLocal }) {
     label: `~${approxParamsB}B at ${DEFAULT_QUANT}`,
     reasoning:
       `This device reports ${round1(totalMemoryGB)} GB of memory. Reserving headroom for the OS, this app, and the context window, roughly ${round1(budgetGB)} GB is usable for model weights — comfortable for a ~${approxParamsB}B model at ${DEFAULT_QUANT}. Larger context windows or running other memory-heavy apps at the same time will eat into this.`,
+  };
+}
+
+/**
+ * Sparse (mixture-of-experts) models change the ceiling: served by FreeToken,
+ * ALL expert weights sit in host RAM and only the few experts active for a
+ * given token stream to the GPU. So the dense rule still applies to the TOTAL
+ * parameter count against RAM, and a second rule sizes the ACTIVE set against
+ * VRAM. `candidates` are the shelf's frontier-moe entries
+ * ({ base, paramsB, activeParamsB }); the largest one clearing both rules is
+ * reported, or null when none does.
+ *
+ * VRAM unknown (no probe result) or unified memory (Apple Silicon) skips the
+ * GPU rule — on unified memory the RAM rule already is the GPU rule.
+ */
+export function estimateSparseFit({ totalMemoryBytes, vramBytes = null, unifiedMemory = false, engineLocal, candidates = [] }) {
+  if (!engineLocal) {
+    return {
+      applies: false,
+      largest: null,
+      reasoning: 'The sparse-model engine is not on this device, so this device’s memory does not constrain sparse model size.',
+    };
+  }
+  if (!Number.isFinite(totalMemoryBytes) || totalMemoryBytes <= 0) {
+    return { applies: false, largest: null, reasoning: 'This device’s memory could not be read, so sparse model fit could not be estimated.' };
+  }
+
+  if (unifiedMemory) {
+    // FreeToken is x86_64 + NVIDIA today; a Metal backend is on its roadmap, not shipped.
+    return { applies: true, largest: null, reasoning: 'FreeToken does not run on Apple Silicon yet (a Metal backend is on its roadmap), so the sparse tier is not sized for this machine.' };
+  }
+  const totalMemoryGB = totalMemoryBytes / 1024 ** 3;
+  const budgetGB = totalMemoryGB * USABLE_MEMORY_FRACTION;
+  const vramGB = Number.isFinite(vramBytes) && vramBytes > 0 ? vramBytes / 1024 ** 3 : null;
+  const vramKnown = vramGB !== null && !unifiedMemory;
+  const vramBudgetGB = vramKnown ? vramGB * USABLE_MEMORY_FRACTION : null;
+  const gbPerBillion = GB_PER_BILLION_AT_Q4;
+
+  const usable = candidates.filter((c) => Number.isFinite(c?.paramsB) && c.paramsB > 0 && Number.isFinite(c?.activeParamsB) && c.activeParamsB > 0);
+  const fitting = usable.filter((c) => {
+    // Budgets rounded to the same one decimal as the need values, so binary
+    // float noise cannot flip a boundary case (4 × 0.6 is 2.3999…99).
+    const needGB = round1(c.paramsB * gbPerBillion);
+    if (needGB > round1(budgetGB)) return false;
+    if (!vramKnown) return true;
+    return round1(c.activeParamsB * gbPerBillion) <= round1(vramBudgetGB);
+  });
+  const largest = fitting.length ? fitting.reduce((best, c) => (c.paramsB > best.paramsB ? c : best)) : null;
+  const vramClause = vramKnown ? '' : ' GPU memory could not be read, so only the RAM rule was applied.';
+
+  if (!largest) {
+    if (!usable.length) {
+      return { applies: true, largest: null, reasoning: 'No sparse (MoE) candidates were supplied to size against.' };
+    }
+    const smallestNeedGB = round1(Math.min(...usable.map((c) => c.paramsB)) * gbPerBillion);
+    const smallestActiveGB = round1(Math.min(...usable.map((c) => c.activeParamsB)) * gbPerBillion);
+    const ramBlocks = smallestNeedGB > round1(budgetGB);
+    // The GPU sentence is only true when no active set at all fits; otherwise the
+    // block is the combination (the entries RAM admits need more VRAM, and vice versa).
+    const gpuBlocks = vramKnown && smallestActiveGB > round1(vramBudgetGB);
+    return {
+      applies: true,
+      largest: null,
+      reasoning: ramBlocks
+        ? `Sparse (MoE) models need their full weights in RAM — the smallest on the shelf needs about ${smallestNeedGB} GB, and this machine reserves less than that for model weights.${vramClause}`
+        : gpuBlocks
+          ? `Sparse (MoE) models keep their experts in RAM but still stream an active set to the GPU — this machine’s ${round1(vramGB)} GB of GPU memory is too small for even the smallest active set on the shelf.`
+          : `No sparse (MoE) model on the shelf clears both rules here: the ones whose experts fit in this machine’s RAM need more than its ${round1(vramGB)} GB of GPU memory for their active set, and the ones whose active set fits need more RAM.`,
+    };
+  }
+
+  const { base, paramsB, activeParamsB } = largest;
+  const gpuClause = vramKnown
+    ? ` while the ${round1(vramGB)} GB GPU runs the ~${activeParamsB}B active set`
+    : ` and stream only its ~${activeParamsB}B active set to the GPU`;
+  return {
+    applies: true,
+    largest: { base, paramsB, activeParamsB },
+    reasoning:
+      `Sparse (MoE) models change the ceiling: with FreeToken, this machine’s ${round1(totalMemoryGB)} GB of RAM can hold the experts of ${base} (${paramsB}B total)${gpuClause}.${vramClause} See the frontier tier on the starter shelf.`,
   };
 }
 
@@ -120,12 +203,29 @@ export function assessFineTuneReadiness({ maxTrainCount }) {
   };
 }
 
-/** Combine hardware fit and fine-tuning readiness into one payload for the API. */
-export function buildModelRecommendation({ totalMemoryBytes, endpointLocal, corpus, maxTrainCount }) {
+/**
+ * Combine hardware fit and fine-tuning readiness into one payload for the API.
+ * `hardware`/`corpus`/`modelFit`/`fineTuning` keep their original shape; `gpu`
+ * (the probe result as the shelf presents it, or null) and `sparseFit`
+ * (estimateSparseFit, or null when no `sparse = { engineLocal, candidates }`
+ * was given) are additive.
+ */
+export function buildModelRecommendation({ totalMemoryBytes, endpointLocal, corpus, maxTrainCount, gpu = null, sparse = null }) {
+  const vramGB = gpu && Number.isFinite(gpu.vramBytes) && gpu.vramBytes > 0 ? round1(gpu.vramBytes / 1024 ** 3) : null;
   return {
     hardware: { totalMemoryGB: Number.isFinite(totalMemoryBytes) ? round1(totalMemoryBytes / 1024 ** 3) : null },
     corpus,
     modelFit: estimateModelFit({ totalMemoryBytes, endpointLocal }),
     fineTuning: assessFineTuneReadiness({ maxTrainCount }),
+    gpu: gpu ? { vramGB, name: gpu.name ?? null, unifiedMemory: Boolean(gpu.unifiedMemory), source: gpu.source ?? null } : null,
+    sparseFit: sparse
+      ? estimateSparseFit({
+          totalMemoryBytes,
+          vramBytes: gpu?.vramBytes ?? null,
+          unifiedMemory: Boolean(gpu?.unifiedMemory),
+          engineLocal: sparse.engineLocal,
+          candidates: sparse.candidates,
+        })
+      : null,
   };
 }

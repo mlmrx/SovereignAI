@@ -47,6 +47,11 @@ export async function handleChat({ store, config, body, sse, signal }) {
   });
 
   let text = '';
+  // Reasoning ("thinking") deltas are relayed to the client as they stream and
+  // then dropped: they are never appended to `text`, never stored, and never fed
+  // to memory extraction. Only the character count survives, so the UI can say
+  // honestly that reasoning was shown but not kept.
+  let reasoningChars = 0;
   let usage = {};
   let stopReason = 'end_turn';
   try {
@@ -63,6 +68,9 @@ export async function handleChat({ store, config, body, sse, signal }) {
       if (part.type === 'delta') {
         text += part.text;
         sse.send('delta', { text: part.text });
+      } else if (part.type === 'reasoning') {
+        reasoningChars += part.text.length;
+        sse.send('reasoning', { text: part.text });
       } else if (part.type === 'done') {
         usage = part.usage ?? {};
         stopReason = part.stopReason ?? 'end_turn';
@@ -94,6 +102,7 @@ export async function handleChat({ store, config, body, sse, signal }) {
     usage,
     stopReason,
     modelDigest,
+    reasoningChars,
   });
   sse.end();
 

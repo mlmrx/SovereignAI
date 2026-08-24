@@ -101,6 +101,7 @@
       name: 'Atlas', host: '127.0.0.1', port: 4321, authToken: '••••••••',
       providers: {
         ollama: { enabled: true, baseUrl: 'http://localhost:11434' },
+        freetoken: { enabled: true, baseUrl: 'http://127.0.0.1:1919' },
         openai: { enabled: false, baseUrl: 'https://api.openai.com', apiKey: '' },
         anthropic: { enabled: true, baseUrl: 'https://api.anthropic.com', apiKey: '••••••••' },
       },
@@ -124,6 +125,7 @@
     '/api/life': lifeRecords,
     '/api/providers': [
       { id: 'ollama', label: 'Ollama', enabled: true, configured: true, ok: true, detail: 'Ollama 0.6.6 · 3 models' },
+      { id: 'freetoken', label: 'FreeToken', enabled: true, configured: true, ok: true, detail: 'FreeToken 0.1.2 · serving gemma-4-26B-A4B-it' },
       { id: 'openai', label: 'OpenAI-compatible', enabled: false, configured: false },
       { id: 'anthropic', label: 'Anthropic (Claude)', enabled: true, configured: true, ok: true, detail: 'key present' },
     ],
@@ -140,6 +142,57 @@
       { documentId: 'd-1', name: 'studio-lease-2026.pdf', score: 0.82, excerpt: '…clause 14: the agreement renews annually each March, with written notice required no later than sixty (60) days prior…' },
       { documentId: 'd-2', name: 'insurance-policy-shield.pdf', score: 0.44, excerpt: '…the policy term runs twelve months from the commencement date stated in the schedule…' },
     ] },
+    // The starter shelf and the sizing hint as a 32 GB / RTX 4060 (8 GB) box
+    // sees them — generated from the real sizing rules, not hand-tuned. Before
+    // these existed the demo answered {} and the shelf threw a TypeError.
+    '/api/model-shelf': {
+      curatedAt: '2026-08',
+      note: 'A dated, opinionated starter shelf — not a leaderboard. The landscape churns monthly: verify current versions and licenses on Hugging Face before relying on an entry. Weight licenses belong to their publishers.',
+      sizedAgainst: 'this machine',
+      gpu: { vramGB: 8, name: 'NVIDIA GeForce RTX 4060', unifiedMemory: false, source: 'nvidia-smi' },
+      roles: [
+        { role: 'everyday-chat', label: 'Everyday chat', job: 'The default local brain: general questions, drafting, summarizing.', models: [
+          { base: 'gemma3:4b', hf: 'google/gemma-3-4b-it', paramsB: 4, license: 'Gemma Terms of Use (Google — use restrictions apply)', why: 'Best small all-rounder of its generation; strong multilingual.', architecture: 'dense', engine: 'ollama', approxGBAtQ4: 2.4, fit: 'fits', engineEnabled: null },
+          { base: 'qwen3:8b', hf: 'Qwen/Qwen3-8B', paramsB: 8, license: 'Apache-2.0', why: 'Stronger reasoning headroom when you have the RAM; permissive license.', architecture: 'dense', engine: 'ollama', approxGBAtQ4: 4.8, fit: 'fits', engineEnabled: null },
+          { base: 'llama3.2:3b', hf: 'meta-llama/Llama-3.2-3B-Instruct', paramsB: 3, license: 'Llama Community License (Meta)', why: 'Reliable, widely fine-tuned baseline with a huge ecosystem.', architecture: 'dense', engine: 'ollama', approxGBAtQ4: 1.8, fit: 'fits', engineEnabled: null },
+        ] },
+        { role: 'memory-cognition', label: 'Memory & cognition', job: 'The model that WRITES your memory: auto-extraction and distillation. Small, fast, and local — pair it with \'cognition stays home\'.', models: [
+          { base: 'qwen3:4b', hf: 'Qwen/Qwen3-4B', paramsB: 4, license: 'Apache-2.0', why: 'Follows the extraction format reliably; cheap enough to run per exchange.', architecture: 'dense', engine: 'ollama', approxGBAtQ4: 2.4, fit: 'fits', engineEnabled: null },
+          { base: 'llama3.2:1b', hf: 'meta-llama/Llama-3.2-1B-Instruct', paramsB: 1, license: 'Llama Community License (Meta)', why: 'Runs on anything; good enough for fact extraction on modest machines.', architecture: 'dense', engine: 'ollama', approxGBAtQ4: 0.6, fit: 'fits', engineEnabled: null },
+          { base: 'hf.co/LiquidAI/LFM2-1.2B-GGUF', hf: 'LiquidAI/LFM2-1.2B-GGUF', paramsB: 1.2, license: 'LFM Open License (custom — read it)', why: 'Liquid AI’s edge-first architecture: unusually fast on CPU for its quality.', architecture: 'dense', engine: 'ollama', approxGBAtQ4: 0.7, fit: 'fits', engineEnabled: null },
+        ] },
+        { role: 'reasoning', label: 'Reasoning & analysis', job: 'Multi-step thinking on your own hardware: plans, math, tricky questions.', models: [
+          { base: 'deepseek-r1:7b', hf: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B', paramsB: 7, license: 'MIT', why: 'Frontier reasoning distilled into a laptop-sized model.', architecture: 'dense', engine: 'ollama', approxGBAtQ4: 4.2, fit: 'fits', engineEnabled: null },
+          { base: 'phi4-mini', hf: 'microsoft/Phi-4-mini-instruct', paramsB: 3.8, license: 'MIT', why: 'Punches far above its size on structured reasoning; MIT weights.', architecture: 'dense', engine: 'ollama', approxGBAtQ4: 2.3, fit: 'fits', engineEnabled: null },
+        ] },
+        { role: 'coding', label: 'Coding', job: 'Code completion and questions inside the editor integrations.', models: [
+          { base: 'qwen2.5-coder:7b', hf: 'Qwen/Qwen2.5-Coder-7B-Instruct', paramsB: 7, license: 'Apache-2.0', why: 'The strongest small code model of its generation.', architecture: 'dense', engine: 'ollama', approxGBAtQ4: 4.2, fit: 'fits', engineEnabled: null },
+          { base: 'qwen2.5-coder:1.5b', hf: 'Qwen/Qwen2.5-Coder-1.5B-Instruct', paramsB: 1.5, license: 'Apache-2.0', why: 'Fast-enough completions on machines without a GPU.', architecture: 'dense', engine: 'ollama', approxGBAtQ4: 0.9, fit: 'fits', engineEnabled: null },
+        ] },
+        { role: 'embeddings', label: 'Embeddings (semantic search)', job: 'Powers knowledge retrieval. Set it under Settings → Knowledge embeddings; BM25 keyword search always works without it.', models: [
+          { base: 'nomic-embed-text', hf: 'nomic-ai/nomic-embed-text-v1.5', paramsB: 0.14, license: 'Apache-2.0', why: 'The default: small, solid, permissive.', architecture: 'dense', engine: 'ollama', approxGBAtQ4: 0.1, fit: 'fits', engineEnabled: null },
+          { base: 'bge-m3', hf: 'BAAI/bge-m3', paramsB: 0.57, license: 'MIT', why: 'Stronger multilingual retrieval when your documents aren’t only English.', architecture: 'dense', engine: 'ollama', approxGBAtQ4: 0.3, fit: 'fits', engineEnabled: null },
+        ] },
+        { role: 'vision', label: 'Vision (experimental)', job: 'Describe or read images locally.', models: [
+          { base: 'moondream', hf: 'vikhyatk/moondream2', paramsB: 1.9, license: 'Apache-2.0', why: 'Tiny image understanding that runs anywhere.', architecture: 'dense', engine: 'ollama', approxGBAtQ4: 1.1, fit: 'fits', engineEnabled: null },
+          { base: 'gemma3:12b', hf: 'google/gemma-3-12b-it', paramsB: 12, license: 'Gemma Terms of Use (Google — use restrictions apply)', why: 'Multimodal chat with real quality, if you have the RAM.', architecture: 'dense', engine: 'ollama', approxGBAtQ4: 7.2, fit: 'fits', engineEnabled: null },
+        ] },
+        { role: 'frontier-moe', label: 'Frontier-class, locally (sparse MoE)', engine: 'freetoken', job: 'Big sparse models on one gaming GPU plus host RAM: the experts live in RAM and only the few active per token hit the GPU. Served by FreeToken, not Ollama — pick one as your default model rather than as a recipe base.', models: [
+          { base: 'Qwen/Qwen3.6-35B-A3B', hf: 'Qwen/Qwen3.6-35B-A3B', paramsB: 35, activeParamsB: 3, architecture: 'moe', license: 'Apache-2.0', why: 'The model FreeToken was built around: 35B of knowledge, about 3B active per token — comfortable from 48 GB of RAM, borderline at 32.', engine: 'freetoken', approxGBAtQ4: 21, fit: 'too-big', engineEnabled: true, approxActiveGBAtQ4: 1.8, gpuFit: 'fits' },
+          { base: 'openai/gpt-oss-20b', hf: 'openai/gpt-oss-20b', paramsB: 21, activeParamsB: 3.6, architecture: 'moe', license: 'Apache-2.0', why: 'OpenAI’s open-weight reasoning model in its native MXFP4 — about 13 GB on disk, with real chain-of-thought.', engine: 'freetoken', approxGBAtQ4: 12.6, fit: 'fits', engineEnabled: true, approxActiveGBAtQ4: 2.2, gpuFit: 'fits' },
+          { base: 'google/gemma-4-26B-A4B-it', hf: 'google/gemma-4-26B-A4B-it', paramsB: 25.2, activeParamsB: 3.8, architecture: 'moe', license: 'Apache-2.0', why: 'Google’s sparse Gemma 4: strong multilingual chat; multimodal upstream, served text-only here.', engine: 'freetoken', approxGBAtQ4: 15.1, fit: 'tight', engineEnabled: true, approxActiveGBAtQ4: 2.3, gpuFit: 'fits' },
+          { base: 'openai/gpt-oss-120b', hf: 'openai/gpt-oss-120b', paramsB: 117, activeParamsB: 5.1, architecture: 'moe', license: 'Apache-2.0', why: 'Near-frontier reasoning on a single desktop GPU — its experts are ~70 GB at Q4, and every one of them must live in host RAM.', engine: 'freetoken', approxGBAtQ4: 70.2, fit: 'too-big', engineEnabled: true, approxActiveGBAtQ4: 3.1, gpuFit: 'fits' },
+        ] },
+      ],
+    },
+    '/api/model-recommendation': {
+      hardware: { totalMemoryGB: 32 },
+      corpus: { documents: 4, totalDocumentChars: 182400, memories: 8 },
+      modelFit: { applies: true, totalMemoryGB: 32, budgetGB: 19.2, quant: 'Q4_K_M', approxParamsB: 32, label: '~32B at Q4_K_M', reasoning: 'This device reports 32 GB of memory. Reserving headroom for the OS, this app, and the context window, roughly 19.2 GB is usable for model weights — comfortable for a ~32B model at Q4_K_M. Larger context windows or running other memory-heavy apps at the same time will eat into this.' },
+      fineTuning: { suggested: false, exampleCount: 0, reasoning: 'No approved training dataset yet. Retrieval (knowledge base + memory) already covers most personalization — Fine-Tuning Studio is worth it once you have a reviewed, locked set of examples that show the model *how* to respond, not just facts for it to draw on.' },
+      gpu: { vramGB: 8, name: 'NVIDIA GeForce RTX 4060', unifiedMemory: false, source: 'nvidia-smi' },
+      sparseFit: { applies: true, largest: { base: 'google/gemma-4-26B-A4B-it', paramsB: 25.2, activeParamsB: 3.8 }, reasoning: 'Sparse (MoE) models change the ceiling: with FreeToken, this machine’s 32 GB of RAM can hold the experts of google/gemma-4-26B-A4B-it (25.2B total) while the 8 GB GPU runs the ~3.8B active set. See the frontier tier on the starter shelf.' },
+    },
   });
 
   /* ---------------- scripted answers ---------------- */

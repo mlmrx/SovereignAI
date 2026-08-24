@@ -61,7 +61,7 @@ Training is disabled by default and has no hosted fallback. The workflow never c
 ## Why sovereign
 
 - **Own the runtime** — one Node process on your hardware. **Zero npm dependencies**: no supply chain, auditable, works offline. Docker image available.
-- **Own the brain** — Ollama models, OpenAI-compatible servers (vLLM, llama.cpp, LM Studio, Groq…), or BYO-key Anthropic; switchable per persona. Model Studio saves portable recipes and builds custom named artifacts on the Ollama endpoint you control.
+- **Own the brain** — Ollama models, [FreeToken](https://github.com/FlashML-org/FreeToken) for frontier-class sparse MoE models on one gaming GPU (20B–120B total, 3–5B active per token), OpenAI-compatible servers (vLLM, llama.cpp, LM Studio, Groq…), or BYO-key Anthropic; switchable per persona. Model Studio saves portable recipes and builds custom named artifacts on the Ollama endpoint you control.
 - **Own the memory** — conversations, long-term memory (manual notes + optional automatic fact extraction), and a document knowledge base in local SQLite. Hybrid retrieval: semantic embeddings when available, BM25 keyword always — fully offline capable.
 - **Own the data** — PDF/DOCX/text ingestion runs entirely locally (even the parsers are dependency-free). Portable JSON backups cover personas, chats, memory, knowledge, model recipes, and fine-tuning project history; provider/trainer settings and secrets are deliberately omitted and reconfigured separately. Archives are checksummed and verifiable (`sovereign verify`), optionally encrypted with a passphrase only you hold, and the format is [openly documented](docs/EXPORT_FORMAT.md) so your data outlives this software.
 - **Own the provenance** — every memory records how it entered the system (added by you, auto-extracted, or distilled from imported history), from which conversation, and when it was last edited. Records that predate tracking say so instead of pretending. The Personal Context Portfolio (`sovereign portfolio`) turns that layer into one markdown document you can paste into any other AI tool — the export door platforms don't build.
@@ -103,9 +103,9 @@ Write-Host "Save this URL: http://localhost:4321/#token=$env:SOVEREIGN_TOKEN"
 docker compose --profile ollama up -d
 ```
 
-Reuse that token for future container recreations (or store `SOVEREIGN_TOKEN=...` in the Git-ignored `.env` file). To use Ollama already running on the Docker host, omit `--profile ollama` and set `OLLAMA_BASE_URL=http://host.docker.internal:11434` before `docker compose up -d`.
+Reuse that token for future container recreations (or store `SOVEREIGN_TOKEN=...` in the Git-ignored `.env` file). To use Ollama already running on the Docker host, omit `--profile ollama` and set `OLLAMA_BASE_URL=http://host.docker.internal:11434` before `docker compose up -d`. The same shape works for FreeToken (`FREETOKEN_BASE_URL=http://host.docker.internal:1919`), but FreeToken binds loopback by default and has no request auth — only rebind it (`ft serve --host 0.0.0.0`) on a machine whose firewall you trust.
 
-**From source:** Node 22.5+, `git clone`, `node bin/sovereign.js start`. Local models: [Ollama](https://ollama.com) + `ollama pull llama3.1` (and `ollama pull nomic-embed-text` for semantic search).
+**From source:** Node 22.5+, `git clone`, `node bin/sovereign.js start`. Local models: [Ollama](https://ollama.com) + `ollama pull llama3.1` (and `ollama pull nomic-embed-text` for semantic search). Frontier-class locally: [FreeToken](https://github.com/FlashML-org/FreeToken) (`ft serve --model Qwen/Qwen3.6-35B-A3B`; NVIDIA RTX 30-series or newer), then enable it in Settings → Providers — `sovereign doctor` tells you when it finds one running.
 
 Installed launchers keep one stable AI home in `%LOCALAPPDATA%\SovereignAI` on Windows or `~/.sovereignai` on macOS/Linux, regardless of the current directory. Set `SOVEREIGN_HOME` explicitly when you want a separate project-specific instance. See [operations and troubleshooting](docs/OPERATIONS.md).
 
@@ -114,7 +114,7 @@ Upgrading from v0.2 requires one state-location check before the first v0.3 laun
 ```
 sovereign start [--lan]    # run the server (LAN/tailnet mode with --lan)
 sovereign init             # write a starter config file
-sovereign doctor           # diagnose home, config, database, providers, and models
+sovereign doctor           # diagnose home, config, database, providers, and models (notices a running FreeToken)
 sovereign mcp              # MCP server (stdio) for Claude/Codex/Cursor/Gemini CLI
 sovereign export [file] [--encrypt]   # checksummed JSON archive (optionally AES-256-GCM encrypted)
 sovereign import <file>    # restore from an export (verifies checksums, decrypts if needed)
@@ -128,7 +128,7 @@ sovereign byoc <action>    # deploy + manage instances on a Docker host YOU own,
 
 **Bring your own cloud:** `sovereign byoc deploy --host you@your-box` provisions a hardened instance on any Linux machine with SSH and Docker — a VPS, a homelab, on-prem. Your data stays on your host; the deploy tooling keeps only connection metadata and a token _hash_, and revoking its SSH key severs it completely. Don't already have a box? `sovereign byoc gpu deploy <runpod|vastai|lambda>` rents a GPU instance and deploys onto it — **unverified against live provider infrastructure, test with the cheapest GPU type first**; see [the BYOC connector](docs/BYOC_SSH_CONNECTOR.md) for exactly what that means and what it costs.
 
-**Ride the open-weights wave:** when a release is too big for your box — the frontier-scale MoE class — `sovereign byoc gpu serve runpod --gpu-type <id> --model <huggingface-id>` rents a GPU running vLLM's OpenAI-compatible server with those exact weights and wires it in as a provider (`--wire`). One command to serve, one to destroy, billing disclosed at every step. Meanwhile every answer from a local model now carries a **weight-digest receipt** (which exact weights replied), and the Hugging Face browser shows each repo's **declared license at the point of choice** — open weights are not automatically open license.
+**Ride the open-weights wave:** the 20B–120B-total sparse MoE class now runs on the GPU you own through FreeToken (see the starter shelf's frontier tier); when a release is too big even for that — the 300B+ class — `sovereign byoc gpu serve runpod --gpu-type <id> --model <huggingface-id>` rents a GPU running vLLM's OpenAI-compatible server with those exact weights and wires it in as a provider (`--wire`). One command to serve, one to destroy, billing disclosed at every step. Meanwhile every answer from a local model now carries a **weight-digest receipt** (which exact weights replied), and the Hugging Face browser shows each repo's **declared license at the point of choice** — open weights are not automatically open license.
 
 **Bring your history with you:** `sovereign import-chat` (CLI, or Settings → Data & privacy in the web UI) parses ChatGPT's and Claude's official export ZIPs directly — built with real confidence, since both are well-documented, stable formats. Imported history starts as archive prose; add `--distill` (or run `sovereign distill` later) to opt into sweeping it for durable memories with your configured model — one call per conversation, idempotent, every distilled memory tagged with its source. Gemini's Google Takeout export is supported experimentally (prompts only; see [the chat import guide](docs/CHAT_IMPORT.md)). Everything else — Grok, Kimi, GLM, DeepSeek, Qwen, or any platform without a dedicated parser — goes through a documented generic JSON format instead of a guessed-at one. Parsing is entirely local; re-running the same file is safe and never duplicates history.
 
@@ -156,7 +156,7 @@ src/
   mcp.js                MCP server (stdio JSON-RPC, zero deps)
   memory-extract.js     automatic long-term memory extraction (opt-in)
   db.js                 SQLite storage (node:sqlite, built into Node 22)
-  providers/            gateway: ollama (chat/embed/create) · openai-compat · anthropic
+  providers/            gateway: ollama (chat/embed/create) · freetoken (local MoE engine) · openai-compat · anthropic
   training/             canonical dataset snapshots · self-hosted trainer protocol client
   ingest/               zero-dep file ingestion: ZIP reader → DOCX · PDF · text
   rag/                  chunker · BM25 · hybrid retriever
@@ -189,7 +189,7 @@ npm test                    # node:test — nothing to install, there are no dep
 node scripts/build-sea.mjs  # build + smoke-test the single binary for this platform
 ```
 
-The suite includes 130+ core, UI-contract, integration, API, security, config, provider, training, ingestion, CLI, single-binary, and Compose checks. Docker image builds remain covered by CI.
+The suite includes 300+ core, UI-contract, integration, API, security, config, provider, training, ingestion, CLI, single-binary, and Compose checks. Docker image builds remain covered by CI.
 
 ## Roadmap
 
@@ -217,6 +217,7 @@ The suite includes 130+ core, UI-contract, integration, API, security, config, p
 - [x] Life Import rail #1 — email ([details](docs/LIFE_IMPORT.md)): zero-dep mbox scanning into evidence-backed life records, with the subscription audit and renewals radar in the Mind view
 - [x] Open-weights rails: `byoc gpu serve` (rented GPU running vLLM with the open weights you choose, OpenAI-compat wire-in), weight-digest receipts on every local answer, and weight-license disclosure in the Hugging Face browser
 - [x] The starter shelf + the cognition role: curated small models by job (with licenses, dated curation, and fit badges for your machine), and `memory.extractionModel` — a small local model that owns what gets learned about you while chat uses anything
+- [x] FreeToken as a recognized local engine: frontier-class sparse MoE models (20B–120B total, 3–5B active) on one gaming GPU, detected by `sovereign doctor`, MoE-aware sizing with a best-effort GPU probe and a frontier tier on the starter shelf, and a model's reasoning shown live in chat — never stored
 - [ ] Life Import rail #2 — bank/card statements (CSV/OFX), extending the same audit with authoritative amounts
 
 ## License

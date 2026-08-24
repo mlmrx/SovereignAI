@@ -17,7 +17,8 @@ before(async () => {
     path.join(rootDir, 'sovereign.config.json'),
     JSON.stringify({ embeddings: { provider: 'ollama', model: '' }, providers: { ollama: { enabled: false } } })
   );
-  app = createApp(rootDir, { env: {} });
+  // hermetic: no GPU probe either, so the suite never shells out to nvidia-smi
+  app = createApp(rootDir, { env: {}, hardware: { detectGpu: async () => null } });
   await new Promise((resolve) => app.server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${app.server.address().port}`;
 });
@@ -41,10 +42,10 @@ async function send(method, pathname, body) {
   return { status: res.status, body: await res.json() };
 }
 
-async function startTempApp(config = {}, { env = {} } = {}) {
+async function startTempApp(config = {}, { env = {}, hardware = { detectGpu: async () => null } } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sovereign-api-isolated-'));
   fs.writeFileSync(path.join(root, 'sovereign.config.json'), JSON.stringify(config));
-  const instance = createApp(root, { env });
+  const instance = createApp(root, { env, hardware });
   await new Promise((resolve) => instance.server.listen(0, '127.0.0.1', resolve));
   const url = `http://127.0.0.1:${instance.server.address().port}`;
   return {
