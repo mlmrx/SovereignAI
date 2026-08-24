@@ -116,8 +116,8 @@
           <tr>
             <td><strong>The model</strong></td>
             <td class="s-stop">Borrowed</td>
-            <td>Where inference runs, which model, per persona — local, any OpenAI-compatible server, or your own API key.</td>
-            <td>The weights are someone else's artifact — trained on unknown data with unknown priors, unauditable in practice.</td>
+            <td>Where inference runs, which model, per persona — local Ollama, FreeToken for frontier-class sparse MoE models on the GPU you own, any OpenAI-compatible server, or your own API key. A model's chain-of-thought is shown live and never stored.</td>
+            <td>The weights are someone else's artifact — trained on unknown data with unknown priors, unauditable in practice. Ollama is a de-facto dependency with its own registry; FreeToken is weeks old, NVIDIA-only, and has no request auth (keep it on loopback).</td>
             <td>Models are swappable per persona in minutes; recipes and fine-tuning lineage are portable data.</td>
           </tr>
           <tr>
@@ -138,7 +138,7 @@
       <li><strong>Your runtime</strong> — zero-dependency, fair-source code; the single binary embeds the same files you can read in the source.</li>
       <li><strong>Your data</strong> — one folder you can copy, where deleted means zeroed on disk, not soft-hidden.</li>
       <li><strong>Your AI's identity</strong> — its name, personas, and system prompts are records you edit and export, not settings a vendor hosts.</li>
-      <li><strong>Your models</strong> — local open weights, swappable per persona, built into named artifacts on an endpoint you control.</li>
+      <li><strong>Your models</strong> — local open weights, swappable per persona, up to frontier-class sparse MoE models on the GPU you already own (FreeToken); built into named artifacts on an endpoint you control.</li>
       <li><strong>Your fine-tuning</strong> — datasets you curated, consent you recorded, adapters trained on a trainer you operate, lineage kept end to end.</li>
       <li><strong>Your memory</strong> — every durable fact carries its origin, source conversation, authoring model, and edit time. Receipts, not vibes.</li>
       <li><strong>Your cognition policy</strong> — you decide which models may write memory, and whether automatic learning runs at all.</li>

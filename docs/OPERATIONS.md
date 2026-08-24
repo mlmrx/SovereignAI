@@ -49,7 +49,9 @@ operating system's download permissions.
 
 ## Verifying release downloads
 
-Every release since v0.5.x attaches `SHA256SUMS.txt` covering all assets.
+Releases cut after v0.5.0 attach `SHA256SUMS.txt` covering all assets (the
+checksums job landed after v0.5.0 was tagged, so that one release ships
+without it).
 After downloading a binary or extension artifact:
 
 ```bash

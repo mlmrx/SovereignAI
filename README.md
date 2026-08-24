@@ -12,14 +12,14 @@ node bin/sovereign.js start
 #   against your real workspace as you learn
 ```
 
-> **Status:** v0.5.0 — portability both ways, honestly recorded: memory provenance, checksummed (and optionally encrypted) export archives with a [documented open format](docs/EXPORT_FORMAT.md), a pasteable Personal Context Portfolio, and opt-in memory distillation from imported chat history. Plus everything before it: command center UI, source-aware chat, Fine-Tuning Studio, BYOC rails, chat-history import, single binaries.
+> **Status:** v0.5.0 (August 4, 2026) is the latest tagged release — portability both ways, honestly recorded: memory provenance, checksummed (and optionally encrypted) export archives with a [documented open format](docs/EXPORT_FORMAT.md), a pasteable Personal Context Portfolio, and opt-in memory distillation from imported chat history. **On `main` since then, unreleased:** [FreeToken](https://github.com/FlashML-org/FreeToken) as a recognized local engine with a frontier sparse-MoE tier on the starter shelf, GPU-aware model sizing, and a model's reasoning shown live in chat (never stored); the starter shelf and the cognition role; the open-weights rails (`byoc gpu serve`, weight-digest receipts, license at the point of choice); cognition sovereignty and the public [Sovereignty Ledger](docs/SOVEREIGNTY.md); Life Import rail #1 (email); the August 2026 [security audit](docs/SECURITY_AUDIT_2026-08.md) with every recommendation resolved; and the public site at [mysovereign.ai](https://mysovereign.ai) with its playground and clickable command center. Plus everything before it: command center UI, source-aware chat, Fine-Tuning Studio, BYOC rails, chat-history import, single binaries.
 
 ## Create your own AI in 5 simple steps
 
 First run opens a guided wizard in the web UI:
 
 1. **Name it** — "Mia", "Atlas", whatever feels right
-2. **Pick its brain** — a local Ollama model, Claude with your API key, or any OpenAI-compatible endpoint. The wizard tells you exactly where prompts and context will be processed.
+2. **Pick its brain** — a local Ollama model, Claude with your API key, or any OpenAI-compatible endpoint. The wizard tells you exactly where prompts and context will be processed. (A local FreeToken engine — frontier-class sparse MoE models on one gaming GPU — is enabled afterwards in Settings → Providers; `sovereign doctor` says so when it finds one running.)
 3. **Shape its personality** — describe it in your own words, tap trait chips (concise / warm / technical / challenger / teacher)
 4. **Feed it your data** — drop in TXT, Markdown, **PDF**, and **DOCX** files; everything is indexed locally. Optionally let it learn about you automatically from conversations
 5. **Make it real** — review the runtime, privacy path, knowledge, and memory choices before creation. On Ollama you can also **build it into a named model artifact** on the configured endpoint, e.g. `mia:latest`.
@@ -55,7 +55,7 @@ Training is disabled by default and has no hosted fallback. The workflow never c
 - **Memory you control** — add, search, edit, or forget durable context; automatic extraction is an explicit opt-in.
 - **Weights you control** — curate immutable datasets and run actual LoRA/QLoRA training through a trainer you operate, with consent, holdout, lineage, and deployment gates.
 - **Responsive and accessible** — full mobile navigation, keyboard-visible actions, labeled controls, live generation status, and reduced-motion support.
-- **Bottega surfaces (experimental)** — a reimagined three-surface interface: `/xbrain.html` (the Mind Field: a full-viewport constellation where every hexagonal cell is a real memory or document — the cells your AI truly recalls ignite and thread into the answer while it streams, with voice/recall/trace faces and select-to-keep consented memory), `/xbrain-ledger.html` (the Memory Ledger: every kept memory as an auditable line you can amend or strike), and `/xbrain-atlas.html` (the Knowledge Atlas: probe your documents with real retrieval scores before asking anything). Design brief: [`docs/XBRAIN_DESIGN_BRIEF.md`](docs/XBRAIN_DESIGN_BRIEF.md).
+- **Bottega surfaces (experimental)** — a reimagined three-surface interface: `/xbrain.html` (the Mind Field: a full-viewport constellation where every hexagonal cell is a real memory or document — the cells your AI truly recalls ignite and thread into the answer while it streams, with voice/recall/trace faces and select-to-keep consented memory), `/xbrain-ledger.html` (the Memory Ledger: every kept memory as an auditable line you can amend or strike), and `/xbrain-atlas.html` (the Knowledge Atlas: probe your documents with real retrieval scores before asking anything). Design brief: [`docs/BOTTEGA_DESIGN_BRIEF.md`](docs/BOTTEGA_DESIGN_BRIEF.md).
 - **Race-safe streaming** — stop generation, switch views safely, copy answers or code, and keep a persona consistent for each conversation.
 
 ## Why sovereign
@@ -189,7 +189,7 @@ npm test                    # node:test — nothing to install, there are no dep
 node scripts/build-sea.mjs  # build + smoke-test the single binary for this platform
 ```
 
-The suite includes 300+ core, UI-contract, integration, API, security, config, provider, training, ingestion, CLI, single-binary, and Compose checks. Docker image builds remain covered by CI.
+The suite includes 370+ core, UI-contract, integration, API, security, config, provider, training, ingestion, CLI, single-binary, and Compose checks. Docker image builds remain covered by CI.
 
 ## Roadmap
 

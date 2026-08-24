@@ -138,3 +138,24 @@ test('the landing page carries the brand and both themes', () => {
   assert.match(html, /exit path/i);
   assert.match(script, /const PROPS =/, 'value props are enumerated');
 });
+
+test('the supported-today shelf promotes only what ships: dated, six groups, caveats on the chip', () => {
+  assert.match(html, /id="latest"/, 'the shelf exists');
+  assert.match(html, /Supported today · shelf dated (January|February|March|April|May|June|July|August|September|October|November|December) 20\d\d/, 'the shelf carries its date');
+  assert.match(html, /class="hero-new" href="#latest"/, 'the hero points at the shelf');
+  const band = html.slice(html.indexOf('id="latest"'), html.indexOf('id="week"'));
+  assert.equal((band.match(/class="today-group/g) ?? []).length, 6, 'six groups on the shelf');
+  // Every chip names a thing that ships — these are the ones the copy elsewhere also claims.
+  for (const chip of ['Ollama', 'FreeToken', 'Claude', 'gpt-oss-120b', 'Qwen3.6-35B-A3B', 'Gemma 4 26B-A4B', 'gpt-oss-20b',
+    'ChatGPT export', 'Claude export', 'Your inbox', 'MCP', 'VS Code', 'JetBrains', 'Browser extension', 'ChatGPT Custom GPT',
+    'Docker', 'Single binary', 'Any box over SSH', 'Provenance on every memory', 'Verified export', 'Reasoning shown live']) {
+    assert.ok(band.includes(`<b>${chip}`), `the shelf must carry ${chip}`);
+  }
+  // Caveats ride on the chip itself, never only in a footnote.
+  assert.match(band, /class="chip pre"[^<]*<b>[^<]*<\/b><small>[^<]*preview/, 'a preview says so on its chip');
+  assert.match(band, /class="chip exp"[^<]*<b>[^<]*<\/b><small>[^<]*experimental/, 'an experimental item says so on its chip');
+  // Promotion never outruns the build: no unshipped platforms, no futures, no "open source".
+  assert.doesNotMatch(band, /roadmap|coming soon|planned|Firefox|Safari|iOS|Android/i, 'nothing unshipped on the shelf');
+  assert.doesNotMatch(band, /open source/i, 'the core is fair source');
+  assert.match(band, /href="\/sovereignty"/, 'the shelf points at the audit that backs it');
+});

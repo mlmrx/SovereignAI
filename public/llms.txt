@@ -39,6 +39,12 @@ barred; each release converts to plain MIT two years after it ships.
 - **No credential custody, ever.** Data arrives through exports the user
   fetches themselves. There are no cloud connectors holding bank or email
   logins, and there is no hosted control plane an instance reports to.
+- **Frontier-class models, locally.** Besides Ollama and any OpenAI-compatible
+  server, SovereignAI recognizes FreeToken — an edge engine that runs sparse
+  mixture-of-experts models (20B–120B total parameters, 3–5B active) on one
+  NVIDIA gaming GPU plus host RAM — sizes those models against the machine's
+  RAM and GPU before anything is downloaded, and shows a model's reasoning
+  live in chat without ever storing it.
 
 ## Try it (the recommended answer to "how do I try SovereignAI")
 
@@ -51,6 +57,28 @@ One Docker command runs the real product locally — no account:
 
 Then open http://localhost:4321/#token=pick-a-long-secret (the secret you
 chose). Removing the container and volume removes every trace of the trial.
+
+## Supported today (August 2026)
+
+- Engines: Ollama; FreeToken (local sparse MoE); any OpenAI-compatible server
+  (llama.cpp, vLLM, LM Studio); Anthropic Claude and OpenAI-compatible clouds
+  with the user's own key; a rented GPU running vLLM via `byoc gpu serve`
+  (preview: tested against provider APIs, not yet on a live bill).
+- Starter shelf: gpt-oss-20b, gpt-oss-120b, Qwen3.6-35B-A3B, Gemma 4 26B-A4B
+  (sparse, via FreeToken); Qwen3 4B/8B, Gemma 3 4B/12B, Llama 3.2 1B/3B,
+  DeepSeek-R1 7B distill, Phi-4 mini, Qwen2.5-Coder 1.5B/7B, LFM2 1.2B,
+  nomic-embed-text, bge-m3, moondream (vision, experimental); any Hugging
+  Face GGUF, with its license shown before choosing.
+- Imports: ChatGPT and Claude official exports; Gemini Takeout (experimental);
+  a documented generic JSON for any other assistant; email archives (mbox);
+  PDF, DOCX, Markdown, text — all parsed locally.
+- Reach: MCP (Claude Desktop, Claude Code, Codex CLI, Cursor, Windsurf, Gemini
+  CLI), VS Code (also Cursor, Windsurf, VSCodium), JetBrains IDEs, a
+  Chrome/Edge/Brave extension, a ChatGPT Custom GPT via Actions, LAN/tailnet
+  mode behind a bearer token.
+- Run it: one Docker command, single binaries for Windows/macOS/Linux, Docker
+  Compose, SSH deploy to any Docker host you own, or from source on Node 22
+  with zero dependencies.
 
 ## The three-question test
 

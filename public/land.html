@@ -33,6 +33,8 @@
         "Checksummed, optionally encrypted export that can be verified without importing",
         "Deletion that zeroes bytes on disk",
         "Imports history from ChatGPT, Claude, and Gemini exports",
+        "Frontier-class sparse mixture-of-experts models (20B–120B total parameters) on one consumer NVIDIA GPU through the FreeToken engine",
+        "A model's reasoning streamed live in chat, never stored",
         "Zero runtime dependencies"
       ],
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Self-hosting the core is free." },
@@ -354,6 +356,46 @@ body.intro-done .hero-inner { opacity: 1; transform: none; transition: opacity 7
   .fullmap-list { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 }
 
+/* ---------- hero: this month's line ---------- */
+.hero-new {
+  display: inline-block; margin-top: 18px; max-width: 100%;
+  padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px;
+  background: color-mix(in srgb, var(--raise) 72%, transparent);
+  color: var(--ink-2); font-size: 0.78rem; line-height: 1.55; text-decoration: none;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+.hero-new:hover { border-color: var(--terra); color: var(--ink); }
+.hero-new .pill { display: inline-block; vertical-align: 1px; margin-right: 8px; background: var(--terra); color: var(--on-terra); border-radius: 999px; padding: 1px 9px; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.hero-new .more { color: var(--terra-hot); white-space: nowrap; margin-left: 6px; }
+
+/* ---------- supported today: the current shelf, dated ----------
+   A shelf, not a feature grid: six groups of chips, each chip a thing that
+   ships in the current build. "new" chips are this month's; "pre"/"exp"
+   chips carry their caveat on the chip itself, so promotion never outruns
+   the build. The eyebrow carries the date so the shelf can go stale honestly. */
+.today-band { background: var(--raise); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.today { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); grid-auto-flow: dense; gap: 14px; }
+.today-group.wide, .today-group.half { grid-column: 1 / -1; }
+@media (min-width: 900px) {
+  .today { grid-template-columns: repeat(3, 1fr); }
+  .today-group.half { grid-column: span 2; }
+}
+.today-group { border: 1px solid var(--line); border-radius: 12px; padding: 20px 20px 18px; background: var(--ground); display: flex; flex-direction: column; gap: 12px; }
+.today-group.feature { border-color: var(--terra); box-shadow: 0 0 0 1px var(--terra) inset; }
+.today-group .name { font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--terra); }
+.today-group p { margin: auto 0 0; padding-top: 4px; font-size: 0.8rem; color: var(--dim); line-height: 1.55; }
+.today-group p a { color: var(--terra-hot); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.chip { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 7px; max-width: 100%; border: 1px solid var(--edge); border-radius: 999px; padding: 4px 11px; font-size: 0.76rem; color: var(--ink-2); background: var(--raise); line-height: 1.4; }
+.chip b { font-weight: 600; color: var(--ink); }
+.chip small { font-size: 0.66rem; color: var(--dim); overflow-wrap: anywhere; }
+.chip.new { border-color: var(--terra); background: var(--glow); }
+.chip.new small { color: var(--terra); }
+.chip.pre, .chip.exp { border-style: dashed; }
+.today-note { margin: 20px 0 0; font-size: 0.78rem; color: var(--dim); line-height: 1.6; max-width: 76ch; }
+.today-note b { color: var(--ink); font-weight: 600; }
+.today-note a { color: var(--terra-hot); }
+
 /* ---------- section frame ---------- */
 section.band { padding: clamp(56px, 10vh, 110px) 0; }
 .band-head { max-width: 640px; margin-bottom: clamp(30px, 5vw, 52px); }
@@ -501,6 +543,7 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
         aria-label="Replay the arrival animation with sound">⬡ om</button>
     </div>
     <p class="hero-note">⬡ Zero-dependency core · fair-source licensed, MIT after two years · your data never trains anyone's model.</p>
+    <a class="hero-new" href="#latest"><span class="pill">New</span><span>Frontier-class open models — gpt-oss-120b, Qwen3.6, Gemma 4 — locally, on one NVIDIA gaming GPU plus the RAM in your box, via FreeToken.</span><span class="more">What's supported today →</span></a>
   </div>
 </section>
 
@@ -521,6 +564,110 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
           here; it's an <b>exit path we test</b>.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- supported today: the current shelf — every chip ships, dated so it can go stale honestly -->
+<section class="band today-band" id="latest">
+  <div class="wrap">
+    <div class="band-head">
+      <p class="eyebrow">Supported today · shelf dated August 2026</p>
+      <h2 class="serif">The latest, on <em>your</em> metal.</h2>
+      <p>What thinks, what it can read, and where it reaches you — as of this month. Every chip below ships in the
+        current build; the ones marked <i>preview</i> or <i>experimental</i> say so on the chip, and nothing on this
+        shelf is a promise.</p>
+    </div>
+    <div class="today">
+      <div class="today-group wide feature">
+        <span class="name">Models · the starter shelf</span>
+        <ul class="chips">
+          <li class="chip new"><b>gpt-oss-120b</b><small>117B · 5B active · 128 GB RAM</small></li>
+          <li class="chip new"><b>Qwen3.6-35B-A3B</b><small>35B · 3B active · 48 GB RAM</small></li>
+          <li class="chip new"><b>Gemma 4 26B-A4B</b><small>25B · 4B active · 32 GB RAM</small></li>
+          <li class="chip new"><b>gpt-oss-20b</b><small>21B · 4B active · 32 GB RAM</small></li>
+          <li class="chip"><b>Qwen3</b><small>4B · 8B</small></li>
+          <li class="chip"><b>Gemma 3</b><small>4B · 12B</small></li>
+          <li class="chip"><b>Llama 3.2</b><small>1B · 3B</small></li>
+          <li class="chip"><b>DeepSeek-R1</b><small>7B distill</small></li>
+          <li class="chip"><b>Phi-4 mini</b><small>3.8B</small></li>
+          <li class="chip"><b>Qwen2.5-Coder</b><small>1.5B · 7B</small></li>
+          <li class="chip"><b>LFM2</b><small>1.2B</small></li>
+          <li class="chip"><b>nomic-embed · bge-m3</b><small>embeddings</small></li>
+          <li class="chip exp"><b>moondream · Gemma 3 12B</b><small>vision · experimental</small></li>
+          <li class="chip"><b>Any Hugging Face GGUF</b><small>license shown before you choose</small></li>
+        </ul>
+        <p>Curated by job, licenses printed, sized against your RAM — and now your GPU — before you download a byte.
+          The sparse tier (20B–120B total, 3–5B active per token) runs on one NVIDIA gaming GPU plus host RAM
+          through FreeToken.</p>
+      </div>
+      <div class="today-group">
+        <span class="name">Engines · where it thinks</span>
+        <ul class="chips">
+          <li class="chip"><b>Ollama</b><small>local</small></li>
+          <li class="chip new"><b>FreeToken</b><small>new · local sparse MoE</small></li>
+          <li class="chip"><b>llama.cpp · vLLM · LM Studio</b><small>OpenAI-compatible</small></li>
+          <li class="chip"><b>Claude</b><small>your API key</small></li>
+          <li class="chip"><b>OpenAI &amp; compatible clouds</b><small>your API key</small></li>
+          <li class="chip pre"><b>Rented GPU running vLLM</b><small>byoc gpu serve · preview</small></li>
+        </ul>
+        <p>Chosen per persona, switched in minutes. Local by default; a remote model is disclosed on screen at the
+          moment it's used.</p>
+      </div>
+      <div class="today-group">
+        <span class="name">Imports · what it can read</span>
+        <ul class="chips">
+          <li class="chip"><b>ChatGPT export</b></li>
+          <li class="chip"><b>Claude export</b></li>
+          <li class="chip exp"><b>Gemini Takeout</b><small>experimental</small></li>
+          <li class="chip"><b>Any other AI</b><small>documented JSON</small></li>
+          <li class="chip"><b>Your inbox</b><small>mbox · Takeout</small></li>
+          <li class="chip"><b>PDF · DOCX · Markdown · text</b></li>
+        </ul>
+        <p>Parsed on your machine by dependency-free parsers; nothing is uploaded to be read. Distill history into
+          memory on your say-so, each fact citing the conversation it came from.</p>
+      </div>
+      <div class="today-group half">
+        <span class="name">Reach · where it meets you</span>
+        <ul class="chips">
+          <li class="chip"><b>MCP</b><small>Claude Desktop · Claude Code · Codex CLI · Cursor · Windsurf · Gemini CLI</small></li>
+          <li class="chip"><b>VS Code</b><small>Cursor · Windsurf · VSCodium too</small></li>
+          <li class="chip"><b>JetBrains</b><small>IntelliJ · PyCharm · WebStorm · GoLand…</small></li>
+          <li class="chip"><b>Browser extension</b><small>Chrome · Edge · Brave</small></li>
+          <li class="chip"><b>ChatGPT Custom GPT</b><small>Actions</small></li>
+          <li class="chip"><b>Your LAN or tailnet</b><small>--lan</small></li>
+        </ul>
+        <p>Every channel reads one store only you hold. Nothing syncs through a cloud, because there isn't one.</p>
+      </div>
+      <div class="today-group">
+        <span class="name">Run it · how it arrives</span>
+        <ul class="chips">
+          <li class="chip"><b>Docker</b><small>one command, no account</small></li>
+          <li class="chip"><b>Single binary</b><small>Windows · macOS · Linux</small></li>
+          <li class="chip"><b>Docker Compose</b></li>
+          <li class="chip"><b>Any box over SSH</b><small>byoc deploy · VPS · homelab</small></li>
+          <li class="chip"><b>From source</b><small>Node 22 · zero dependencies</small></li>
+        </ul>
+        <p>The whole app is one file — runtime, interface, database engine. Works offline. Reports nothing to anyone.</p>
+      </div>
+      <div class="today-group">
+        <span class="name">Receipts · what it proves</span>
+        <ul class="chips">
+          <li class="chip"><b>Provenance on every memory</b></li>
+          <li class="chip"><b>Weight-digest receipts</b><small>on every Ollama answer</small></li>
+          <li class="chip new"><b>Reasoning shown live</b><small>never stored</small></li>
+          <li class="chip"><b>Cognition stays home</b><small>one switch</small></li>
+          <li class="chip"><b>Verified export</b><small>SHA-256 · AES-256-GCM</small></li>
+          <li class="chip"><b>Deletion that zeroes bytes</b></li>
+          <li class="chip"><b>LoRA / QLoRA</b><small>your trainer · your consent</small></li>
+        </ul>
+        <p>Audited claim by claim in the <a href="/sovereignty">Sovereignty Ledger</a> — where an unknown stays unknown.</p>
+      </div>
+    </div>
+    <p class="today-note"><b>New this month:</b> FreeToken as a recognized local engine, the frontier sparse-MoE tier on
+      the starter shelf, GPU-aware sizing, and a model's reasoning streamed live but never written down.
+      <i>Preview</i> means built and tested against the provider's API, not yet run on a live bill; <i>experimental</i>
+      means it works and we're not yet proud of it. The shelf carries its date because shelves go stale.
+      <a href="#install">Run it now →</a></p>
   </div>
 </section>
 
