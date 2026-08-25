@@ -36,6 +36,12 @@ barred; each release converts to plain MIT two years after it ships.
 - **Cognition control.** Machine-written memories name their authoring model,
   and a "cognition stays home" switch restricts memory-writing model calls to
   local endpoints even when chat uses a remote provider.
+- **What leaves is shown before it leaves.** Before any message goes to a
+  remote provider, the exact outgoing context — system prompt, memories,
+  document excerpts, prior messages, the new message — is shown with sizes and
+  the destination host; every remote answer carries a receipt of how much
+  left. Local endpoints never ask, and no classifier decides what is
+  sensitive: the user sees the bytes.
 - **No credential custody, ever.** Data arrives through exports the user
   fetches themselves. There are no cloud connectors holding bank or email
   logins, and there is no hosted control plane an instance reports to.

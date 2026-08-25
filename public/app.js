@@ -7,6 +7,7 @@ const MAX_UPLOAD_BYTES = 14 * 1024 * 1024;
 const MAX_MODEL_RECIPE_BYTES = 20 * 1024 * 1024;
 const MODEL_RECIPE_FORMAT = 'sovereignai.model-recipe';
 const MODEL_RECIPE_VERSION = 1;
+const PROVIDER_NAMES = Object.freeze({ ollama: 'Ollama', freetoken: 'FreeToken', openai: 'OpenAI-compatible', anthropic: 'Anthropic' });
 const MODEL_PARAMETER_FIELDS = Object.freeze({
   temperature: 'model-temperature',
   num_ctx: 'model-num-ctx',
@@ -54,6 +55,8 @@ const state = {
   ollamaModelRequestId: 0,
   settingsDirty: false,
   settingsLoaded: false,
+  // Settings draft of privacy.outgoingPreviewTrusted: chips revoke here, Save persists.
+  outgoingTrustedDraft: [],
 };
 
 /* Accept an auth token once, keep it out of proxy logs, and send it on API calls.
@@ -416,7 +419,7 @@ function runtimeInfo(persona = activePersona()) {
       local = ['localhost', '127.0.0.1', '::1', '[::1]', '0.0.0.0', 'host.docker.internal', 'ollama'].includes(host) || host.startsWith('127.');
     } catch { local = false; }
   }
-  const names = { ollama: 'Ollama', freetoken: 'FreeToken', openai: 'OpenAI-compatible', anthropic: 'Anthropic' };
+  const names = PROVIDER_NAMES;
   const status = state.providers.find((item) => item.id === provider);
   const mode = local ? 'local' : 'remote';
   const label = local ? `Local · ${names[provider] || provider}` : `Remote · ${names[provider] || provider}`;
@@ -954,6 +957,12 @@ async function sendMessage(overrideText) {
   const text = (overrideText ?? inputEl.value).trim();
   if (!text) return;
   const personaId = $('#persona-select').value || undefined;
+  // The customs declaration (ADR-26): a send to a remote provider shows what
+  // would leave first. Cancelling keeps the message in the composer.
+  if (!(await outgoingClearance({ text, personaId }))) {
+    if (overrideText !== undefined && !inputEl.value.trim()) { inputEl.value = text; autoGrow(); }
+    return;
+  }
   inputEl.value = '';
   autoGrow();
   addMessage('user', text);
@@ -1023,6 +1032,8 @@ async function sendMessage(overrideText) {
     if (metadata?.model) metaBits.push(`${metadata.provider}/${metadata.model}`);
     if (state.lastModelDigest) metaBits.push(`weights ${state.lastModelDigest.slice(0, 12)}`);
     if (reasoningChars > 0) metaBits.push('reasoning shown, not saved');
+    // The receipt: present only when the provider was remote and something left.
+    if (metadata?.outgoing) metaBits.push(`left the machine · ${formatBytes(metadata.outgoing.bytes)} → ${metadata.outgoing.host || 'remote host'}`);
     if (streamError) metaBits.push('stream interrupted');
     pending.finish({ nextMeta: metaBits.join(' · '), nextSources: metadata?.sources || [], wasError: Boolean(streamError) });
     if (streamError) toast(streamError, { type: 'error', title: 'Response interrupted' });
@@ -1048,6 +1059,117 @@ async function sendMessage(overrideText) {
       await loadConversations().catch(() => {});
       refreshCounts().catch(() => {});
     }
+  }
+}
+
+/* The customs declaration (ADR-26). Before a message goes to a REMOTE
+   provider, ask the server for exactly what would leave and show it. Local
+   providers never gate — nothing leaves. The server's locality verdict wins:
+   /api/providers rows carry `local`, and until that has loaded the preview's
+   own manifest.provider.local decides. A failed preview never falls through
+   to a send the user could not see. */
+async function outgoingClearance({ text, personaId }) {
+  const privacy = state.config?.privacy || {};
+  if (privacy.outgoingPreview === 'off') return true;
+  const trusted = Array.isArray(privacy.outgoingPreviewTrusted) ? privacy.outgoingPreviewTrusted : [];
+  const persona = state.personas.find((item) => item.id === personaId) || activePersona();
+  const providerId = persona?.provider || state.config?.defaults?.provider || 'ollama';
+  if (trusted.includes(providerId)) return true;
+  const row = state.providers.find((item) => item.id === providerId);
+  if (row?.local === true) return true;
+  let manifest;
+  try {
+    manifest = await api.send('POST', '/api/chat/preview', { message: text, conversationId: state.conversationId, personaId });
+  } catch (error) {
+    toast(error.message || 'Could not preview what would leave.', { type: 'error', title: 'Nothing was sent' });
+    return false;
+  }
+  if (!manifest?.provider || !manifest.totals) {
+    toast('The preview came back malformed, so nothing was sent.', { type: 'error', title: 'Nothing was sent' });
+    return false;
+  }
+  if (manifest.provider.local) return true;
+  if (trusted.includes(manifest.provider.id)) return true;
+  return showOutgoingDialog(manifest);
+}
+
+function showOutgoingDialog(manifest) {
+  const dialog = $('#outgoing-dialog');
+  const label = manifest.provider.label || manifest.provider.id;
+  const summary = `To ${label} at ${manifest.provider.host || 'an unknown host'} · ${formatBytes(manifest.totals.bytes)} · ~${Number(manifest.totals.approxTokens || 0).toLocaleString()} tokens`;
+  if (!dialog?.showModal) return Promise.resolve(window.confirm(`What leaves your machine\n\n${summary}\n\nSend it?`));
+  if (dialog.open) return Promise.resolve(false);
+  $('#outgoing-summary').textContent = summary;
+  renderOutgoingParts(manifest.parts || {});
+  const extraction = manifest.extraction;
+  const extractionLine = $('#outgoing-extraction');
+  extractionLine.hidden = !extraction;
+  extractionLine.textContent = extraction
+    ? `Afterwards, ${PROVIDER_NAMES[extraction.provider] || extraction.provider}${extraction.model ? ` (${extraction.model})` : ''} — ${extraction.local ? 'on this machine' : 'also remote'} — may write memory from this exchange.`
+    : '';
+  const trust = $('#outgoing-trust');
+  trust.checked = false;
+  $('#outgoing-trust-label').textContent = `Don't ask again for ${label}`;
+  dialog.returnValue = 'cancel';
+  dialog.showModal();
+  $('#outgoing-send').focus();
+  return new Promise((resolve) => {
+    dialog.addEventListener('close', async () => {
+      const send = dialog.returnValue === 'send';
+      if (send && trust.checked) await trustProvider(manifest.provider.id);
+      inputEl.focus();
+      resolve(send);
+    }, { once: true });
+  });
+}
+
+/* Every part is rendered as text (textContent, never markup): this is the
+   user's own prompt, notes, and documents, shown exactly as they would go. */
+function renderOutgoingParts(parts) {
+  const host = $('#outgoing-parts');
+  host.innerHTML = '';
+  const count = (n, noun) => `${Number(n).toLocaleString()} ${noun}${n === 1 ? '' : 's'}`;
+  const system = String(parts.system || '');
+  const memories = Array.isArray(parts.memories) ? parts.memories : [];
+  const sources = Array.isArray(parts.sources) ? parts.sources : [];
+  const history = Array.isArray(parts.history) ? parts.history : [];
+  const message = String(parts.message || '');
+  const documents = new Set(sources.map((source) => source.documentId)).size;
+  const rows = [
+    ['System prompt', `${count(system.length, 'char')} · includes the notes and excerpts below`, system],
+    ['Memories', count(memories.length, 'note'), memories.map((memory) => `- ${memory.content}`).join('\n\n')],
+    ['Knowledge excerpts', `${count(sources.length, 'excerpt')} from ${count(documents, 'document')}`, sources.map((source, index) => `[${index + 1}] ${source.title || 'Document'}\n${source.excerpt || ''}`).join('\n\n')],
+    ['Prior messages', count(history.length, 'message'), history.map((turn) => `${turn.role}: ${turn.content}`).join('\n\n')],
+    ['Your message', count(message.length, 'char'), message],
+  ];
+  for (const [label, detail, text] of rows) {
+    const part = document.createElement('details');
+    part.className = 'outgoing-part';
+    const summary = document.createElement('summary');
+    const name = document.createElement('span');
+    name.textContent = label;
+    const meta = document.createElement('span');
+    meta.className = 'outgoing-count';
+    meta.textContent = detail;
+    summary.append(name, meta);
+    const body = document.createElement('pre');
+    body.className = 'outgoing-text';
+    body.textContent = text || '(nothing)';
+    part.append(summary, body);
+    host.appendChild(part);
+  }
+}
+
+async function trustProvider(providerId) {
+  const current = state.config?.privacy?.outgoingPreviewTrusted || [];
+  if (current.includes(providerId)) return;
+  try {
+    state.config = await api.send('PUT', '/api/config', { privacy: { outgoingPreviewTrusted: [...current, providerId] } });
+    state.outgoingTrustedDraft = [...(state.config.privacy?.outgoingPreviewTrusted || [])];
+    if (state.settingsLoaded) renderOutgoingTrusted();
+    toast(`${PROVIDER_NAMES[providerId] || providerId} will not ask again. Revoke that under Settings → Data & privacy.`);
+  } catch (error) {
+    toast(error.message || 'Could not save that choice.', { type: 'error', title: 'Still asking next time' });
   }
 }
 
@@ -1382,6 +1504,9 @@ async function loadSettings() {
   $('#cfg-auto-memory').checked = Boolean(state.config.memory?.autoExtract);
   $('#cfg-extract-local-only').checked = Boolean(state.config.memory?.extractLocalOnly);
   $('#cfg-extraction-model').value = state.config.memory?.extractionModel || '';
+  $('#cfg-outgoing-preview').value = state.config.privacy?.outgoingPreview || 'ask';
+  state.outgoingTrustedDraft = [...(state.config.privacy?.outgoingPreviewTrusted || [])];
+  renderOutgoingTrusted();
   renderPersonaEditor();
   state.settingsLoaded = true;
   markSettingsDirty(false);
@@ -2253,6 +2378,26 @@ function renderProviderStatus() {
   }).join('');
 }
 
+/* Providers the user told the customs declaration not to ask about again, as
+   removable chips. Revoking edits the draft; Save changes persists it. */
+function renderOutgoingTrusted() {
+  const host = $('#cfg-outgoing-trusted');
+  const list = state.outgoingTrustedDraft || [];
+  if (!list.length) {
+    host.innerHTML = '<span class="trusted-none">None — every remote send is shown first.</span>';
+    return;
+  }
+  host.innerHTML = list.map((id) => {
+    const name = escapeHtml(PROVIDER_NAMES[id] || id);
+    return `<span class="trusted-chip"><span>${name}</span><button class="trusted-revoke" type="button" data-provider="${escapeHtml(id)}" aria-label="Ask again before sending to ${name}">Revoke</button></span>`;
+  }).join('');
+  $$('.trusted-revoke', host).forEach((button) => button.addEventListener('click', () => {
+    state.outgoingTrustedDraft = (state.outgoingTrustedDraft || []).filter((id) => id !== button.dataset.provider);
+    renderOutgoingTrusted();
+    markSettingsDirty(true);
+  }));
+}
+
 $('#settings-save').addEventListener('click', async () => {
   const button = $('#settings-save');
   button.disabled = true;
@@ -2269,6 +2414,7 @@ $('#settings-save').addEventListener('click', async () => {
     defaults: { provider: $('#cfg-default-provider').value, model: $('#cfg-default-model').value.trim() },
     embeddings: { provider: 'ollama', model: $('#cfg-embed-model').value.trim() },
     memory: { autoExtract: $('#cfg-auto-memory').checked, extractLocalOnly: $('#cfg-extract-local-only').checked, extractionModel: $('#cfg-extraction-model').value.trim() },
+    privacy: { outgoingPreview: $('#cfg-outgoing-preview').value, outgoingPreviewTrusted: state.outgoingTrustedDraft || [] },
   };
   try {
     if (update.defaults.provider !== 'anthropic' && !update.defaults.model) {

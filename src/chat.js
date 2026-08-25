@@ -1,29 +1,136 @@
-import { getProvider } from './providers/index.js';
+import { getProvider, isLocalProviderEndpoint, providerEndpointHost } from './providers/index.js';
 import { retrieve, formatContext } from './rag/retriever.js';
-import { autoExtractMemories } from './memory-extract.js';
+import { autoExtractMemories, extractionTarget } from './memory-extract.js';
 import { HttpError } from './util.js';
 
 /**
- * Orchestrate one chat turn:
- * resolve persona → assemble context (history + memory + knowledge) → stream
- * the model's reply over SSE → persist both sides of the exchange locally.
+ * Assemble one chat turn without touching the database: resolve the persona
+ * and model, load and trim the prior turns, place memory notes and knowledge
+ * excerpts into the system prompt, and return the exact array that would be
+ * handed to `provider.chatStream`. Side-effect-free by contract — this is what
+ * `POST /api/chat/preview` shows before a remote send (ADR-26) and what
+ * `handleChat` streams from, so the declaration and the request cannot drift
+ * apart. Retrieval runs (it is a read); nothing is created or written.
  */
-export async function handleChat({ store, config, body, sse, signal }) {
-  const message = typeof body.message === 'string' ? body.message.trim() : '';
-  if (!message) throw new HttpError(400, 'message is required');
-  if (message.length > 200_000) throw new HttpError(413, 'message must be at most 200,000 characters');
+export async function assembleChatRequest({ store, config, conversationId, personaId, message }) {
+  const text = typeof message === 'string' ? message.trim() : '';
+  if (!text) throw new HttpError(400, 'message is required');
+  if (text.length > 200_000) throw new HttpError(413, 'message must be at most 200,000 characters');
 
-  const persona = resolvePersona(store, body.personaId, config);
+  const persona = resolvePersona(store, personaId, config);
   const { provider, providerCfg, model } = resolveModel(config, persona);
 
-  let conversation = body.conversationId ? store.getConversation(body.conversationId) : null;
-  if (body.conversationId && !conversation) throw new HttpError(404, 'Conversation not found');
-  if (!conversation) {
-    conversation = store.createConversation({ persona_id: persona.id, title: message.slice(0, 64) });
-  }
+  const conversation = conversationId ? store.getConversation(conversationId) : null;
+  if (conversationId && !conversation) throw new HttpError(404, 'Conversation not found');
 
-  // History is assembled before persisting the new user turn.
-  const history = trimHistory(store.listMessages(conversation.id), config.limits.historyChars);
+  // History is the transcript as stored before this turn is persisted.
+  const history = trimHistory(conversation ? store.listMessages(conversation.id) : [], config.limits.historyChars);
+  const { system, sources, memories } = await buildSystemPrompt({ store, config, persona, query: text });
+
+  return {
+    persona,
+    conversation,
+    provider,
+    providerCfg,
+    model,
+    local: isLocalProviderEndpoint(provider.id, providerCfg),
+    endpointHost: providerEndpointHost(providerCfg),
+    system,
+    memories,
+    sources,
+    history,
+    message: text,
+    // The exact array handed to provider.chatStream.
+    messages: [...history, { role: 'user', content: text }],
+    temperature: provider.id === 'anthropic' ? undefined : persona.temperature,
+  };
+}
+
+/**
+ * The context as it crosses the wire: the system prompt as a leading
+ * system-role message when present, then the trimmed history, then the new
+ * user turn — the `messages` array an OpenAI-compatible or Ollama endpoint
+ * receives verbatim (Anthropic carries the same content as `system` +
+ * `messages`). "bytes" everywhere in the product means the UTF-8 length of
+ * this array serialized as JSON.
+ */
+export function outgoingContext(request) {
+  return [...(request.system ? [{ role: 'system', content: request.system }] : []), ...request.messages];
+}
+
+/** Sizes of what leaves: characters of content, bytes on the wire, a rough token count, message count. */
+export function outgoingTotals(request) {
+  const context = outgoingContext(request);
+  const chars = context.reduce((sum, part) => sum + part.content.length, 0);
+  return {
+    chars,
+    bytes: Buffer.byteLength(JSON.stringify(context), 'utf8'),
+    approxTokens: Math.ceil(chars / 4),
+    messages: context.length,
+  };
+}
+
+/**
+ * The customs declaration (ADR-26): everything that would leave for this turn,
+ * with sizes, and nothing else — no API key, no endpoint URL (host only), and
+ * no write of any kind. Same body and validation as `handleChat`.
+ */
+export async function previewChatRequest({ store, config, body }) {
+  const request = await assembleChatRequest({
+    store,
+    config,
+    conversationId: body.conversationId,
+    personaId: body.personaId,
+    message: body.message,
+  });
+  const { provider, persona } = request;
+  let extraction = null;
+  if (config.memory?.autoExtract && persona.use_memory) {
+    const target = extractionTarget(config, { providerId: provider.id, model: request.model });
+    if (target) extraction = { provider: target.providerId, model: target.model ?? null, local: target.local };
+  }
+  return {
+    provider: { id: provider.id, label: provider.label, local: request.local, host: request.endpointHost },
+    model: request.model,
+    parts: {
+      system: request.system,
+      memories: request.memories.map((m) => ({ id: m.id, content: m.content })),
+      sources: request.sources.map((s) => ({
+        documentId: s.documentId,
+        title: s.document,
+        excerpt: s.content,
+        score: s.score,
+        method: s.method,
+      })),
+      history: request.history,
+      message: request.message,
+    },
+    totals: outgoingTotals(request),
+    extraction,
+  };
+}
+
+/**
+ * Orchestrate one chat turn:
+ * assemble context (persona + history + memory + knowledge) → stream the
+ * model's reply over SSE → persist both sides of the exchange locally.
+ */
+export async function handleChat({ store, config, body, sse, signal }) {
+  const request = await assembleChatRequest({
+    store,
+    config,
+    conversationId: body.conversationId,
+    personaId: body.personaId,
+    message: body.message,
+  });
+  const { persona, provider, providerCfg, model, system, message } = request;
+  // The stream's meta carries excerpts of what was placed in the prompt; the
+  // full text is the preview's business (ADR-26).
+  const sources = request.sources.map(({ content, ...source }) => source);
+  const memories = request.memories.map(({ content, ...memory }) => memory);
+
+  const conversation =
+    request.conversation ?? store.createConversation({ persona_id: persona.id, title: message.slice(0, 64) });
   store.addMessage({ conversation_id: conversation.id, role: 'user', content: message });
 
   // Weight provenance: resolve which exact weights will answer, in parallel
@@ -34,8 +141,6 @@ export async function handleChat({ store, config, body, sse, signal }) {
     .then((digest) => (modelDigest = digest))
     .catch(() => null);
 
-  const { system, sources, memories } = await buildSystemPrompt({ store, config, persona, query: message });
-
   sse.send('meta', {
     conversationId: conversation.id,
     conversationTitle: conversation.title,
@@ -44,6 +149,9 @@ export async function handleChat({ store, config, body, sse, signal }) {
     model,
     sources,
     memories,
+    // The receipt (ADR-26): how much left and for which host — null when the
+    // provider is local and nothing left the machine.
+    outgoing: request.local ? null : { ...outgoingTotalsForReceipt(request), host: request.endpointHost },
   });
 
   let text = '';
@@ -59,8 +167,8 @@ export async function handleChat({ store, config, body, sse, signal }) {
       cfg: providerCfg,
       model,
       system,
-      messages: [...history, { role: 'user', content: message }],
-      temperature: provider.id === 'anthropic' ? undefined : persona.temperature,
+      messages: request.messages,
+      temperature: request.temperature,
       maxTokens: config.limits.maxTokens,
       signal,
     });
@@ -134,6 +242,12 @@ export async function handleChat({ store, config, body, sse, signal }) {
     store.touchConversation(conversation.id);
     return saved;
   }
+}
+
+// The receipt carries the sizes, not the message count (that is the preview's).
+function outgoingTotalsForReceipt(request) {
+  const { chars, bytes, approxTokens } = outgoingTotals(request);
+  return { bytes, chars, approxTokens };
 }
 
 // One digest lookup per (endpoint, model) per minute — never blocks the
@@ -212,8 +326,9 @@ async function buildSystemPrompt({ store, config, persona, query }) {
     if (selected.length > 0) {
       parts.push('Relevant long-term notes the user asked you to remember:\n' + selected.map((m) => `- ${m.content}`).join('\n'));
       // Reported to clients so recall can be shown truthfully: these notes
-      // were actually placed in the prompt for this turn.
-      memories = selected.map((m) => ({ id: m.id, excerpt: String(m.content).slice(0, 300) }));
+      // were actually placed in the prompt for this turn. The stream carries
+      // the excerpt; the outgoing preview shows the whole note (`content`).
+      memories = selected.map((m) => ({ id: m.id, excerpt: String(m.content).slice(0, 300), content: String(m.content) }));
     }
   }
 
@@ -229,6 +344,8 @@ async function buildSystemPrompt({ store, config, persona, query }) {
         excerpt: r.content.slice(0, 600),
         score: r.score,
         method: r.method,
+        // The whole excerpt as placed in the prompt (the stream carries only `excerpt`).
+        content: r.content,
       }));
     }
   }

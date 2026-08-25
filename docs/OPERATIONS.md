@@ -36,6 +36,17 @@ URL is the intent). `SOVEREIGN_HARDWARE_PROBE=off` disables the best-effort GPU
 probe (`nvidia-smi`, then Linux sysfs) that sizes the starter shelf's sparse
 MoE tier; without it the shelf reports the GPU as unknown rather than guessing.
 
+The customs declaration (what leaves your machine, shown before it leaves) is
+configured under `privacy` in `sovereign.config.json`:
+`privacy.outgoingPreview` is `"ask"` (default — the web UI shows the exact
+outgoing context before every send to a remote provider) or `"off"`;
+`privacy.outgoingPreviewTrusted` lists provider ids (`ollama`, `freetoken`,
+`openai`, `anthropic`) the user chose "don't ask again" for, and is what the
+Revoke chips under Settings → Data & privacy edit. Local endpoints never ask,
+because nothing leaves. Headless channels — the CLI, `/api/ask`, MCP, the
+editor and browser integrations, ChatGPT Actions — do not show the
+declaration; every remote answer still carries the `outgoing` receipt.
+
 JSON exports restore personas, conversations, messages, memories, documents,
 chunks, Model Studio recipes, and Fine-Tuning Studio projects, reviewed
 examples, immutable JSONL snapshots, run records, metrics, evaluation

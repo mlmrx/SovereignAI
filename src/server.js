@@ -18,7 +18,7 @@ import { seedPersonas, shouldReplaceSeedPersonas } from './personas.js';
 import { chunkText } from './rag/chunker.js';
 import { retrieve, embedTexts } from './rag/retriever.js';
 import { extractText } from './ingest/index.js';
-import { handleChat } from './chat.js';
+import { handleChat, previewChatRequest } from './chat.js';
 import { applySecurityHeaders, isJsonRequest, readJsonBody, sendJson, sseStart, HttpError } from './util.js';
 import {
   ModelRecipeValidationError,
@@ -981,6 +981,12 @@ export function createApp(rootDir, { env = process.env, hardware } = {}) {
     if (!query.q) throw new HttpError(400, 'q is required');
     return retrieve({ store, config, query: query.q });
   });
+
+  // ---- the customs declaration (ADR-26): what would leave, before it does ----
+  // Same body and validation as POST /api/chat, but a read: no conversation,
+  // message, or memory is written, and the manifest carries the endpoint host
+  // only — never an API key or a full URL.
+  route('POST', '/api/chat/preview', async ({ body }) => previewChatRequest({ store, config, body }));
 
   // ---- simple ask (non-streaming; for integrations like ChatGPT Actions) ----
   route('POST', '/api/ask', async ({ body }) => {

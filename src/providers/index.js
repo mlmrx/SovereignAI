@@ -32,12 +32,33 @@ export function isLocalProviderEndpoint(providerId, cfg) {
   }
 }
 
-/** Status summary for all providers (configured + reachable). */
+/**
+ * The host a provider's requests go to — hostname plus an explicit port,
+ * never the path and never credentials — for the outgoing preview and the
+ * receipt on a remote answer (ADR-26). Null when no endpoint is configured.
+ */
+export function providerEndpointHost(cfg) {
+  try {
+    return new URL(cfg?.baseUrl ?? '').host || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Status summary for all providers (configured + reachable + local). */
 export async function providerStatus(config) {
   const results = [];
   for (const provider of Object.values(providers)) {
     const cfg = config.providers[provider.id];
-    const entry = { id: provider.id, label: provider.label, enabled: Boolean(cfg?.enabled), configured: provider.isConfigured(cfg ?? {}) };
+    const entry = {
+      id: provider.id,
+      label: provider.label,
+      enabled: Boolean(cfg?.enabled),
+      configured: provider.isConfigured(cfg ?? {}),
+      // Whether a send to this provider stays on this machine — the same rule
+      // the outgoing preview gates on, so the UI never has to guess.
+      local: isLocalProviderEndpoint(provider.id, cfg ?? {}),
+    };
     if (entry.configured) {
       try {
         const health = await provider.health(cfg);

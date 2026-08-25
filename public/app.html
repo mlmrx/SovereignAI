@@ -774,6 +774,17 @@
 
           <section id="data-settings" class="settings-section" aria-labelledby="data-heading">
             <div class="settings-heading"><h2 id="data-heading">Data & privacy</h2><p>Your SQLite database stays in the SovereignAI state directory. Exports copy workspace data; chats may send prompts and selected memory or knowledge to the configured model provider.</p></div>
+            <div class="settings-card option-card" id="outgoing-settings">
+              <label>Before a message goes to a remote provider<select id="cfg-outgoing-preview">
+                <option value="ask">Ask — show exactly what would leave, every time</option>
+                <option value="off">Off — send without showing</option>
+              </select></label>
+              <p class="field-note">The customs declaration: the system prompt, memories, knowledge excerpts, and prior messages that would leave, with sizes, before anything does. Local endpoints never ask — nothing leaves. Every answer from a remote provider carries a receipt of how much left and to which host.</p>
+              <div class="trusted-providers">
+                <strong>Not asking again for</strong>
+                <div id="cfg-outgoing-trusted" class="trusted-list" aria-live="polite"></div>
+              </div>
+            </div>
             <div class="settings-card data-card">
               <span class="data-icon"><svg class="icon"><use href="#i-download"/></svg></span>
               <div><strong>Portable workspace backup</strong><p>Export personas, conversations, memories, and document chunks to one readable JSON file. API keys are never included.</p></div>
@@ -971,6 +982,16 @@
       <h2 id="confirm-title">Are you sure?</h2>
       <p id="confirm-message">This action cannot be undone.</p>
       <div class="dialog-actions"><button class="btn ghost" value="cancel">Cancel</button><button id="confirm-action" class="btn danger solid" value="confirm">Delete</button></div>
+    </form>
+  </dialog>
+  <dialog id="outgoing-dialog" class="outgoing-dialog" aria-labelledby="outgoing-title" aria-describedby="outgoing-summary">
+    <form method="dialog">
+      <h2 id="outgoing-title">What leaves your machine</h2>
+      <p id="outgoing-summary" class="outgoing-summary"></p>
+      <div id="outgoing-parts" class="outgoing-parts"></div>
+      <p id="outgoing-extraction" class="outgoing-extraction" hidden></p>
+      <label class="check-row outgoing-trust-row"><input type="checkbox" id="outgoing-trust" /><span><strong id="outgoing-trust-label">Don't ask again for this provider</strong><small>Revoke it any time under Settings → Data &amp; privacy.</small></span></label>
+      <div class="dialog-actions"><button id="outgoing-cancel" class="btn ghost" value="cancel" type="submit">Cancel — nothing leaves</button><button id="outgoing-send" class="btn primary" value="send" type="submit">Send</button></div>
     </form>
   </dialog>
   <div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>

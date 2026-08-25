@@ -14,19 +14,10 @@ export async function autoExtractMemories({
   assistantReply,
   conversationId = null,
 }) {
-  // The cognition role: a dedicated extraction model (usually small + local)
-  // owns memory-writing regardless of which model handled the chat.
-  if (config.memory?.extractionModel) {
-    providerId = config.defaults.provider;
-    model = config.memory.extractionModel;
-  }
-  const provider = getProvider(providerId);
-  const cfg = config.providers[providerId];
-  if (!provider.isConfigured(cfg)) return;
-  // Cognition stays home: with extractLocalOnly on, a remote provider may
-  // chat, but it may not WRITE memory. Skipping (not erroring) is this
-  // fire-and-forget path's contract; the Mind view surfaces the policy.
-  if (config.memory?.extractLocalOnly && !isLocalProviderEndpoint(providerId, cfg)) return;
+  const target = extractionTarget(config, { providerId, model });
+  if (!target) return;
+  const { provider, cfg, model: effectiveModel } = target;
+  providerId = target.providerId;
 
   const existing = store.listMemories().slice(-30).map((m) => `- ${m.content}`).join('\n').slice(0, 3000) || '(none)';
   const system =
@@ -38,7 +29,6 @@ export async function autoExtractMemories({
     `Already known:\n${existing}\n\nExchange:\nUser: ${userMessage.slice(0, 2000)}\n` +
     `Assistant: ${assistantReply.slice(0, 1500)}\n\nNew durable facts:`;
 
-  const effectiveModel = model || (providerId === config.defaults.provider ? config.defaults.model : undefined);
   let out = '';
   const stream = provider.chatStream({
     cfg,
@@ -63,6 +53,32 @@ export async function autoExtractMemories({
       });
     }
   }
+}
+
+/**
+ * Which model would WRITE memory after an exchange, given the provider and
+ * model that answered the chat — or null when auto-extraction would skip:
+ * the target is not configured, or "cognition stays home" refuses a remote
+ * one. The cognition role (`memory.extractionModel`) overrides both: a
+ * dedicated extraction model, usually small and local, owns memory-writing
+ * regardless of which model handled the chat. Shared with the outgoing
+ * preview (ADR-26) so the declaration names the model that would really run.
+ */
+export function extractionTarget(config, { providerId = config.defaults.provider, model } = {}) {
+  if (config.memory?.extractionModel) {
+    providerId = config.defaults.provider;
+    model = config.memory.extractionModel;
+  }
+  const provider = getProvider(providerId);
+  const cfg = config.providers[providerId];
+  if (!provider.isConfigured(cfg)) return null;
+  // Cognition stays home: with extractLocalOnly on, a remote provider may
+  // chat, but it may not WRITE memory. Skipping (not erroring) is the
+  // fire-and-forget path's contract; the Mind view surfaces the policy.
+  const local = isLocalProviderEndpoint(providerId, cfg);
+  if (config.memory?.extractLocalOnly && !local) return null;
+  const effectiveModel = model || (providerId === config.defaults.provider ? config.defaults.model : undefined);
+  return { providerId, provider, cfg, model: effectiveModel, local };
 }
 
 /**

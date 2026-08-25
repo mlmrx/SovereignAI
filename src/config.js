@@ -13,6 +13,9 @@ const PROVIDER_IDS = ['ollama', 'freetoken', 'openai', 'anthropic'];
 // without auth. They get no apiKey field at all, so nothing secret-shaped can
 // ever be persisted for them.
 const KEYLESS_PROVIDER_IDS = new Set(['ollama', 'freetoken']);
+// The customs declaration (ADR-26): 'ask' shows exactly what would leave
+// before every send to a remote provider; 'off' sends without showing.
+const OUTGOING_PREVIEW_MODES = ['ask', 'off'];
 const TOP_LEVEL_KEYS = new Set([
   'name',
   'host',
@@ -22,6 +25,7 @@ const TOP_LEVEL_KEYS = new Set([
   'defaults',
   'embeddings',
   'memory',
+  'privacy',
   'training',
   'limits',
   'trustedExtensionOrigins',
@@ -47,6 +51,11 @@ export const DEFAULT_CONFIG = {
   embeddings: { provider: 'ollama', model: 'nomic-embed-text' },
   // Auto memory: distill durable facts from conversations into long-term memory (extra model call per exchange).
   memory: { autoExtract: false, extractLocalOnly: false, extractionModel: '' },
+  // What leaves your machine is shown before it leaves: with outgoingPreview
+  // 'ask', the web UI shows the exact outgoing context before any send to a
+  // remote provider, except providers the user listed in outgoingPreviewTrusted
+  // ("don't ask again"). Local endpoints never ask — nothing leaves.
+  privacy: { outgoingPreview: 'ask', outgoingPreviewTrusted: [] },
   // Fine-tuning uses an optional user-operated HTTP trainer. Dataset content is
   // never sent there until a project snapshot is explicitly approved.
   training: {
@@ -262,6 +271,7 @@ export function normalizeConfig(value) {
     defaults: normalizeDefaults(value.defaults),
     embeddings: normalizeEmbeddings(value.embeddings),
     memory: normalizeMemory(value.memory),
+    privacy: normalizePrivacy(value.privacy),
     training: normalizeTraining(value.training),
     limits: normalizeLimits(value.limits),
     trustedExtensionOrigins: normalizeTrustedExtensionOrigins(value.trustedExtensionOrigins),
@@ -342,6 +352,22 @@ function normalizeMemory(value) {
     // gets learned about you while chat uses anything.
     extractionModel,
   };
+}
+
+function normalizePrivacy(value) {
+  assertPlainObject(value, 'privacy');
+  assertKnownKeys(value, new Set(['outgoingPreview', 'outgoingPreviewTrusted']), 'privacy');
+  const mode = value.outgoingPreview === undefined
+    ? 'ask'
+    : stringValue(value.outgoingPreview, 'privacy.outgoingPreview', { min: 1, max: 20, trim: true });
+  if (!OUTGOING_PREVIEW_MODES.includes(mode)) {
+    fail(`privacy.outgoingPreview must be one of: ${OUTGOING_PREVIEW_MODES.join(', ')}`);
+  }
+  const trusted = value.outgoingPreviewTrusted === undefined ? [] : value.outgoingPreviewTrusted;
+  if (!Array.isArray(trusted)) fail('privacy.outgoingPreviewTrusted must be an array of provider ids');
+  // Only known provider ids can be trusted; a typo must fail, not silently gate nothing.
+  const ids = trusted.map((entry, index) => providerId(entry, `privacy.outgoingPreviewTrusted[${index}]`));
+  return { outgoingPreview: mode, outgoingPreviewTrusted: [...new Set(ids)] };
 }
 
 function normalizeTraining(value) {

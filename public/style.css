@@ -722,6 +722,24 @@ textarea { resize: vertical; line-height: 1.5; }
 .wz-nav { display: flex; justify-content: space-between; gap: 10px; padding: 15px 22px; border-top: 1px solid var(--border); background: var(--sidebar); }
 
 /* Dialogs and toasts */
+/* The customs declaration (ADR-26): what leaves, shown before it leaves. Every part is text, every part expands. */
+.outgoing-dialog { width: min(680px, 94vw); max-height: 90vh; padding: 0; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--surface); color: var(--text); box-shadow: var(--shadow); }.outgoing-dialog::backdrop { background: rgba(0,0,0,.66); backdrop-filter: blur(5px); }
+.outgoing-dialog form { display: flex; flex-direction: column; gap: 12px; max-height: 90vh; padding: 22px; overflow: hidden; }
+.outgoing-dialog h2 { margin: 0; font-size: 17px; }
+.outgoing-summary { margin: 0; color: var(--text-soft); font: 11px var(--mono); }
+.outgoing-parts { display: grid; gap: 6px; min-height: 0; overflow: auto; }
+.outgoing-part { border: 1px solid var(--border); border-radius: 9px; background: var(--bg); }
+.outgoing-part summary { display: flex; justify-content: space-between; gap: 12px; min-height: 36px; padding: 7px 10px; color: var(--text-soft); cursor: pointer; list-style: none; font-size: 11px; font-weight: 650; }
+.outgoing-part summary::-webkit-details-marker { display: none; }
+.outgoing-count { color: var(--muted); font: 10px var(--mono); text-align: right; }
+.outgoing-text { max-height: 14rem; margin: 0; padding: 8px 10px 10px; overflow: auto; border-top: 1px solid var(--border); color: var(--muted); font: 10.5px/1.55 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.outgoing-extraction { margin: 0; color: var(--muted); font-size: 10px; }
+.outgoing-dialog .dialog-actions { grid-template-columns: 1fr auto; }
+.trusted-providers { margin-top: 12px; }.trusted-providers strong { display: block; margin-bottom: 6px; color: var(--text); font-size: 12px; }
+.trusted-list { display: flex; flex-wrap: wrap; gap: 6px; }.trusted-none { color: var(--muted); font-size: 10px; }
+.trusted-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 27px; padding: 3px 4px 3px 10px; border: 1px solid var(--accent-border); border-radius: 999px; background: var(--accent-soft); color: var(--accent-bright); font-size: 10px; font-weight: 650; }
+.trusted-revoke { min-height: 20px; padding: 1px 7px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--text-soft); cursor: pointer; font-size: 9px; }
+.trusted-revoke:hover { border-color: var(--danger); color: var(--danger); }
 .confirm-dialog { width: min(420px, 92vw); padding: 0; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--surface); color: var(--text); box-shadow: var(--shadow); }.confirm-dialog::backdrop { background: rgba(0,0,0,.66); backdrop-filter: blur(5px); }.confirm-dialog form { padding: 24px; text-align: center; }.confirm-icon { width: 46px; height: 46px; display: grid; place-items: center; margin: 0 auto 12px; border-radius: 50%; background: var(--danger-soft); color: var(--danger); }.confirm-dialog h2 { margin: 0; font-size: 18px; }.confirm-dialog p { margin: 7px auto 20px; color: var(--muted); font-size: 11px; }.dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .toast-stack { position: fixed; z-index: 150; right: 18px; bottom: 18px; width: min(360px, calc(100vw - 36px)); display: flex; flex-direction: column; gap: 8px; pointer-events: none; }.toast { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 9px; padding: 11px 13px; border: 1px solid var(--border-strong); border-radius: 11px; background: var(--surface-2); box-shadow: var(--shadow); color: var(--text-soft); font-size: 11px; animation: toast-in 180ms ease both; }.toast::before { content: ""; width: 7px; height: 7px; margin-top: 5px; border-radius: 50%; background: var(--accent); }.toast.success::before { background: var(--local); }.toast.error::before { background: var(--danger); }.toast strong { display: block; color: var(--text); font-size: 11px; }.toast.out { animation: toast-out 160ms ease both; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } } @keyframes toast-out { to { opacity: 0; transform: translateY(6px); } }

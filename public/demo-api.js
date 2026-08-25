@@ -108,6 +108,7 @@
       defaults: { provider: 'ollama', model: 'llama3.1:latest' },
       embeddings: { provider: 'ollama', model: 'nomic-embed-text' },
       memory: { autoExtract: true, extractLocalOnly: true, extractionModel: 'llama3.1:latest' },
+      privacy: { outgoingPreview: 'ask', outgoingPreviewTrusted: [] },
       training: { enabled: false, baseUrl: 'http://127.0.0.1:7331', authToken: '', allowRemote: false, allowInsecurePrivateNetwork: false },
       limits: { historyChars: 24_000, ragChunks: 6, maxTokens: 32_000 },
       trustedExtensionOrigins: [], setupComplete: true,
@@ -124,10 +125,10 @@
     '/api/documents': documents,
     '/api/life': lifeRecords,
     '/api/providers': [
-      { id: 'ollama', label: 'Ollama', enabled: true, configured: true, ok: true, detail: 'Ollama 0.6.6 · 3 models' },
-      { id: 'freetoken', label: 'FreeToken', enabled: true, configured: true, ok: true, detail: 'FreeToken 0.1.2 · serving gemma-4-26B-A4B-it' },
-      { id: 'openai', label: 'OpenAI-compatible', enabled: false, configured: false },
-      { id: 'anthropic', label: 'Anthropic (Claude)', enabled: true, configured: true, ok: true, detail: 'key present' },
+      { id: 'ollama', label: 'Ollama', enabled: true, configured: true, local: true, ok: true, detail: 'Ollama 0.6.6 · 3 models' },
+      { id: 'freetoken', label: 'FreeToken', enabled: true, configured: true, local: true, ok: true, detail: 'FreeToken 0.1.2 · serving gemma-4-26B-A4B-it' },
+      { id: 'openai', label: 'OpenAI-compatible', enabled: false, configured: false, local: false },
+      { id: 'anthropic', label: 'Anthropic (Claude)', enabled: true, configured: true, local: false, ok: true, detail: 'key present' },
     ],
     '/api/models': [{ provider: 'ollama', models: [
       { id: 'llama3.1:latest', label: 'llama3.1:latest', digest: '46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e' },
@@ -258,6 +259,8 @@
       model: 'llama3.1:latest',
       sources: answer.sources,
       memories: answer.memories,
+      // Local provider: nothing left the machine, so there is no receipt.
+      outgoing: null,
     }, 120]];
     for (const w of words) packets.push(['delta', { text: w }, 16]);
     packets.push(['done', {
@@ -266,6 +269,35 @@
       stopReason: 'end_turn',
     }, 60]);
     return new Response(sseStream(packets), { status: 200, headers: { 'content-type': 'text/event-stream' } });
+  }
+
+  /* The customs declaration, as the demo's local default provider sees it:
+     Ollama on localhost, so nothing leaves and the app never has to open the
+     dialog — but the manifest is here, shaped exactly like the server's. */
+  function previewManifest(body) {
+    const answer = ANSWERS.find((a) => a.match.test(body.message || '')) || ANSWERS[ANSWERS.length - 1];
+    const persona = personas.find((p) => p.id === body.personaId) || personas[0];
+    const message = body.message || '';
+    const history = (messages[body.conversationId] || []).map((m) => ({ role: m.role, content: m.content }));
+    const notes = answer.memories.length
+      ? ['Relevant long-term notes the user asked you to remember:\n' + answer.memories.map((m) => `- ${m.content}`).join('\n')]
+      : [];
+    const system = [persona.system_prompt, ...notes].join('\n\n---\n\n');
+    const context = [{ role: 'system', content: system }, ...history, { role: 'user', content: message }];
+    const chars = context.reduce((sum, m) => sum + m.content.length, 0);
+    return {
+      provider: { id: 'ollama', label: 'Ollama', local: true, host: 'localhost:11434' },
+      model: 'llama3.1:latest',
+      parts: {
+        system,
+        memories: answer.memories,
+        sources: answer.sources.map((s) => ({ documentId: s.documentId, title: s.name, excerpt: s.excerpt, score: 0.82, method: 'hybrid' })),
+        history,
+        message,
+      },
+      totals: { chars, bytes: new TextEncoder().encode(JSON.stringify(context)).length, approxTokens: Math.ceil(chars / 4), messages: context.length },
+      extraction: { provider: 'ollama', model: 'llama3.1:latest', local: true },
+    };
   }
 
   const REFUSED = 'Not in the demo — this page has no server behind it. Run the real thing and it works.';
@@ -281,6 +313,7 @@
     try { body = init.body ? JSON.parse(init.body) : {}; } catch { /* not JSON */ }
 
     if (path === '/api/chat' && method === 'POST') return chatResponse(body);
+    if (path === '/api/chat/preview' && method === 'POST') return json(previewManifest(body));
 
     if (method === 'GET') {
       const table = FIXTURES();

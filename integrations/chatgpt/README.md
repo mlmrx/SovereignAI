@@ -2,7 +2,7 @@
 
 Give ChatGPT access to **your** sovereign AI — its memory, knowledge base, and configured models — via a Custom GPT with Actions.
 
-> **Platform constraint:** OpenAI's servers must reach your SovereignAI instance over HTTPS, so you need a public tunnel. SovereignAI's database stays on your machine, but requests and selected context sent through this Action are processed by ChatGPT/OpenAI and your configured model provider. The tunnel is a doorway you control and can close anytime.
+> **Platform constraint:** OpenAI's servers must reach your SovereignAI instance over HTTPS, so you need a public tunnel. SovereignAI's database stays on your machine, but requests and selected context sent through this Action are processed by ChatGPT/OpenAI and your configured model provider. The tunnel is a doorway you control and can close anytime. This is a headless channel: it does not show the customs declaration (the web UI's preview of exactly what leaves before a remote send), so `askSovereign` sends the persona's context without asking.
 
 ## 1. Protect your server
 

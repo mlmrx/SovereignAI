@@ -41,6 +41,11 @@
     },
     {
       "@type": "Question",
+      "name": "Can I see what leaves my machine before it does?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes, and exactly: before any message goes to a remote provider, SovereignAI shows the system prompt, the memories placed in it, the retrieved document excerpts, the prior messages, and your new message, each expandable, with sizes and the destination host. You can send, cancel with nothing sent, or stop asking for that provider and revoke that later. The preview is assembled by the same code as the real request, so it cannot differ from what is sent. Local endpoints never ask because nothing leaves, and every answer from a remote provider carries a receipt of how much left. There is no classifier deciding what counts as sensitive; you see the actual content." }
+    },
+    {
+      "@type": "Question",
       "name": "Is SovereignAI open source?",
       "acceptedAnswer": { "@type": "Answer", "text": "No, and we do not claim to be. The core is fair source under FSL-1.1-MIT. You can read the code, self-host it, fork it, and use it internally without restriction; the only barred use is launching a competing commercial SovereignAI offering. Each release converts to the plain MIT license two years after it ships, so the code outlives the company." }
     },
@@ -140,6 +145,11 @@
     <div class="qa">
       <h3>Does SovereignAI work offline?</h3>
       <p>Yes. With a local model running on your machine, the entire product works with no internet connection: chat, memory, document search, imports, and exports. Keyword search always works offline; semantic search additionally requires a local embedding model.</p>
+    </div>
+
+    <div class="qa">
+      <h3>Can I see what leaves my machine before it does?</h3>
+      <p>Yes, and exactly: before any message goes to a remote provider, SovereignAI shows the system prompt, the memories placed in it, the retrieved document excerpts, the prior messages, and your new message, each expandable, with sizes and the destination host. You can send, cancel with nothing sent, or stop asking for that provider and revoke that later. The preview is assembled by the same code as the real request, so it cannot differ from what is sent. Local endpoints never ask because nothing leaves, and every answer from a remote provider carries a receipt of how much left. There is no classifier deciding what counts as sensitive; you see the actual content.</p>
     </div>
 
     <div class="qa">
