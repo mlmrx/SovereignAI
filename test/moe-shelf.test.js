@@ -9,7 +9,7 @@ import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { MODEL_SHELF, shelfWithFit, sparseCandidates } from '../src/model-shelf.js';
+import { MODEL_SHELF, effectiveEngine, shelfWithFit, sparseCandidates } from '../src/model-shelf.js';
 import { buildModelRecommendation, estimateSparseFit } from '../src/model-recommendation.js';
 import { createGpuProbe, parseNvidiaSmi } from '../src/hardware.js';
 import { createApp } from '../src/server.js';
@@ -20,10 +20,14 @@ const QWEN = 'Qwen/Qwen3.6-35B-A3B';
 const GPT_OSS_20B = 'openai/gpt-oss-20b';
 const GEMMA = 'google/gemma-4-26B-A4B-it';
 const GPT_OSS_120B = 'openai/gpt-oss-120b';
+// The one sparse entry Ollama pulls directly: its base is an Ollama tag, and it overrides the tier's engine.
+const NEMOTRON = 'nemotron-3.5-lightning:30b';
 
 const moeGroup = (shelf) => shelf.roles.find((group) => group.role === 'frontier-moe');
 const byBase = (models) => Object.fromEntries(models.map((model) => [model.base, model]));
 const dense = (shelf) => shelf.roles.filter((group) => group.role !== 'frontier-moe').flatMap((group) => group.models);
+// Works on the raw tier (engine inherited from the group) and on the sized output (engine populated).
+const servedBy = (group, engine) => group.models.filter((model) => effectiveEngine(model, group) === engine);
 
 // ---------------------------------------------------------------- shelf data
 
@@ -37,13 +41,23 @@ test('the frontier MoE tier is last, served by FreeToken, and every entry is an 
     assert.ok(Number.isFinite(model.activeParamsB) && model.activeParamsB > 0, `${model.base}: activeParamsB`);
     assert.ok(model.activeParamsB < model.paramsB, `${model.base}: the active set is a subset of the total`);
     assert.ok(model.license && model.why, `${model.base}: license and why`);
-    assert.equal(model.hf, model.base, `${model.base}: base is the Hugging Face id ft serve takes`);
+    if (effectiveEngine(model, group) === 'freetoken') assert.equal(model.hf, model.base, `${model.base}: base is the Hugging Face id ft serve takes`);
   }
+  // One entry overrides the group's engine: Ollama pulls its GGUF directly, so
+  // its base is an Ollama library tag and its hf pointer is the upstream repo.
+  const nemotron = group.models.find((m) => m.base === NEMOTRON);
+  assert.equal(nemotron.engine, 'ollama');
+  assert.equal(effectiveEngine(nemotron, group), 'ollama', 'the entry’s own engine wins over the group’s');
+  assert.match(nemotron.base, /^[a-z0-9.-]+:[a-z0-9]+$/, 'an Ollama library tag, not a Hugging Face id');
+  assert.equal(nemotron.hf, 'nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16');
+  assert.equal(group.models.indexOf(nemotron), group.models.findIndex((m) => m.base === GPT_OSS_120B) - 1, 'after gemma-4, before gpt-oss-120b');
+  assert.ok(servedBy(group, 'freetoken').length >= 4, 'the FreeToken-served tier keeps its four');
   assert.deepEqual(
     sparseCandidates().map((c) => c.base),
-    group.models.map((m) => m.base),
-    'sparseCandidates mirrors the tier'
+    servedBy(group, 'freetoken').map((m) => m.base),
+    'sparseCandidates mirrors the FreeToken-served entries of the tier'
   );
+  assert.ok(!sparseCandidates().some((c) => c.base === NEMOTRON), 'FreeToken’s model list does not name Nemotron, so ft serve is not claimed for it');
   assert.ok(sparseCandidates().every((c) => Object.keys(c).sort().join() === 'activeParamsB,base,paramsB'));
 });
 
@@ -51,7 +65,7 @@ test('the frontier MoE tier is last, served by FreeToken, and every entry is an 
 
 test('sparse entries size their TOTAL params against RAM, exactly like dense entries', () => {
   const at8 = byBase(moeGroup(shelfWithFit({ totalMemoryBytes: 8 * GB, endpointLocal: true, engines: LOCAL })).models);
-  for (const base of [QWEN, GPT_OSS_20B, GEMMA, GPT_OSS_120B]) assert.equal(at8[base].fit, 'too-big', `${base} at 8 GB`);
+  for (const base of [QWEN, GPT_OSS_20B, GEMMA, NEMOTRON, GPT_OSS_120B]) assert.equal(at8[base].fit, 'too-big', `${base} at 8 GB`);
 
   const at32 = byBase(moeGroup(shelfWithFit({ totalMemoryBytes: 32 * GB, endpointLocal: true, engines: LOCAL })).models);
   assert.equal(at32[QWEN].approxGBAtQ4, 21);
@@ -62,6 +76,11 @@ test('sparse entries size their TOTAL params against RAM, exactly like dense ent
   assert.equal(at32[GEMMA].fit, 'tight');
   assert.equal(at32[GPT_OSS_120B].approxGBAtQ4, 70.2);
   assert.equal(at32[GPT_OSS_120B].fit, 'too-big');
+  assert.equal(at32[NEMOTRON].approxGBAtQ4, 18, '30B total × 0.6 — the whole weight set, since Ollama keeps it resident');
+  assert.equal(at32[NEMOTRON].fit, 'tight', '18 GB against a 19.2 GB budget, over the 14.4 GB comfort line');
+
+  const at48 = byBase(moeGroup(shelfWithFit({ totalMemoryBytes: 48 * GB, endpointLocal: true, engines: LOCAL })).models);
+  assert.equal(at48[NEMOTRON].fit, 'fits', '18 GB against a 28.8 GB budget');
 
   const at128 = byBase(moeGroup(shelfWithFit({ totalMemoryBytes: 128 * GB, endpointLocal: true, engines: LOCAL })).models);
   assert.equal(at128[QWEN].fit, 'fits');
@@ -75,6 +94,10 @@ test('sparse entries carry the active-set numbers; dense entries stay dense', ()
   assert.equal(moe[QWEN].approxActiveGBAtQ4, 1.8);
   assert.equal(moe[QWEN].engine, 'freetoken');
   assert.equal(moe[QWEN].architecture, 'moe');
+  assert.equal(moe[NEMOTRON].activeParamsB, 3);
+  assert.equal(moe[NEMOTRON].approxActiveGBAtQ4, 1.8);
+  assert.equal(moe[NEMOTRON].engine, 'ollama', 'the API row carries the effective engine, not the group’s');
+  assert.equal(moe[NEMOTRON].architecture, 'moe');
   for (const model of dense(shelf)) {
     assert.equal(model.architecture, 'dense');
     assert.equal(model.engine, 'ollama');
@@ -86,14 +109,22 @@ test('sparse entries carry the active-set numbers; dense entries stay dense', ()
 // ---------------------------------------------------------------- locality gate
 
 test('each entry is sized against this machine only when ITS engine is local', () => {
-  const ollamaLocalOnly = shelfWithFit({ totalMemoryBytes: 32 * GB, endpointLocal: true, engines: { freetoken: { enabled: true, local: false } }, gpu: { vramBytes: 8 * GB, name: 'Fake GPU', unifiedMemory: false, source: 'nvidia-smi' } });
-  assert.ok(moeGroup(ollamaLocalOnly).models.every((m) => m.fit === null), 'a remote FreeToken is not sized against this RAM');
-  assert.ok(moeGroup(ollamaLocalOnly).models.every((m) => m.gpuFit === null), 'a remote FreeToken is not sized against this GPU either');
+  const gpu = { vramBytes: 8 * GB, name: 'Fake GPU', unifiedMemory: false, source: 'nvidia-smi' };
+  const ollamaLocalOnly = shelfWithFit({ totalMemoryBytes: 32 * GB, endpointLocal: true, engines: { freetoken: { enabled: true, local: false } }, gpu });
+  assert.ok(servedBy(moeGroup(ollamaLocalOnly), 'freetoken').every((m) => m.fit === null), 'a remote FreeToken is not sized against this RAM');
+  assert.ok(servedBy(moeGroup(ollamaLocalOnly), 'freetoken').every((m) => m.gpuFit === null), 'a remote FreeToken is not sized against this GPU either');
+  const nemotronHome = byBase(moeGroup(ollamaLocalOnly).models)[NEMOTRON];
+  assert.equal(nemotronHome.fit, 'tight', 'the Ollama-served sparse entry follows the Ollama gate, not FreeToken’s');
+  assert.equal(nemotronHome.gpuFit, null, 'and never carries gpuFit, even with a GPU in hand');
   assert.ok(dense(ollamaLocalOnly).every((m) => ['fits', 'tight', 'too-big'].includes(m.fit)), 'dense entries keep the Ollama locality');
 
-  const freetokenLocalOnly = shelfWithFit({ totalMemoryBytes: 32 * GB, endpointLocal: false, engines: { freetoken: { enabled: true, local: true } } });
+  const freetokenLocalOnly = shelfWithFit({ totalMemoryBytes: 32 * GB, endpointLocal: false, engines: { freetoken: { enabled: true, local: true } }, gpu });
   assert.ok(dense(freetokenLocalOnly).every((m) => m.fit === null));
-  assert.ok(moeGroup(freetokenLocalOnly).models.every((m) => ['fits', 'tight', 'too-big'].includes(m.fit)));
+  assert.ok(servedBy(moeGroup(freetokenLocalOnly), 'freetoken').every((m) => ['fits', 'tight', 'too-big'].includes(m.fit)));
+  assert.ok(servedBy(moeGroup(freetokenLocalOnly), 'freetoken').every((m) => ['fits', 'tight', 'too-big'].includes(m.gpuFit)));
+  const nemotronAway = byBase(moeGroup(freetokenLocalOnly).models)[NEMOTRON];
+  assert.equal(nemotronAway.fit, null, 'a remote Ollama means the Ollama-served sparse entry is not sized here, whatever FreeToken is doing');
+  assert.equal(nemotronAway.gpuFit, null);
 
   const noEngines = shelfWithFit({ totalMemoryBytes: 32 * GB, endpointLocal: false });
   assert.ok(moeGroup(noEngines).models.every((m) => m.fit === null), 'unknown engines fall back to endpointLocal');
@@ -108,6 +139,10 @@ test('engineEnabled reflects the engine row: true, false, or null when unknown',
   assert.equal(unknown.engineEnabled, null);
   const ollama = shelfWithFit({ totalMemoryBytes: 32 * GB, endpointLocal: true, engines: { ollama: { enabled: true, local: true } } }).roles[0].models[0];
   assert.equal(ollama.engineEnabled, true, 'Ollama entries read engines.ollama when it is passed');
+  const sparseOllama = byBase(moeGroup(shelfWithFit({ totalMemoryBytes: 32 * GB, endpointLocal: true, engines: { freetoken: { enabled: true, local: true } } })).models)[NEMOTRON];
+  assert.equal(sparseOllama.engineEnabled, null, 'an Ollama-served sparse entry reads engines.ollama, not engines.freetoken');
+  const sparseOllamaOn = byBase(moeGroup(shelfWithFit({ totalMemoryBytes: 32 * GB, endpointLocal: true, engines: { freetoken: { enabled: false, local: true }, ollama: { enabled: true, local: true } } })).models)[NEMOTRON];
+  assert.equal(sparseOllamaOn.engineEnabled, true);
 });
 
 // ---------------------------------------------------------------- GPU fit (active params)
@@ -119,11 +154,13 @@ test('gpuFit sizes the ACTIVE set against 60% of dedicated VRAM, on sparse entri
   assert.equal(moe4[QWEN].gpuFit, 'fits', '1.8 GB active against a 2.4 GB VRAM budget (0.75 × 2.4 = 1.8)');
   assert.equal(moe4[GPT_OSS_20B].gpuFit, 'tight', '2.2 GB');
   assert.equal(moe4[GPT_OSS_120B].gpuFit, 'too-big', '3.1 GB');
+  assert.equal(moe4[NEMOTRON].gpuFit, null, 'Ollama keeps the whole weight set resident: no active-set VRAM rule, even though 1.8 GB would clear it');
   assert.ok(dense(at4).every((m) => m.gpuFit === undefined));
   assert.deepEqual(at4.gpu, { vramGB: 4, name: gpu4.name, unifiedMemory: false, source: 'nvidia-smi' });
 
   const at24 = shelfWithFit({ totalMemoryBytes: 64 * GB, endpointLocal: true, engines: LOCAL, gpu: { ...gpu4, vramBytes: 24 * GB } });
-  assert.ok(moeGroup(at24).models.every((m) => m.gpuFit === 'fits'));
+  assert.ok(servedBy(moeGroup(at24), 'freetoken').every((m) => m.gpuFit === 'fits'));
+  assert.equal(byBase(moeGroup(at24).models)[NEMOTRON].gpuFit, null);
 
   const unknownVram = shelfWithFit({ totalMemoryBytes: 64 * GB, endpointLocal: true, engines: LOCAL, gpu: { vramBytes: null, name: null, unifiedMemory: false, source: null } });
   assert.ok(moeGroup(unknownVram).models.every((m) => m.gpuFit === null));
@@ -333,12 +370,19 @@ test('GET /api/model-shelf and /api/model-recommendation carry the injected GPU 
   assert.deepEqual(shelf.gpu, { vramGB: 8, name: 'Fake GPU', unifiedMemory: false, source: 'nvidia-smi' });
   const group = shelf.roles.at(-1);
   assert.equal(group.role, 'frontier-moe');
-  for (const model of group.models) {
+  for (const model of servedBy(group, 'freetoken')) {
     assert.ok(['fits', 'tight', 'too-big'].includes(model.gpuFit), `${model.base}: gpuFit from the 8 GB fake`);
     assert.equal(model.engineEnabled, false, 'freetoken is absent from this config → not enabled');
     assert.equal(model.engine, 'freetoken');
     assert.ok(Number.isFinite(model.approxActiveGBAtQ4));
   }
+  // The API row's `engine` is the effective one, and Ollama's rules apply to that row.
+  const nemotron = byBase(group.models)[NEMOTRON];
+  assert.equal(nemotron.engine, 'ollama');
+  assert.equal(nemotron.gpuFit, null, 'no active-set VRAM rule under Ollama, GPU or not');
+  assert.equal(nemotron.engineEnabled, null, 'the route passes no Ollama engine row, so enablement is not claimed');
+  assert.ok(['fits', 'tight', 'too-big'].includes(nemotron.fit), 'the default Ollama URL is loopback, so the RAM rule applies');
+  assert.ok(Number.isFinite(nemotron.approxActiveGBAtQ4));
   assert.ok(probes >= 1, 'the injected probe was used');
 
   const recRes = await fetch(`${server.base}/api/model-recommendation`);
@@ -384,9 +428,13 @@ test('a remote FreeToken endpoint is not sized against this machine, even when O
   t.after(() => server.close());
   const shelf = await (await fetch(`${server.base}/api/model-shelf`)).json();
   const group = shelf.roles.at(-1);
-  assert.ok(group.models.every((m) => m.engineEnabled === true));
-  assert.ok(group.models.every((m) => m.fit === null), 'remote engine → fit null');
-  assert.ok(group.models.every((m) => m.gpuFit === null), 'remote engine → gpuFit null despite the injected GPU');
+  const remoteRows = servedBy(group, 'freetoken');
+  assert.ok(remoteRows.every((m) => m.engineEnabled === true));
+  assert.ok(remoteRows.every((m) => m.fit === null), 'remote engine → fit null');
+  assert.ok(remoteRows.every((m) => m.gpuFit === null), 'remote engine → gpuFit null despite the injected GPU');
+  const nemotron = byBase(group.models)[NEMOTRON];
+  assert.ok(['fits', 'tight', 'too-big'].includes(nemotron.fit), 'the Ollama-served sparse entry follows the local Ollama, not the remote FreeToken');
+  assert.equal(nemotron.gpuFit, null);
   assert.ok(shelf.roles[0].models.every((m) => m.fit !== null), 'dense entries still size against local Ollama');
   const rec = await (await fetch(`${server.base}/api/model-recommendation`)).json();
   assert.equal(rec.sparseFit.applies, false);

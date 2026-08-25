@@ -146,7 +146,7 @@ test('the supported-today shelf promotes only what ships: dated, six groups, cav
   const band = html.slice(html.indexOf('id="latest"'), html.indexOf('id="week"'));
   assert.equal((band.match(/class="today-group/g) ?? []).length, 6, 'six groups on the shelf');
   // Every chip names a thing that ships — these are the ones the copy elsewhere also claims.
-  for (const chip of ['Ollama', 'FreeToken', 'Claude', 'gpt-oss-120b', 'Qwen3.6-35B-A3B', 'Gemma 4 26B-A4B', 'gpt-oss-20b',
+  for (const chip of ['Ollama', 'FreeToken', 'Claude', 'gpt-oss-120b', 'Qwen3.6-35B-A3B', 'Gemma 4 26B-A4B', 'gpt-oss-20b', 'Nemotron 3.5 Lightning', 'Qwen3.8-27B',
     'ChatGPT export', 'Claude export', 'Your inbox', 'MCP', 'VS Code', 'JetBrains', 'Browser extension', 'ChatGPT Custom GPT',
     'Docker', 'Single binary', 'Any box over SSH', 'Provenance on every memory', 'Verified export', 'Reasoning shown live']) {
     assert.ok(band.includes(`<b>${chip}`), `the shelf must carry ${chip}`);

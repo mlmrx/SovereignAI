@@ -677,10 +677,11 @@
                   <label class="span-2">Base model<input id="model-base" maxlength="2048" list="ollama-model-options" autocomplete="off" placeholder="e.g. llama3.1:latest or hf.co/owner/repo:Q4_K_M" required /></label>
                   <datalist id="ollama-model-options"></datalist>
                   <details class="model-advanced model-shelf span-2">
-                    <summary><span><strong>Starter shelf: curated small models by job</strong><small>Dated picks with licenses and fit for this machine — chat, cognition, reasoning, coding, embeddings — plus a frontier MoE tier served by FreeToken</small></span><svg class="icon"><use href="#i-chevron"/></svg></summary>
+                    <summary><span><strong>Starter shelf: curated small models by job</strong><small>Dated picks with licenses and fit for this machine — chat, cognition, reasoning, coding, embeddings — plus a frontier MoE tier served by FreeToken — or, for one entry, pulled straight into Ollama</small></span><svg class="icon"><use href="#i-chevron"/></svg></summary>
                     <div class="model-advanced-body">
                       <div id="model-shelf-body" aria-live="polite"><p class="model-studio-status">Loading the shelf…</p></div>
                       <p id="model-shelf-note" class="model-studio-status"></p>
+                      <p class="model-studio-status">Sized here by rule of thumb — about 0.6 GB per billion parameters at Q4, using 60% of your RAM. For measured numbers, two independent references: <a href="https://local.ai/" target="_blank" rel="noopener">local.ai</a> (benchmarks produced by Exo Labs) and <a href="https://pipette.liquid.ai/" target="_blank" rel="noopener">Pipette</a> (Liquid AI × Artificial Analysis). We have no relationship with either.</p>
                     </div>
                   </details>
                   <details class="model-advanced model-hf-browse span-2">

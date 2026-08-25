@@ -65,10 +65,12 @@ chose). Removing the container and volume removes every trace of the trial.
   with the user's own key; a rented GPU running vLLM via `byoc gpu serve`
   (preview: tested against provider APIs, not yet on a live bill).
 - Starter shelf: gpt-oss-20b, gpt-oss-120b, Qwen3.6-35B-A3B, Gemma 4 26B-A4B
-  (sparse, via FreeToken); Qwen3 4B/8B, Gemma 3 4B/12B, Llama 3.2 1B/3B,
-  DeepSeek-R1 7B distill, Phi-4 mini, Qwen2.5-Coder 1.5B/7B, LFM2 1.2B,
-  nomic-embed-text, bge-m3, moondream (vision, experimental); any Hugging
-  Face GGUF, with its license shown before choosing.
+  (sparse, via FreeToken); Nemotron 3.5 Lightning 30B-A3B (sparse, pulled
+  directly by Ollama); Qwen3.8-27B (dense, vision, 262K context), Qwen3
+  4B/8B, Gemma 3 4B/12B, Llama 3.2 1B/3B, DeepSeek-R1 7B distill, Phi-4
+  mini, Qwen2.5-Coder 1.5B/7B, LFM2.5 2.6B, nomic-embed-text, bge-m3,
+  moondream (vision, experimental); any Hugging Face GGUF, with its license
+  shown before choosing.
 - Imports: ChatGPT and Claude official exports; Gemini Takeout (experimental);
   a documented generic JSON for any other assistant; email archives (mbox);
   PDF, DOCX, Markdown, text — all parsed locally.

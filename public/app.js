@@ -2074,13 +2074,17 @@ async function loadModelShelf() {
           const fit = model.fit ? FIT[model.fit] : null;
           const engine = model.engine || 'ollama';
           const sparse = model.architecture === 'moe';
-          const action = engine === 'freetoken' ? 'Use as default model' : group.role === 'memory-cognition' ? 'Use for cognition' : group.role === 'embeddings' ? 'Use for search' : 'Use as base';
-          // Sparse entries: total params live in RAM, the active set hits the GPU — say both numbers.
+          // A sparse entry is a default-model pick on whichever engine serves it — never a recipe base.
+          const action = sparse || engine === 'freetoken' ? 'Use as default model' : group.role === 'memory-cognition' ? 'Use for cognition' : group.role === 'embeddings' ? 'Use for search' : 'Use as base';
+          // Sparse entries: total params live in RAM. Under FreeToken the active set hits the GPU, so say
+          // both numbers; under Ollama the whole weight set stays resident, so RAM is the only number.
           const size = sparse
-            ? `${escapeHtml(String(model.paramsB))}B total · ${escapeHtml(String(model.activeParamsB))}B active · ~${escapeHtml(String(model.approxGBAtQ4))} GB RAM · ~${escapeHtml(String(model.approxActiveGBAtQ4))} GB VRAM`
+            ? `${escapeHtml(String(model.paramsB))}B total · ${escapeHtml(String(model.activeParamsB))}B active · ~${escapeHtml(String(model.approxGBAtQ4))} GB RAM${engine === 'freetoken' ? ` · ~${escapeHtml(String(model.approxActiveGBAtQ4))} GB VRAM` : ' at Q4'}`
             : `${escapeHtml(String(model.paramsB))}B · ~${escapeHtml(String(model.approxGBAtQ4))} GB at Q4`;
           const gpuFit = sparse && model.gpuFit && GPU_FIT[model.gpuFit] ? GPU_FIT[model.gpuFit] : null;
-          const enginePill = engine === 'freetoken' ? shelfEnginePill() : null;
+          // The pill names the engine that serves THIS entry (the API's per-entry `engine`):
+          // FreeToken for most of the tier, Ollama where it pulls the GGUF directly.
+          const enginePill = sparse || engine === 'freetoken' ? shelfEnginePill(engine) : null;
           const pills = [
             fit ? pill('shelf-fit', fit) : '',
             gpuFit ? pill('shelf-fit', gpuFit) : '',
@@ -2101,12 +2105,14 @@ async function loadModelShelf() {
   }
 }
 
-/** The FreeToken engine's live status, from the last /api/providers check, as a pill. */
-function shelfEnginePill() {
-  const row = state.providers.find((provider) => provider.id === 'freetoken');
-  if (row?.ok === true) return { label: 'FreeToken ready', tone: 'ok', title: row.detail || '' };
-  if (row && (row.enabled || row.configured)) return { label: 'FreeToken unavailable', tone: 'bad', title: row.detail || '' };
-  return { label: 'needs FreeToken', tone: 'warn', title: 'Enable FreeToken in Settings → Providers' };
+/** An engine's live status, from the last /api/providers check, as a pill — FreeToken or Ollama, per shelf entry. */
+const SHELF_ENGINE_LABELS = { freetoken: 'FreeToken', ollama: 'Ollama' };
+function shelfEnginePill(engine = 'freetoken') {
+  const name = SHELF_ENGINE_LABELS[engine] || engine;
+  const row = state.providers.find((provider) => provider.id === engine);
+  if (row?.ok === true) return { label: `${name} ready`, tone: 'ok', title: row.detail || '' };
+  if (row && (row.enabled || row.configured)) return { label: `${name} unavailable`, tone: 'bad', title: row.detail || '' };
+  return { label: `needs ${name}`, tone: 'warn', title: `Enable ${name} in Settings → Providers` };
 }
 
 /** Re-render an already-open shelf so the engine pill tracks provider status. */
@@ -2139,6 +2145,20 @@ async function applyShelfModel(role, base, { engine = 'ollama', hf = base } = {}
             : `Default model set to ${base}. Enable FreeToken in Settings → Providers and serve it with: ft serve --model ${hf}`,
         { type: 'success' }
       );
+      return;
+    }
+    if (role === 'frontier-moe') {
+      // A sparse model Ollama pulls directly is still a default-model pick, not
+      // a recipe base: it becomes the default model on the engine that serves it.
+      const updated = await api.send('PUT', '/api/config', { defaults: { provider: engine, model: base } });
+      state.config = updated;
+      $('#cfg-default-provider').value = engine;
+      $('#cfg-default-model').value = base;
+      refreshModelOptions().catch(() => {});
+      updateRuntimeUI();
+      renderDashboard();
+      const name = SHELF_ENGINE_LABELS[engine] || engine;
+      toast(`Default model set to ${base} on ${name}.${engine === 'ollama' ? ` Pull it first: ollama pull ${base}` : ''}`, { type: 'success' });
       return;
     }
     if (role === 'memory-cognition') {

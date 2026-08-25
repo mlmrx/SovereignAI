@@ -41,6 +41,29 @@ test('shelfWithFit sizes against RAM and says nothing when it cannot know', () =
   assert.ok(remote.roles.flatMap((g) => g.models).every((model) => model.fit === null), 'remote endpoints must not be sized against this machine');
 });
 
+test('Qwen3.8-27B leads the reasoning group and is sized honestly: tight at 32 GB, comfortable at 48', () => {
+  const reasoning = MODEL_SHELF.find((group) => group.role === 'reasoning');
+  assert.equal(reasoning.models[0].base, 'qwen3.8:27b');
+  assert.equal(reasoning.models[0].hf, 'Qwen/Qwen3.8-27B');
+  assert.equal(reasoning.models[0].license, 'Apache-2.0');
+  const pick = (gb) => shelfWithFit({ totalMemoryBytes: gb * 1024 ** 3, endpointLocal: true }).roles.find((group) => group.role === 'reasoning').models[0];
+  assert.equal(pick(32).approxGBAtQ4, 16.2);
+  assert.equal(pick(32).fit, 'tight', '16.2 GB against a 19.2 GB budget, over the 14.4 GB comfort line');
+  assert.equal(pick(48).fit, 'fits', '16.2 GB against a 28.8 GB budget');
+  assert.equal(pick(16).fit, 'too-big');
+  assert.equal(pick(32).engine, 'ollama');
+  assert.equal(pick(32).gpuFit, undefined, 'dense: no active-set rule');
+});
+
+test('the cognition shelf points at the official LFM2.5 GGUF repo in the hf.co/ form Ollama pulls', () => {
+  const cognition = MODEL_SHELF.find((group) => group.role === 'memory-cognition');
+  const lfm = cognition.models.find((model) => model.base.startsWith('hf.co/LiquidAI/'));
+  assert.equal(lfm.base, 'hf.co/LiquidAI/LFM2.5-2.6B-GGUF');
+  assert.equal(lfm.hf, 'LiquidAI/LFM2.5-2.6B-GGUF');
+  assert.match(lfm.license, /LFM Open License v1\.0/);
+  assert.match(lfm.license, /read it/i, 'a custom license says so on the shelf');
+});
+
 test('GET /api/model-shelf serves the sized shelf', async (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sovereign-shelf-'));
   fs.writeFileSync(path.join(dir, 'sovereign.config.json'), JSON.stringify({ embeddings: { provider: 'ollama', model: '' }, providers: { ollama: { enabled: false } } }));

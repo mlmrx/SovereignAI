@@ -45,7 +45,7 @@ export const MODEL_SHELF = [
     models: [
       { base: 'qwen3:4b', hf: 'Qwen/Qwen3-4B', paramsB: 4, license: 'Apache-2.0', why: 'Follows the extraction format reliably; cheap enough to run per exchange.' },
       { base: 'llama3.2:1b', hf: 'meta-llama/Llama-3.2-1B-Instruct', paramsB: 1, license: 'Llama Community License (Meta)', why: 'Runs on anything; good enough for fact extraction on modest machines.' },
-      { base: 'hf.co/LiquidAI/LFM2-1.2B-GGUF', hf: 'LiquidAI/LFM2-1.2B-GGUF', paramsB: 1.2, license: 'LFM Open License (custom — read it)', why: 'Liquid AI’s edge-first architecture: unusually fast on CPU for its quality.' },
+      { base: 'hf.co/LiquidAI/LFM2.5-2.6B-GGUF', hf: 'LiquidAI/LFM2.5-2.6B-GGUF', paramsB: 2.6, license: 'LFM Open License v1.0 (custom — commercial use only under US$10M annual revenue; read it)', why: 'Liquid AI’s hybrid on-device architecture with a 131K context; its card cites ~113 tokens/s on a Ryzen CPU in about 2.5 GB.' },
     ],
   },
   {
@@ -53,6 +53,7 @@ export const MODEL_SHELF = [
     label: 'Reasoning & analysis',
     job: 'Multi-step thinking on your own hardware: plans, math, tricky questions.',
     models: [
+      { base: 'qwen3.8:27b', hf: 'Qwen/Qwen3.8-27B', paramsB: 27, license: 'Apache-2.0', why: 'The strongest open dense model a 32 GB machine can run at Q4 (tight there, comfortable from 48): thinking mode, image and video input, 262K native context. The model Perplexity’s Portable Computer runs locally at launch.' },
       { base: 'deepseek-r1:7b', hf: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B', paramsB: 7, license: 'MIT', why: 'Frontier reasoning distilled into a laptop-sized model.' },
       { base: 'phi4-mini', hf: 'microsoft/Phi-4-mini-instruct', paramsB: 3.8, license: 'MIT', why: 'Punches far above its size on structured reasoning; MIT weights.' },
     ],
@@ -84,30 +85,48 @@ export const MODEL_SHELF = [
       { base: 'gemma3:12b', hf: 'google/gemma-3-12b-it', paramsB: 12, license: 'Gemma Terms of Use (Google — use restrictions apply)', why: 'Multimodal chat with real quality, if you have the RAM.' },
     ],
   },
-  // Sparse mixture-of-experts models served by FreeToken rather than Ollama.
-  // `paramsB` stays the TOTAL parameter count — that is what has to live in
-  // host RAM — and `activeParamsB` is the per-token active set that actually
-  // hits the GPU — both as stated on each model card (Aug 2026). `base` is the Hugging Face id, which is what
-  // `ft serve --model` takes. Keep this group LAST: the shelf's dense
+  // Sparse mixture-of-experts models, served by FreeToken rather than Ollama
+  // unless an entry says otherwise. `paramsB` stays the TOTAL parameter count
+  // — that is what has to live in host RAM — and `activeParamsB` is the
+  // per-token active set that actually hits the GPU — both as stated on each
+  // model card (Aug 2026). For a FreeToken entry `base` is the Hugging Face
+  // id, which is what `ft serve --model` takes. An entry carrying
+  // `engine: 'ollama'` ships as GGUF and Ollama pulls it directly: its `base`
+  // is the Ollama tag, it is sized by the Ollama locality gate, and it gets no
+  // `gpuFit` — Ollama keeps the whole weight set resident, so the total-params
+  // RAM rule is the only honest number. Keep this group LAST: the shelf's dense
   // ordering (and its tests) assume the first big entry is a dense one.
   {
     role: 'frontier-moe',
     label: 'Frontier-class, locally (sparse MoE)',
     engine: 'freetoken',
-    job: 'Big sparse models on one gaming GPU plus host RAM: the experts live in RAM and only the few active per token hit the GPU. Served by FreeToken, not Ollama — pick one as your default model rather than as a recipe base.',
+    job: 'Big sparse models on one gaming GPU plus host RAM: the experts live in RAM and only the few active per token hit the GPU. Served by FreeToken (one entry ships as GGUF and Ollama pulls it directly) — pick one as your default model rather than as a recipe base.',
     models: [
       { base: 'Qwen/Qwen3.6-35B-A3B', hf: 'Qwen/Qwen3.6-35B-A3B', paramsB: 35, activeParamsB: 3, architecture: 'moe', license: 'Apache-2.0', why: 'The model FreeToken was built around: 35B of knowledge, about 3B active per token — comfortable from 48 GB of RAM, borderline at 32.' },
       { base: 'openai/gpt-oss-20b', hf: 'openai/gpt-oss-20b', paramsB: 21, activeParamsB: 3.6, architecture: 'moe', license: 'Apache-2.0', why: 'OpenAI’s open-weight reasoning model in its native MXFP4 — about 13 GB on disk, with real chain-of-thought.' },
       { base: 'google/gemma-4-26B-A4B-it', hf: 'google/gemma-4-26B-A4B-it', paramsB: 25.2, activeParamsB: 3.8, architecture: 'moe', license: 'Apache-2.0', why: 'Google’s sparse Gemma 4: strong multilingual chat; multimodal upstream, served text-only here.' },
+      { base: 'nemotron-3.5-lightning:30b', hf: 'nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16', paramsB: 30, activeParamsB: 3, architecture: 'moe', engine: 'ollama', license: 'OpenMDW-1.1 (commercial use allowed)', why: 'NVIDIA’s sparse hybrid (Mamba-2, attention, and MoE layers): 30B of experts, 3B active per token, a 1M context — the first frontier-tier sparse model Ollama pulls directly. About 18 GB at Q4 by our rule, so 32 GB of RAM is tight and 48 comfortable.' },
       { base: 'openai/gpt-oss-120b', hf: 'openai/gpt-oss-120b', paramsB: 117, activeParamsB: 5.1, architecture: 'moe', license: 'Apache-2.0', why: 'Near-frontier reasoning on a single desktop GPU — its experts are ~70 GB at Q4, and every one of them must live in host RAM.' },
     ],
   },
 ];
 
-/** The sparse candidates the recommendation sizes against: { base, paramsB, activeParamsB }. */
+/** The engine that serves an entry: its own override, else its group's, else Ollama. */
+export function effectiveEngine(model, group) {
+  return model.engine ?? group.engine ?? 'ollama';
+}
+
+/**
+ * The sparse candidates the FreeToken recommendation sizes against:
+ * { base, paramsB, activeParamsB }. Only the tier's FreeToken-served entries
+ * qualify — an Ollama-served sparse entry is not on FreeToken's model list,
+ * so `ft serve` is not a claim we make for it.
+ */
 export function sparseCandidates() {
   const group = MODEL_SHELF.find((entry) => entry.role === 'frontier-moe');
-  return group ? group.models.map(({ base, paramsB, activeParamsB }) => ({ base, paramsB, activeParamsB })) : [];
+  return group
+    ? group.models.filter((model) => effectiveEngine(model, group) === 'freetoken').map(({ base, paramsB, activeParamsB }) => ({ base, paramsB, activeParamsB }))
+    : [];
 }
 
 function round1(value) {
@@ -139,7 +158,9 @@ function fitWithin(needGB, budgetGB) {
  *
  * `fit` is always computed on TOTAL params against RAM — for a sparse model
  * that is the honest number, because FreeToken keeps every expert in host
- * memory. `gpuFit` (sparse entries only) sizes the active set against VRAM.
+ * memory. `gpuFit` (FreeToken-served sparse entries only) sizes the active
+ * set against VRAM; a sparse entry Ollama serves gets `gpuFit: null`, since
+ * Ollama does not split experts between RAM and the GPU that way.
  */
 export function shelfWithFit({ totalMemoryBytes, endpointLocal, engines = {}, gpu = null }) {
   const totalGB = Number.isFinite(totalMemoryBytes) && totalMemoryBytes > 0 ? totalMemoryBytes / 1024 ** 3 : null;
@@ -160,7 +181,7 @@ export function shelfWithFit({ totalMemoryBytes, endpointLocal, engines = {}, gp
       ...group,
       models: group.models.map((model) => {
         const architecture = model.architecture ?? 'dense';
-        const engine = model.engine ?? group.engine ?? 'ollama';
+        const engine = effectiveEngine(model, group);
         const engineInfo = engines[engine];
         const local = engine === 'ollama' ? Boolean(endpointLocal) : (engineInfo?.local ?? Boolean(endpointLocal));
         const needGB = round1(model.paramsB * Q4_GB_PER_B);
@@ -171,7 +192,8 @@ export function shelfWithFit({ totalMemoryBytes, endpointLocal, engines = {}, gp
           sized.activeParamsB = model.activeParamsB;
           sized.approxActiveGBAtQ4 = activeGB;
           // Same locality gate as `fit`: a remote engine's active set is not this GPU's problem.
-          sized.gpuFit = vramBudgetGB !== null && local ? fitWithin(activeGB, vramBudgetGB) : null;
+          // Only FreeToken streams the active set to the GPU; under Ollama the rule is RAM alone.
+          sized.gpuFit = engine === 'freetoken' && vramBudgetGB !== null && local ? fitWithin(activeGB, vramBudgetGB) : null;
         }
         return sized;
       }),
