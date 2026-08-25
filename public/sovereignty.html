@@ -117,14 +117,14 @@
           <tr>
             <td><strong>The model</strong></td>
             <td class="s-stop">Borrowed</td>
-            <td>Where inference runs, which model, per persona — local Ollama, FreeToken for frontier-class sparse MoE models on the GPU you own, any OpenAI-compatible server, or your own API key. A model's chain-of-thought is shown live and never stored.</td>
+            <td>Where inference runs, which model, per persona — local Ollama, FreeToken for frontier-class sparse MoE models on the GPU you own, any OpenAI-compatible server, or your own API key. A model's chain-of-thought is shown live and never stored. Before any remote call, exactly what would leave — prompt, memories, excerpts, history — is shown, and every remote answer carries a receipt of how much left and to which host.</td>
             <td>The weights are someone else's artifact — trained on unknown data with unknown priors, unauditable in practice. Ollama is a de-facto dependency with its own registry; FreeToken is weeks old, NVIDIA-only, and has no request auth (keep it on loopback).</td>
             <td>Models are swappable per persona in minutes; recipes and fine-tuning lineage are portable data.</td>
           </tr>
           <tr>
             <td><strong>Cognition</strong><br><span style="color:var(--dim);font-size:0.86em">who writes your memory</span></td>
             <td class="s-warn">Conditional</td>
-            <td>Machine-written memories name their authoring model. A "cognition stays home" switch restricts memory-writing to local endpoints even when chat uses a remote provider.</td>
+            <td>Machine-written memories name their authoring model. A "cognition stays home" switch restricts memory-writing to local endpoints even when chat uses a remote provider. What a remote model would read is shown before it leaves, and that declaration names the model that would write memory afterwards.</td>
             <td>With the switch off and a remote provider, a third party's model is the lens deciding what is durable about you — disclosed at the point of use.</td>
             <td>Turn the switch on, or delete any machine-written memory — the ledger shows exactly which those are.</td>
           </tr>
