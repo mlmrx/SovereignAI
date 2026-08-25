@@ -76,6 +76,11 @@
     },
     {
       "@type": "Question",
+      "name": "How is this different from Perplexity's Portable Computer?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Portable Computer runs Perplexity's agent on your own NVIDIA GPU (24 GB of VRAM or more, Linux first) and asks before sending a step to a cloud model — an instinct we share. It still needs a Perplexity subscription and account, its connectors hold your Gmail, Drive and GitHub credentials, and it does not say where your memory lives, how you export it, or whether you can read the code. SovereignAI needs no account, holds no credentials, runs on the laptop you already have (small models anywhere, frontier-class sparse models on a 4 to 8 GB GPU plus RAM through FreeToken), records where every memory came from, shows exactly what leaves before any remote call, and exports everything into a documented, checksummed file. They are also different jobs: theirs is an agent harness for tasks; ours is the memory, knowledge, and exit you own underneath whatever you run." }
+    },
+    {
+      "@type": "Question",
       "name": "What are SovereignAI's limitations?",
       "acceptedAnswer": { "@type": "Answer", "text": "The database is not encrypted at rest, so the honest answer today is operating-system full-disk encryption. The model layer is borrowed: even open weights are a third party's artifact trained on data nobody can audit. Rented GPU compute is tenancy rather than ownership, and those trade-offs are printed before you provision. A full layer-by-layer self-audit is published as the Sovereignty Ledger." }
     },
@@ -107,6 +112,7 @@
       <a href="/playground">What</a>
       <a href="/command-center">How</a>
       <a href="/sovereignty">Ledger</a>
+      <a href="/blog">Blog</a>
       <span class="shell-theme" data-theme-mount></span>
       <a class="shell-cta" href="/#install">Run it</a>
     </nav>
@@ -172,6 +178,11 @@
     </div>
 
     <div class="qa">
+      <h3>How is this different from Perplexity's Portable Computer?</h3>
+      <p>Portable Computer runs Perplexity's agent on your own NVIDIA GPU (24 GB of VRAM or more, Linux first) and asks before sending a step to a cloud model — an instinct we share. It still needs a Perplexity subscription and account, its connectors hold your Gmail, Drive and GitHub credentials, and it does not say where your memory lives, how you export it, or whether you can read the code. SovereignAI needs no account, holds no credentials, runs on the laptop you already have (small models anywhere, frontier-class sparse models on a 4 to 8 GB GPU plus RAM through FreeToken), records where every memory came from, shows exactly what leaves before any remote call, and exports everything into a documented, checksummed file. They are also different jobs: theirs is an agent harness for tasks; ours is the memory, knowledge, and exit you own underneath whatever you run.</p>
+    </div>
+
+    <div class="qa">
       <h3>What are SovereignAI's limitations?</h3>
       <p>The database is not encrypted at rest, so the honest answer today is operating-system full-disk encryption. The model layer is borrowed: even open weights are a third party's artifact trained on data nobody can audit. Rented GPU compute is tenancy rather than ownership, and those trade-offs are printed before you provision. A full layer-by-layer self-audit is published as the <a href="/sovereignty">Sovereignty Ledger</a>.</p>
     </div>
@@ -206,6 +217,7 @@
       <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
       <a href="/why">The thesis</a>
       <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/blog">Blog</a>
       <a href="/faq">FAQ</a>
       <a href="/#install">Run the trial</a>
       <a href="/#access">Request access</a>

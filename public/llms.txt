@@ -120,6 +120,14 @@ Knowledge Atlas (/knowledge-atlas), and the Sovereign Path guide (/guide). The
 interface files are the same ones a live install serves; only the data is
 staged, and each page says so with a visible demo badge.
 
+## Blog
+
+- [Local is solved. Ownership isn't.](https://mysovereign.ai/blog/local-is-solved-ownership-is-not)
+  (August 25, 2026): what one week of local-first releases — Perplexity's
+  Portable Computer, FreeToken, Qwen3.8-27B, Nemotron 3.5 Lightning, local.ai,
+  Pipette — means for sovereign AI, and what none of them say about who owns
+  the result. Index: https://mysovereign.ai/blog
+
 ## Docs
 
 - [What is sovereign AI?](https://mysovereign.ai/what-is-sovereign-ai): both

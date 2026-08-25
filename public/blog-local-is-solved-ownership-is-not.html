@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Local is solved. Ownership isn't.</title>
+<meta name="description" content="In one August week, Perplexity and NVIDIA shipped a local-first agent, Berkeley shipped an engine that runs 120B-class models on a gaming GPU, and two benchmark sites launched to help you choose. What the week means for sovereign AI — and what none of it says about who owns the result." />
+<link rel="canonical" href="https://mysovereign.ai/blog/local-is-solved-ownership-is-not" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Local is solved. Ownership isn't." />
+<meta property="og:description" content="Perplexity's Portable Computer, FreeToken, Qwen3.8, Nemotron 3.5, local.ai, Pipette — one week of local-first AI, read through the three questions a sovereign product has to answer." />
+<meta property="og:url" content="https://mysovereign.ai/blog/local-is-solved-ownership-is-not" />
+<meta property="og:site_name" content="SovereignAI" />
+<meta property="article:published_time" content="2026-08-25" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Local is solved. Ownership isn't." />
+<meta name="twitter:description" content="One week of local-first AI releases, read through the three questions a sovereign product has to answer." />
+<link rel="stylesheet" href="/doc.css" />
+<link rel="stylesheet" href="/shell.css" />
+<script src="/shell.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Local is solved. Ownership isn't.",
+  "description": "What one week of local-first AI releases — Perplexity's Portable Computer, FreeToken, Qwen3.8-27B, Nemotron 3.5 Lightning, local.ai and Pipette — means for sovereign AI, and what none of them say about who owns the result.",
+  "datePublished": "2026-08-25",
+  "dateModified": "2026-08-25",
+  "inLanguage": "en",
+  "mainEntityOfPage": "https://mysovereign.ai/blog/local-is-solved-ownership-is-not",
+  "isPartOf": { "@type": "Blog", "name": "The SovereignAI blog", "url": "https://mysovereign.ai/blog" },
+  "author": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "publisher": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "keywords": "local-first AI, sovereign AI, private AI, Perplexity Portable Computer, FreeToken, Qwen3.8, Nemotron 3.5 Lightning, local.ai, Pipette"
+}
+</script>
+<style>
+  .byline { font-size: 0.82rem; color: var(--dim); margin: -6px 0 26px; letter-spacing: 0.02em; }
+  .byline a { color: inherit; }
+  .week { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 10px; }
+  .week li { border: 1px solid var(--rule); border-radius: 6px; padding: 12px 16px; background: var(--sheet); }
+  .week b { display: block; margin-bottom: 2px; }
+  .week small { color: var(--dim); }
+  .three { counter-reset: q; list-style: none; padding: 0; margin: 0 0 8px; }
+  .three li { counter-increment: q; position: relative; padding-left: 34px; margin: 0 0 10px; }
+  .three li::before { content: counter(q); position: absolute; left: 0; top: 1px; width: 24px; height: 24px; border-radius: 50%; background: var(--terra); color: #fff; font-size: 0.78rem; font-weight: 700; display: grid; place-items: center; }
+  .sources { font-size: 0.82rem; color: var(--dim); }
+  .sources li { margin-bottom: 4px; }
+  .sources a { color: inherit; }
+  .limits { border-left: 3px solid var(--terra); padding: 4px 0 4px 16px; margin: 18px 0; }
+</style>
+</head>
+<body>
+
+<header class="shell-bar">
+  <div class="shell-in">
+    <a class="shell-brand" href="/">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+      SovereignAI
+    </a>
+    <nav class="shell-links">
+      <a href="/">Home</a>
+      <a href="/watch">Why</a>
+      <a href="/playground">What</a>
+      <a href="/command-center">How</a>
+      <a href="/sovereignty">Ledger</a>
+      <a href="/blog">Blog</a>
+      <span class="shell-theme" data-theme-mount></span>
+      <a class="shell-cta" href="/#install">Run it</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <article class="wrap">
+    <p class="eyebrow"><a href="/blog" style="color:inherit;text-decoration:none">Blog</a> · August 25, 2026</p>
+    <h1 class="serif">Local is solved. Ownership isn't.</h1>
+    <p class="lede">In one August week, Perplexity and NVIDIA shipped a local-first agent, a Berkeley lab shipped an engine that runs 120B-class models on a gaming GPU, two of the best open models of the year dropped their weights, and two benchmark sites launched to help you choose between all of it. Here is what that week means — and what none of it says.</p>
+    <p class="byline">By the SovereignAI team at Unify Dynamics · about nine minutes · every claim below links to its source at the end</p>
+
+    <h2 class="serif">The week, in six releases</h2>
+    <ul class="week">
+      <li><b>FreeToken</b> <small>FlashML, UC Berkeley · Apache-2.0 · weeks old</small><br>An edge engine that keeps a sparse model's experts in host RAM and streams only the active set to the GPU — so 20B to 120B-total mixture-of-experts models run on one consumer NVIDIA card plus the memory already in your box.</li>
+      <li><b>Nemotron 3.5 Lightning 30B-A3B</b> <small>NVIDIA · August 11 · OpenMDW-1.1, commercial use allowed</small><br>Thirty billion parameters of experts, three billion active per token, a hybrid Mamba-2/attention design, and GGUF builds that Ollama pulls directly.</li>
+      <li><b>Qwen3.8-27B</b> <small>Alibaba · weights August 14 · Apache-2.0</small><br>A dense 27B model with a 262K-token context, image and video understanding, and a thinking mode. At four-bit it is about 16 GB — it fits a 32 GB machine.</li>
+      <li><b>Pipette</b> <small>Liquid AI × Artificial Analysis · August 24 · Apache-2.0 clients</small><br>Benchmarks speed, latency and peak memory on <em>your</em> device (phones included) and scores quality separately in the cloud.</li>
+      <li><b>local.ai</b> <small>data by Exo Labs · new this month</small><br>An independent leaderboard for local setups: an "intelligence" index, measured tokens per second at a cold 32K context, energy, and a value index — across ten machines from $2,700 to $15,500.</li>
+      <li><b>Portable Computer</b> <small>Perplexity with NVIDIA · August 25</small><br>Perplexity's agent harness brought fully on-device: Linux first, Windows in September, an NVIDIA GPU with at least 24 GB of VRAM, Qwen3.8-27B or Perplexity's own post-trained "PPLX 27B", and — the part everyone quoted — every task starts locally, and the system <em>asks</em> before sending a single step to a frontier model in the cloud, showing you what would go.</li>
+    </ul>
+
+    <h2 class="serif">What they all agree on</h2>
+    <p>Inference has come home. Not "will come home" — the model that runs on the machine under your desk is now good enough for most of the work people actually do, and the economics have flipped: a token you generate locally costs nothing at the margin. Perplexity's own numbers make the case better than we could. On their coding benchmark the local model alone scores 59.6% for free; letting a frontier model advise on the hard steps lifts that to 73.0% at about 42 cents a task; the frontier model alone scores 82.4% at 65 cents. The gap is real, but so is the price, and the price is now something you choose per step rather than per subscription.</p>
+    <p>That is the tell. When a company whose business is an answer engine <em>in the cloud</em> ships a product where the cloud is the exception you approve, the argument about where computation should run is over. The cloud has become what it should have been all along: a specialist you consult, not a landlord you rent from.</p>
+    <p>The benchmark sites are the other half of the same signal. local.ai's tagline is the most honest sentence written about this market this year: <em>"Running AI locally is easy now. Choosing what to run is not."</em> When the hard problem moves from <em>can I</em> to <em>which one</em>, a category has matured.</p>
+
+    <h2 class="serif">What none of them say</h2>
+    <p>"Local" describes where a computation runs. "Sovereign" describes who holds the result. Those are different words because they are different things, and the week's announcements are eloquent about the first and silent about the second.</p>
+    <p>We keep a <a href="/sovereignty">public ledger</a> of our own product's claims, and we propose the same three questions for any product that calls itself private:</p>
+    <ol class="three">
+      <li><strong>Can I read every line that runs?</strong></li>
+      <li><strong>Can I take everything out — verified, in a documented format — and leave?</strong></li>
+      <li><strong>When something isn't private, does the product tell me at that moment?</strong></li>
+    </ol>
+    <p>Run the week through them. Portable Computer answers the third question better than anyone has, and we will come back to that. On the first two it is quiet: the harness is closed, a Perplexity subscription and account are required, the Gmail, Drive, GitHub and Slack connectors hold your credentials, and nothing in the launch material says where your memory lives, how you export it, or what deletion means. The benchmarks measure tokens per second on machines that cost more than most people's cars — useful, and beside the point for the laptop you already own.</p>
+    <p>None of this is a criticism of the engineering, which is excellent. It is an observation about what the industry is optimizing for. A local model attached to a cloud memory, behind a login, is a better-ventilated cage. The moat was never the model. <strong>The moat is the memory</strong> — the accumulated record of what you asked, decided, and were told — and the week that solved local inference did not move that moat one inch.</p>
+
+    <h2 class="serif">Where they are right, and we were behind</h2>
+    <p>Credit where it is owed. Perplexity's per-step disclosure is the right instinct executed well: before anything leaves the machine, you see what would leave, and you say yes or no. We have disclosed <em>which</em> model answers and whether it is local since the first release. They show the <em>bytes</em>. That is better, and we were behind.</p>
+    <p>So we built it. As of today's build, before any request goes to a remote provider, SovereignAI shows you the customs declaration: the system prompt, the memories it is about to inject, the document excerpts it retrieved, the prior messages, and your new one — with sizes — and waits. Every answer that came back from a remote model carries a receipt of how much left and to which host. Local models never gate, because nothing leaves.</p>
+    <p>One deliberate difference: there is no PII classifier in front of that dialog. A classifier is one more model reading your data and making a judgment you cannot audit. You can read the bytes yourself; that is the whole point of showing them.</p>
+
+    <h2 class="serif">What we are doing this week</h2>
+    <p>The shelf is where a product like ours stays honest, so the shelf got the work.</p>
+    <ul>
+      <li><strong>The starter shelf is refreshed and dated.</strong> Qwen3.8-27B joins as the top reasoning pick — the same model Perplexity chose, at four-bit on a 32 GB machine. Nemotron 3.5 Lightning joins the frontier tier as the first sparse model Ollama pulls directly, no special engine required. Every entry carries its license, because open weights are not automatically an open license.</li>
+      <li><strong>The sizing is a rule of thumb, and says so.</strong> We estimate about 0.6 GB per billion parameters at four-bit against 60% of your RAM, and since last week your GPU too. That is an estimate, not a measurement; the shelf now links to local.ai and Pipette for measured numbers. We have no relationship with either.</li>
+      <li><strong>The frontier tier starts at the GPU you have.</strong> Through FreeToken, the 20B–120B sparse class runs on a 4–8 GB card plus host RAM. Portable Computer's floor is 24 GB of VRAM. Different bets about who this is for.</li>
+      <li><strong>Reasoning is shown live and never stored.</strong> The new models think out loud; you can watch, and nothing of it is written down, distilled, or exported.</li>
+    </ul>
+
+    <h2 class="serif">Why it matters</h2>
+    <p>Our <a href="/why">thesis</a> is that you are the most fragmented database on earth — every service holds a shard of you, and the joins between the shards are where your life actually is. The reassembled whole is the most sensitive dataset that could exist about a person, which is why it is only safe on hardware you control, in formats you can walk away with.</p>
+    <p>This week made the first half of that easy. The models are good, the engines are clever, and the hardware you already own is enough. What it did not do is settle the second half, and the second half is the part that decides whether "local-first" becomes a property you own or a feature you rent. If the industry stops at inference — local model, cloud memory, vendor login — it will have rebuilt the last decade's lock-in with better latency.</p>
+    <p>The honest version of local-first has to answer all three questions, and it has to answer them about itself first. So, for the record, the parts of SovereignAI that are <em>not</em> sovereign yet:</p>
+    <div class="limits">
+      <p>The database is not encrypted at rest; the honest answer today is full-disk encryption. The model layer is borrowed — even open weights are someone else's artifact, trained on data nobody can audit. A rented GPU is tenancy, and we print that before you provision. An unknown is reported as unknown, never rounded up to a feature.</p>
+    </div>
+    <p>Counterintuitively, the ability to leave is the strongest reason to trust a product like this. That has not changed this week. It just got a better week of company.</p>
+
+    <div class="cta">
+      <h3 class="serif" style="margin-top:0">Your models. Your memory. Your machine.</h3>
+      <p>The open trial is one Docker command — the real product, no account. The <a href="/sovereignty">ledger</a> lists what we cannot claim.</p>
+      <p><a class="btn" href="/#install">Run it now</a></p>
+    </div>
+
+    <h2 class="serif" id="sources">Sources</h2>
+    <ul class="sources">
+      <li>Perplexity Portable Computer — <a href="https://venturebeat.com/infrastructure/perplexity-partners-with-nvidia-to-launch-portable-computer-a-fully-local-ai-agent-with-zero-token-costs" rel="noopener">VentureBeat</a>, <a href="https://moorinsightsstrategy.com/field-notes/perplexity-computer-goes-local-with-portable-computer/" rel="noopener">Moor Insights &amp; Strategy</a>, <a href="https://www.tomsguide.com/ai/perplexitys-new-local-first-ai-runs-on-your-pc-and-asks-before-using-the-cloud" rel="noopener">Tom's Guide</a>. Hardware floor, models, permission step, PII classifier, connectors, subscription tiers and the Terminal Bench 2.1 figures are Perplexity's own statements as reported there.</li>
+      <li>FreeToken — <a href="https://github.com/FlashML-org/FreeToken" rel="noopener">FlashML-org/FreeToken</a>.</li>
+      <li>Nemotron 3.5 Lightning — <a href="https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16" rel="noopener">model card</a>; <a href="https://ollama.com/library/nemotron-3.5-lightning" rel="noopener">Ollama library</a>.</li>
+      <li>Qwen3.8-27B — <a href="https://huggingface.co/Qwen/Qwen3.8-27B" rel="noopener">model card</a>; <a href="https://ollama.com/library/qwen3.8" rel="noopener">Ollama library</a>.</li>
+      <li>Pipette — <a href="https://pipette.liquid.ai/" rel="noopener">pipette.liquid.ai</a>; <a href="https://github.com/Liquid4All/pipette-clients" rel="noopener">pipette-clients</a>.</li>
+      <li>local.ai — <a href="https://local.ai/" rel="noopener">local.ai</a>, <a href="https://local.ai/about" rel="noopener">about</a>.</li>
+      <li>Our own claims — the <a href="/sovereignty">Sovereignty Ledger</a> and the <a href="/faq">FAQ</a>. Where this post says "today's build", it means the release deployed alongside it.</li>
+    </ul>
+  </article>
+</main>
+
+<footer class="shell-foot">
+  <div class="shell-in">
+    <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg> SovereignAI</div>
+    <div class="cols">
+      <a href="/">Home</a>
+      <a href="/watch">Watch</a>
+      <a href="/a-day">A day with it</a>
+      <a href="/command-center">Command center</a>
+      <a href="/playground">Playground</a>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/why">The thesis</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/blog">Blog</a>
+      <a href="/faq">FAQ</a>
+      <a href="/#install">Run the trial</a>
+      <a href="/#access">Request access</a>
+    </div>
+    <p>Own every layer you can. Rent nothing you can&#39;t walk away from. · SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years.</p>
+    <p>This website counts visits with Vercel Web Analytics — cookie-less, aggregate, no cross-site tracking. Your SovereignAI instance reports nothing to anyone, ever.</p>
+  </div>
+</footer>
+
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

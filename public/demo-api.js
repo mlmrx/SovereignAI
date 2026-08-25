@@ -327,6 +327,7 @@
     ['/playground', 'What'],
     ['/command-center', 'How'],
     ['/sovereignty', 'Ledger'],
+    ['/blog', 'Blog'],
   ];
 
   function siteHeader() {

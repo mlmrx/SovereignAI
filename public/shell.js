@@ -62,7 +62,8 @@
     const here = location.pathname.replace(/\/$/, '') || '/';
     document.querySelectorAll('.shell-links a[href^="/"]').forEach((a) => {
       const href = a.getAttribute('href').replace(/\/$/, '') || '/';
-      if (href === here) a.setAttribute('aria-current', 'page');
+      // A section's pages light the section: /blog/<post> is still 'Blog'.
+      if (href === here || (href !== '/' && here.startsWith(href + '/'))) a.setAttribute('aria-current', 'page');
     });
 
     document.querySelectorAll('[data-theme-mount]').forEach((mount) => {

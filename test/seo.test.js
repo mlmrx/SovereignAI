@@ -25,6 +25,8 @@ const PAGES = [
   ['playground.html', '/playground'],
   ['watch.html', '/watch'],
   ['a-day.html', '/a-day'],
+  ['blog.html', '/blog'],
+  ['blog-local-is-solved-ownership-is-not.html', '/blog/local-is-solved-ownership-is-not'],
 ];
 
 // The playground: the product's real interface files, publicly hosted in
@@ -142,7 +144,9 @@ test('one shell frames every page: same header, same footer, same theme control'
   // (what we cannot claim) -> Run it. What must precede How: you learn what
   // a thing is before how it works — so Playground (the explainer) sits at
   // What, and the command center (the hands-on interface) sits at How.
-  const NAV = ['/', '/watch', '/playground', '/command-center', '/sovereignty'];
+  // Blog sits after the funnel, before the theme control: a side door, not a
+  // step — added at the founder's request when the writing started.
+  const NAV = ['/', '/watch', '/playground', '/command-center', '/sovereignty', '/blog'];
   for (const [file] of [...PAGES, ['watch.html']]) {
     const html = pub(file);
     assert.match(html, /<header class="shell-bar">/, `${file} must carry the shared header`);
@@ -157,7 +161,7 @@ test('one shell frames every page: same header, same footer, same theme control'
     assert.deepEqual(hrefs, NAV, `${file} nav must match the canonical order`);
     // Everything cut from the bar must still be reachable from the footer.
     const foot = html.match(/<footer class="shell-foot">([\s\S]*?)<\/footer>/)[1];
-    for (const href of ['/why', '/what-is-sovereign-ai', '/a-day', '/faq', '/#access']) {
+    for (const href of ['/why', '/what-is-sovereign-ai', '/a-day', '/faq', '/blog', '/#access']) {
       assert.ok(foot.includes(`href="${href}"`), `${file} footer must still reach ${href}`);
     }
   }
@@ -281,4 +285,33 @@ test('every public page is reachable: routes are wired and internal links resolv
       assert.ok(known.has(href), `${file} links ${href}, which no route serves`);
     }
   }
+});
+
+test('the blog is a real section: every post is routed, deployed, indexed, listed, dated, and sourced', () => {
+  const config = JSON.parse(rootFile('vercel.json'));
+  const routes = new Map(config.rewrites.map((r) => [r.source, r.destination]));
+  assert.equal(routes.get('/blog'), '/blog.html', 'the index must be routed');
+  const index = pub('blog.html');
+  assert.match(index, /"@type": "Blog"/, 'the index publishes Blog structured data');
+  const posts = fs.readdirSync(path.join(root, 'public')).filter((f) => /^blog-.+\.html$/.test(f));
+  assert.ok(posts.length >= 1, 'at least one post');
+  const sitemap = pub('sitemap.xml');
+  const ignore = pub('.vercelignore');
+  for (const file of posts) {
+    const slug = file.replace(/^blog-/, '').replace(/\.html$/, '');
+    const route = `/blog/${slug}`;
+    assert.equal(routes.get(route), `/${file}`, `${route} must serve ${file}`);
+    assert.ok(ignore.includes(`!${file}`), `${file} would not be deployed`);
+    assert.ok(sitemap.includes(`<loc>${SITE}${route}</loc>`), `sitemap is missing ${route}`);
+    assert.ok(index.includes(`href="${route}"`), `the index must list ${route}`);
+    const html = pub(file);
+    assert.match(html, /"@type": "BlogPosting"/, `${file} needs BlogPosting data`);
+    assert.match(html, /"datePublished": "20\d\d-\d\d-\d\d"/, `${file} needs a publication date`);
+    assert.ok(html.includes(`<link rel="canonical" href="${SITE}${route}"`), `${file} canonical must be its clean route`);
+    // House rule: every post links its sources, and names our own limits.
+    assert.match(html, /id="sources"/, `${file} must carry a Sources section`);
+    assert.match(html, /href="\/sovereignty"/, `${file} must point at the ledger`);
+  }
+  // The answer-engine index knows the blog exists.
+  assert.match(pub('llms.txt'), /## Blog/, 'llms.txt must list the blog');
 });
