@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The customs declaration, in depth</title>
+<meta name="description" content="How SovereignAI shows you exactly what would leave your machine before any request reaches a cloud model — the side-effect-free preview, the byte-identical manifest, the receipt on every remote answer, the test that keeps them honest, and the things we deliberately did not build." />
+<link rel="canonical" href="https://mysovereign.ai/blog/the-customs-declaration" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="The customs declaration, in depth" />
+<meta property="og:description" content="Showing the bytes before they leave: the preview endpoint, the manifest, the receipt, the parity test, and why there is no PII classifier." />
+<meta property="og:url" content="https://mysovereign.ai/blog/the-customs-declaration" />
+<meta property="og:site_name" content="SovereignAI" />
+<meta property="article:published_time" content="2026-08-25" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="The customs declaration, in depth" />
+<meta name="twitter:description" content="How SovereignAI shows you exactly what would leave your machine before a cloud model sees it." />
+<link rel="stylesheet" href="/doc.css" />
+<link rel="stylesheet" href="/shell.css" />
+<script src="/shell.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "The customs declaration, in depth",
+  "description": "A technical deep dive into how SovereignAI shows exactly what would leave the machine before any remote model call: the side-effect-free preview, the byte-identical manifest, the receipt, the parity test, and the deliberate omissions.",
+  "datePublished": "2026-08-25",
+  "dateModified": "2026-08-25",
+  "inLanguage": "en",
+  "mainEntityOfPage": "https://mysovereign.ai/blog/the-customs-declaration",
+  "isPartOf": { "@type": "Blog", "name": "The SovereignAI blog", "url": "https://mysovereign.ai/blog" },
+  "author": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "publisher": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "keywords": "private AI, data egress, disclosure, local-first, LLM privacy, prompt transparency, sovereign AI"
+}
+</script>
+<style>
+  .byline { font-size: 0.82rem; color: var(--dim); margin: -6px 0 26px; letter-spacing: 0.02em; }
+  pre { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; margin: 0 0 16px; overflow-x: auto; font-size: 0.8rem; line-height: 1.5; }
+  pre code { background: none; padding: 0; }
+  .rules { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 10px; }
+  .rules li { border: 1px solid var(--rule); border-radius: 6px; padding: 12px 16px; background: var(--sheet); }
+  .rules b { display: block; margin-bottom: 2px; }
+  .limits { border-left: 3px solid var(--terra); padding: 4px 0 4px 16px; margin: 18px 0; }
+  .series { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--rule); margin-top: 36px; padding-top: 16px; font-size: 0.88rem; }
+  .series a { color: var(--terra); text-decoration: none; }
+  .series a:hover { text-decoration: underline; }
+  .sources { font-size: 0.82rem; color: var(--dim); }
+  .sources li { margin-bottom: 4px; }
+  .sources a { color: inherit; }
+</style>
+</head>
+<body>
+
+<header class="shell-bar">
+  <div class="shell-in">
+    <a class="shell-brand" href="/">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+      SovereignAI
+    </a>
+    <nav class="shell-links">
+      <a href="/">Home</a>
+      <a href="/watch">Why</a>
+      <a href="/playground">What</a>
+      <a href="/command-center">How</a>
+      <a href="/sovereignty">Ledger</a>
+      <a href="/blog">Blog</a>
+      <span class="shell-theme" data-theme-mount></span>
+      <a class="shell-cta" href="/#install">Run it</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <article class="wrap">
+    <p class="eyebrow"><a href="/blog" style="color:inherit;text-decoration:none">Blog</a> · Launch week, part 3 of 3 · Deep dive · August 25, 2026</p>
+    <h1 class="serif">The customs declaration, in depth</h1>
+    <p class="lede">Every AI product that uses a cloud model sends your context somewhere. Very few show you what. This is how SovereignAI shows you the exact bytes before they leave your machine, how it proves the preview is the request, and the two things we deliberately refused to build.</p>
+    <p class="byline">By the SovereignAI team at Unify Dynamics · about ten minutes · for engineers and the curious</p>
+
+    <h2 class="serif">The problem with "we disclose it"</h2>
+    <p>Since its first release, SovereignAI has disclosed <em>which</em> model answers and whether it runs locally. Every chat turn shows the persona, the provider, the model, and — for local models — the exact weight digest that replied. That is more than most products do, and it is not enough. Disclosure at the provider level tells you a remote model was used. It does not tell you what it was given.</p>
+    <p>What a chat turn gives a model is not your message. It is your message plus a system prompt, plus the durable memories the product decided were relevant, plus excerpts retrieved from your documents, plus the trimmed history of the conversation. A three-word question can carry two kilobytes of the most personal context you own. If that context is about to cross the internet to a company you have an API key with, you should be able to read it first — not a summary, not a category, the bytes.</p>
+    <p>Perplexity's Portable Computer, launched this week, does something close: it asks before escalating a step to a cloud model and shows what would be sent. We think that is the right instinct, and we were behind on it. So we built our version, and we built it differently in two places. Here is all of it.</p>
+
+    <h2 class="serif">The five rules</h2>
+    <ul class="rules">
+      <li><b>1. The preview is the request.</b> What you see is not a description of what will be sent. It is assembled by the same function that assembles the real request, and a test proves the two are byte-identical.</li>
+      <li><b>2. Looking is free of side effects.</b> Opening the declaration creates no conversation, writes no message, touches no memory. Retrieval runs, because retrieval is a read. Cancel means nothing happened.</li>
+      <li><b>3. Local never gates.</b> If the provider's endpoint is on this machine — loopback, the Docker host alias, an Ollama or FreeToken on localhost — nothing leaves, so nothing asks. The rule is the same hostname test that governs "cognition stays home".</li>
+      <li><b>4. Every remote answer carries a receipt.</b> Whether or not you looked first, an answer that came from a remote provider says how much left and for which host.</li>
+      <li><b>5. No classifier decides for you.</b> There is no PII detector in front of the dialog. A classifier is one more model reading your data and making a judgment you cannot audit. You can read the bytes yourself; that is the point of showing them.</li>
+    </ul>
+
+    <h2 class="serif">Assembling a turn without touching the database</h2>
+    <p>The change that made everything else possible was a refactor. A chat turn used to be one function: validate the message, resolve the persona and model, create the conversation if needed, persist the user's message, build the system prompt, stream from the provider, persist the reply. Assembly and side effects were interleaved, which is fine for a chat and useless for a preview.</p>
+    <p>Now there is <code>assembleChatRequest()</code>: it resolves the persona and the model, loads and trims the prior turns, places memory notes and knowledge excerpts into the system prompt, and returns the exact <code>messages</code> array that will be handed to the provider — and it writes nothing. The streaming path calls it and then does its side effects; the preview endpoint calls it and returns what it found. Two callers, one assembly, no way for the declaration and the request to drift apart.</p>
+    <p>What crosses the wire is then a pure function of that assembled request:</p>
+<pre><code>export function outgoingContext(request) {
+  return [
+    ...(request.system ? [{ role: 'system', content: request.system }] : []),
+    ...request.messages,
+  ];
+}
+
+export function outgoingTotals(request) {
+  const context = outgoingContext(request);
+  const chars = context.reduce((sum, part) =&gt; sum + part.content.length, 0);
+  return {
+    chars,
+    bytes: Buffer.byteLength(JSON.stringify(context), 'utf8'),
+    approxTokens: Math.ceil(chars / 4),
+    messages: context.length,
+  };
+}</code></pre>
+    <p>"Bytes" has one definition everywhere in the product: the UTF-8 length of that array serialized as JSON — the system prompt as a leading system-role message when there is one, then the trimmed history, then the new user turn. That is literally the <code>messages</code> array an OpenAI-compatible or Ollama endpoint receives; the Anthropic API carries the same content split into <code>system</code> and <code>messages</code>. The token figure is an estimate (four characters per token) and is labeled as one. We would rather show a number we can define than a number we cannot.</p>
+
+    <h2 class="serif">The manifest</h2>
+    <p><code>POST /api/chat/preview</code> takes the same body as <code>POST /api/chat</code> and passes the same validation. It returns the declaration:</p>
+<pre><code>{
+  "provider": { "id": "openai", "label": "OpenAI-compatible", "local": false, "host": "api.example-remote.test" },
+  "model": "gpt-5-mini",
+  "parts": {
+    "system":   "You are Atlas ... Relevant long-term notes ... Knowledge excerpts ...",
+    "memories": [ { "id": 12, "content": "Prefers short answers with the reasoning underneath." } ],
+    "sources":  [ { "documentId": 3, "title": "launch-notes.md", "excerpt": "...", "score": 0.81, "method": "hybrid" } ],
+    "history":  [ { "role": "user", "content": "..." }, { "role": "assistant", "content": "..." } ],
+    "message":  "When does the embargo lift?"
+  },
+  "totals": { "chars": 641, "bytes": 721, "approxTokens": 161, "messages": 2 },
+  "extraction": null
+}</code></pre>
+    <p>Three details are deliberate. The provider is identified by <strong>host only</strong> — never the full base URL, never an API key; the field is derived from the configured endpoint by the same helper that scrubs endpoints in the doctor output. The <strong>full text</strong> of memories and excerpts is in the manifest, while the live chat stream still carries only short excerpts of them; the preview is where you read, the stream is where you watch. And <code>extraction</code> names the model that would <em>write memory</em> after this exchange if automatic extraction is on — resolved by the same function the extractor itself uses, so the declaration names the model that will really run, including the case where "cognition stays home" would refuse a remote one and the field is <code>null</code>.</p>
+
+    <h2 class="serif">The dialog, and the receipt</h2>
+    <p>In the web interface the gate lives in the send path. If the setting is on, the provider for this persona is not local, and you have not trusted that provider, the client calls the preview and opens a dialog: one line for the destination and size, then five rows — system prompt, memories, knowledge excerpts, prior messages, your message — each expandable to its full text, rendered as text. <strong>Send</strong> proceeds with the ordinary request. <strong>Cancel — nothing leaves</strong> does exactly that, and your message stays in the composer. Escape is cancel. If the preview itself fails, nothing is sent; failing open would defeat the feature.</p>
+    <p>A checkbox — <em>don't ask again for this provider</em> — writes the provider's id into your configuration (<code>privacy.outgoingPreviewTrusted</code>), where you can revoke it under Settings. The whole feature is one config key: <code>privacy.outgoingPreview</code> is <code>ask</code> by default and <code>off</code> if you would rather not be asked at all.</p>
+    <p>Whichever you chose, the answer that comes back from a remote provider carries a receipt in the stream's metadata — <code>outgoing: { bytes, chars, approxTokens, host }</code> — and the message shows it: <em>left the machine · 721 B → api.example-remote.test</em>. A local answer shows nothing new, because nothing left. The receipt is not a courtesy; it is the audit trail for the times you chose not to look.</p>
+
+    <h2 class="serif">The test that keeps it honest</h2>
+    <p>Rule one is a claim, and claims here come with tests. The parity test stands up a mock OpenAI-compatible server that records the body of every request. It calls the preview, then the real chat, with the same message, persona, and conversation. Then it asserts that the provider's captured <code>messages</code> deep-equal the preview's outgoing context, in the same order, and that the receipt's byte count equals the serialized size of what the mock actually received. A second test counts conversations, messages, and memories before and after a preview and requires the numbers not to move. A third checks that the manifest never contains an API key or a scheme — host only. If any of those fail, the build fails.</p>
+
+    <h2 class="serif">What we did not build, on purpose</h2>
+    <p><strong>No PII classifier.</strong> The obvious feature — flag the sensitive parts, maybe redact them — means running a model over your context before the model you chose runs over it. That is a second reader, with its own errors, whose judgment you cannot see. We show the bytes instead. If a memory should not travel, you can strike it from the ledger; if a document should not be retrievable by a remote persona, that is what personas without knowledge access are for.</p>
+    <p><strong>No gate on headless surfaces.</strong> The command line, the plain <code>/api/ask</code> endpoint, the MCP server inside Claude Desktop or Cursor, the editor and browser integrations, and the ChatGPT Actions bridge do not open a dialog, because a dialog there would hang a program. Their documentation says so. The receipt data is still on the wire for anything that wants to show it.</p>
+
+    <h2 class="serif">The limits, stated</h2>
+    <div class="limits">
+      <p>The declaration shows what SovereignAI sends. It cannot show what a remote provider does with it afterwards — logging, retention, training — and it does not pretend to. Plain HTTP does not encrypt anything, including this context; use a local model, a trusted network, or HTTPS to the provider. "Local" is decided by hostname: an endpoint on your LAN is not local by this rule, which is the conservative reading and the intended one. And a token count is an estimate.</p>
+    </div>
+    <p>What it does do is make one thing impossible: sending your context to a company without being able to know exactly what you sent. That used to be the normal case. As of this build, on this product, it is not.</p>
+
+    <div class="cta">
+      <h3 class="serif" style="margin-top:0">See it on your own machine.</h3>
+      <p>Run the trial, add a remote provider with your own key, and send a message. The dialog is the first thing you will see. The <a href="/sovereignty">ledger</a> records the rest.</p>
+      <p><a class="btn" href="/#install">Run it now</a></p>
+    </div>
+
+    <nav class="series" aria-label="Launch week series">
+      <a href="/blog/local-is-solved-ownership-is-not">← Previous: Local is solved. Ownership isn't.</a>
+      <span>Part 3 of 3</span>
+    </nav>
+
+    <h2 class="serif" id="sources">Sources</h2>
+    <ul class="sources">
+      <li>The mechanism is decision record ADR-26 in the product's architecture notes, shipped with every install; the ledger rows for "the model" and "cognition" on the <a href="/sovereignty">Sovereignty Ledger</a> reflect it.</li>
+      <li>Perplexity's per-step disclosure, as described at its launch — <a href="https://venturebeat.com/infrastructure/perplexity-partners-with-nvidia-to-launch-portable-computer-a-fully-local-ai-agent-with-zero-token-costs" rel="noopener">VentureBeat</a>, <a href="https://www.tomsguide.com/ai/perplexitys-new-local-first-ai-runs-on-your-pc-and-asks-before-using-the-cloud" rel="noopener">Tom's Guide</a>.</li>
+      <li>The example manifest and the 721-byte receipt come from a throwaway instance driven against a stubbed remote host during testing; the numbers are real, the host is not.</li>
+    </ul>
+  </article>
+</main>
+
+<footer class="shell-foot">
+  <div class="shell-in">
+    <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg> SovereignAI</div>
+    <div class="cols">
+      <a href="/">Home</a>
+      <a href="/watch">Watch</a>
+      <a href="/a-day">A day with it</a>
+      <a href="/command-center">Command center</a>
+      <a href="/playground">Playground</a>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/why">The thesis</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/blog">Blog</a>
+      <a href="/faq">FAQ</a>
+      <a href="/#install">Run the trial</a>
+      <a href="/#access">Request access</a>
+    </div>
+    <p>Own every layer you can. Rent nothing you can&#39;t walk away from. · SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years.</p>
+    <p>This website counts visits with Vercel Web Analytics — cookie-less, aggregate, no cross-site tracking. Your SovereignAI instance reports nothing to anyone, ever.</p>
+  </div>
+</footer>
+
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Introducing SovereignAI</title>
+<meta name="description" content="A private AI command center that runs on your own machine: local models you choose, memory where every fact carries a receipt, your documents and history parsed without uploading, and an exit you can verify. Zero dependencies, no account, works offline. Here is what it is, why it exists, and how to run it in two minutes." />
+<link rel="canonical" href="https://mysovereign.ai/blog/introducing-sovereignai" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Introducing SovereignAI" />
+<meta property="og:description" content="One AI that runs on your machine, thinks with models you choose, remembers with receipts, and proves you can leave. No cloud, no account, nothing to trust but code you can read." />
+<meta property="og:url" content="https://mysovereign.ai/blog/introducing-sovereignai" />
+<meta property="og:site_name" content="SovereignAI" />
+<meta property="article:published_time" content="2026-08-25" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Introducing SovereignAI" />
+<meta name="twitter:description" content="One AI that runs on your machine, remembers with receipts, and proves you can leave." />
+<link rel="stylesheet" href="/doc.css" />
+<link rel="stylesheet" href="/shell.css" />
+<script src="/shell.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Introducing SovereignAI",
+  "description": "What SovereignAI is, why it exists, what you own when you run it, what is not sovereign yet, and how to try it in two minutes.",
+  "datePublished": "2026-08-25",
+  "dateModified": "2026-08-25",
+  "inLanguage": "en",
+  "mainEntityOfPage": "https://mysovereign.ai/blog/introducing-sovereignai",
+  "isPartOf": { "@type": "Blog", "name": "The SovereignAI blog", "url": "https://mysovereign.ai/blog" },
+  "author": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "publisher": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "keywords": "sovereign AI, private AI, local AI, self-hosted AI, personal AI, memory provenance, verifiable export"
+}
+</script>
+<style>
+  .byline { font-size: 0.82rem; color: var(--dim); margin: -6px 0 26px; letter-spacing: 0.02em; }
+  .layers { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 10px; }
+  .layers li { border: 1px solid var(--rule); border-radius: 6px; padding: 12px 16px; background: var(--sheet); }
+  .layers b { display: block; margin-bottom: 2px; }
+  .twelve { columns: 2; column-gap: 28px; padding-left: 22px; margin: 0 0 16px; }
+  .twelve li { break-inside: avoid; margin-bottom: 4px; }
+  @media (max-width: 640px) { .twelve { columns: 1; } }
+  .three { counter-reset: q; list-style: none; padding: 0; margin: 0 0 8px; }
+  .three li { counter-increment: q; position: relative; padding-left: 34px; margin: 0 0 10px; }
+  .three li::before { content: counter(q); position: absolute; left: 0; top: 1px; width: 24px; height: 24px; border-radius: 50%; background: var(--terra); color: #fff; font-size: 0.78rem; font-weight: 700; display: grid; place-items: center; }
+  .run { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; margin: 0 0 16px; overflow-x: auto; }
+  .run code { white-space: pre; font-size: 0.82rem; }
+  .limits { border-left: 3px solid var(--terra); padding: 4px 0 4px 16px; margin: 18px 0; }
+  .series { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--rule); margin-top: 36px; padding-top: 16px; font-size: 0.88rem; }
+  .series a { color: var(--terra); text-decoration: none; }
+  .series a:hover { text-decoration: underline; }
+  .sources { font-size: 0.82rem; color: var(--dim); }
+  .sources li { margin-bottom: 4px; }
+  .sources a { color: inherit; }
+</style>
+</head>
+<body>
+
+<header class="shell-bar">
+  <div class="shell-in">
+    <a class="shell-brand" href="/">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+      SovereignAI
+    </a>
+    <nav class="shell-links">
+      <a href="/">Home</a>
+      <a href="/watch">Why</a>
+      <a href="/playground">What</a>
+      <a href="/command-center">How</a>
+      <a href="/sovereignty">Ledger</a>
+      <a href="/blog">Blog</a>
+      <span class="shell-theme" data-theme-mount></span>
+      <a class="shell-cta" href="/#install">Run it</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <article class="wrap">
+    <p class="eyebrow"><a href="/blog" style="color:inherit;text-decoration:none">Blog</a> · Launch week, part 1 of 3 · August 25, 2026</p>
+    <h1 class="serif">Introducing SovereignAI</h1>
+    <p class="lede">One AI that runs on your machine, thinks with models you choose, remembers with receipts, and proves you can leave. No cloud required. No account. Nothing to trust but code you can read. This is what it is, why it exists, and how to run it in about two minutes.</p>
+    <p class="byline">By the SovereignAI team at Unify Dynamics · about seven minutes</p>
+
+    <h2 class="serif">The problem it exists for</h2>
+    <p>You are the most fragmented database on earth. Your bank knows what you spend but not why. Your health provider has your labs but not your sleep. A retailer knows what you bought; only you know which purchase was a mistake worth remembering. And every AI assistant you have ever typed a thought into holds a transcript of the person you were that afternoon — in an account you do not control, under terms you did not write.</p>
+    <p>The joins between those shards are where your life actually is: subscriptions against what you use, renewals against a calendar, what you were told against what you decided. No vendor can build those joins, because no vendor has the shards — and no vendor <em>should</em>, because the assembled whole is the most sensitive dataset that could exist about a person. Handing it to one company is not a product. It is a hostage situation with a subscription fee.</p>
+    <p>So the reassembled you has to live on hardware you control, readable by models you point at it, in formats you can walk away with. That sentence is the whole product. Everything below is the mechanism.</p>
+
+    <h2 class="serif">What it is</h2>
+    <p>SovereignAI is a private AI command center: a single program on your laptop, homelab, or any box you own, with a web interface, a chat that knows you, a durable memory, a knowledge base built from your own documents, and one export that holds all of it. It is written with <strong>zero runtime dependencies</strong> — a modern Node runtime's standard library and nothing else — so "the code you audit is the code that runs" is literal. It works offline. It reports nothing to anyone, ever.</p>
+    <p>It owns five layers, and each one is a concrete guarantee rather than a slogan:</p>
+    <ul class="layers">
+      <li><b>The machine.</b> One file, your hardware. Docker, a single binary for Windows, macOS, or Linux, Docker Compose, an SSH deploy to any box you own, or from source. Localhost by default; your LAN or tailnet behind a bearer token when you say so.</li>
+      <li><b>The models.</b> Local open weights by default — Ollama for the small shelf, FreeToken for frontier-class sparse models on the GPU you already own, any OpenAI-compatible server. A frontier model with your own API key is a choice, disclosed on screen at the moment it is used, never a default.</li>
+      <li><b>The memory.</b> Every fact it remembers records how it entered (typed, extracted from a chat, or distilled from imported history), which conversation it came from, which model wrote it, and when it changed. Deleting really deletes: the bytes on disk are zeroed.</li>
+      <li><b>The knowledge.</b> Your PDFs, Word documents, notes, your chat history from ChatGPT and Claude, even the receipts and renewals hiding in your inbox — parsed on your machine by dependency-free parsers. Nothing is uploaded to be read.</li>
+      <li><b>The exit.</b> One checksummed file holds everything, in a format documented well enough to outlive us. Encrypt it with a passphrase only you hold. Verify it without importing it. Distill it into a portfolio you can paste into any AI you will ever use.</li>
+    </ul>
+
+    <h2 class="serif">Twelve things that are yours here</h2>
+    <p>The layers are the summary; this is the inventory. Each item ships today, none of it is a promise, and every one is audited in the <a href="/sovereignty">Sovereignty Ledger</a>:</p>
+    <ol class="twelve">
+      <li><strong>Your hardware</strong> — laptop, homelab, your VPS, your call.</li>
+      <li><strong>Your runtime</strong> — zero-dependency code you can actually audit.</li>
+      <li><strong>Your data</strong> — one folder; deleted means zeroed.</li>
+      <li><strong>Your AI's identity</strong> — its name and personas are your records.</li>
+      <li><strong>Your models</strong> — local weights, swappable per persona.</li>
+      <li><strong>Your fine-tuning</strong> — your datasets, your consent, your trainer.</li>
+      <li><strong>Your memory</strong> — every fact with origin, source, and author.</li>
+      <li><strong>Your cognition policy</strong> — choose which models may write memory.</li>
+      <li><strong>Your knowledge</strong> — parsed on-machine, previewable retrieval.</li>
+      <li><strong>Your history</strong> — chats born here or imported, inbox included.</li>
+      <li><strong>Your access</strong> — every channel reads a store only you hold.</li>
+      <li><strong>Your exit</strong> — verified export, portfolio, provable deletion.</li>
+    </ol>
+
+    <h2 class="serif">The three questions</h2>
+    <p>We propose the same test for every product that calls itself private AI, and we apply it to ourselves first:</p>
+    <ol class="three">
+      <li><strong>Can I read every line that runs?</strong> Here: yes. Zero dependencies, fair-source licensed.</li>
+      <li><strong>Can I take everything out, verified, and leave?</strong> Here: yes. One export with a per-table SHA-256 manifest and an archive digest, optionally encrypted with AES-256-GCM under a passphrase the vendor never sees, and a separate verify command that checks an archive without importing it.</li>
+      <li><strong>When something isn't private, does it tell me at that moment?</strong> Here: yes. A remote model is disclosed on screen when it answers — and, as of this week, before any request goes to one, you see exactly what would leave your machine and say yes or no. <a href="/blog/the-customs-declaration">How that works, in depth.</a></li>
+    </ol>
+
+    <h2 class="serif">Where it reaches you</h2>
+    <p>Your AI's memory and knowledge are not trapped in one window. An MCP server puts them inside Claude Desktop, Claude Code, Codex CLI, Cursor, Windsurf, and Gemini CLI. A VS Code extension (Cursor, Windsurf, and VSCodium too), a JetBrains plugin, a browser extension for Chrome, Edge, and Brave, and a ChatGPT Custom GPT via Actions all read the same store — the one only you hold. Nothing syncs through a cloud, because there isn't one.</p>
+
+    <h2 class="serif">Run it now</h2>
+    <p>The trial is the product — the real thing on your machine, not a demo with scripted answers. No account, no sign-up. Have Docker? You are about two minutes away:</p>
+    <div class="run"><code>docker run -d --name sovereign -p 127.0.0.1:4321:4321 -v sovereign:/state \
+  --add-host=host.docker.internal:host-gateway \
+  -e OLLAMA_BASE_URL=http://host.docker.internal:11434 \
+  -e SOVEREIGN_TOKEN=pick-a-long-secret ghcr.io/mlmrx/sovereignai:latest</code></div>
+    <p>Then open <code>http://localhost:4321/#token=pick-a-long-secret</code> with the secret you chose, and the guided setup takes it from there. Drop in a ChatGPT or Claude export and your AI knows you within minutes. Done trying? <code>docker rm -f sovereign &amp;&amp; docker volume rm sovereign</code> — gone means gone. That is the exit working before you have even committed.</p>
+    <p>Prefer no Docker? Single binaries, a one-line installer, and source access come with an <a href="/#access">access grant</a> a person reviews. The starter shelf inside the app is dated and sized for your machine — small models on any laptop, and through FreeToken the 20B–120B sparse class on a 4–8 GB NVIDIA card plus host RAM. What is on it this week is on the <a href="/#latest">front page</a>.</p>
+
+    <h2 class="serif">What is not sovereign yet</h2>
+    <p>A product that claims to have solved privacy is worth distrusting. So, on the record:</p>
+    <div class="limits">
+      <p>The database is not encrypted at rest; the honest answer today is operating-system full-disk encryption. The model layer is borrowed — even open weights are someone else's artifact, trained on data nobody can audit. A rented GPU is tenancy, not ownership, and the trade-offs are printed before you provision. The rule that governs the whole ledger: an unknown is reported as unknown, never rounded up to a feature.</p>
+    </div>
+
+    <h2 class="serif">The license, and who we are</h2>
+    <p>The core is fair source — FSL-1.1-MIT. Self-hosting, forking, and internal use are unrestricted, for individuals and companies alike; the only restricted act is selling a competing SovereignAI product on a release younger than two years, and on its second anniversary every release becomes plain MIT, irrevocably, by the license text itself. Your exit is a date you can compute, not our goodwill. Nothing an individual needs to own all twelve layers is ever paywalled; the commercial path works by addition — a managed edition, organization features — never by clawing back what is free.</p>
+    <p>SovereignAI is built by Unify Dynamics. We are small, we ship in the open with a public ledger of our own claims, and we will keep writing here about what changed and why — with the mechanism named, every time.</p>
+
+    <div class="cta">
+      <h3 class="serif" style="margin-top:0">Own every layer you can. Rent nothing you can't walk away with.</h3>
+      <p>The open trial is one Docker command. The <a href="/sovereignty">ledger</a> lists what we cannot claim. The <a href="/faq">FAQ</a> answers the rest.</p>
+      <p><a class="btn" href="/#install">Run it now</a></p>
+    </div>
+
+    <nav class="series" aria-label="Launch week series">
+      <span>Part 1 of 3</span>
+      <a href="/blog/local-is-solved-ownership-is-not">Next: Local is solved. Ownership isn't. →</a>
+    </nav>
+
+    <h2 class="serif" id="sources">Sources</h2>
+    <ul class="sources">
+      <li>Every claim above names a shipped mechanism; the <a href="/sovereignty">Sovereignty Ledger</a> audits them layer by layer, and the <a href="/why">thesis</a> sets out the fragmented-database argument in full.</li>
+      <li>Export format, verification, and encryption: documented in the product's export specification, shipped with every install.</li>
+      <li>License: the Functional Source License, <a href="https://fsl.software/" rel="noopener">fsl.software</a>.</li>
+    </ul>
+  </article>
+</main>
+
+<footer class="shell-foot">
+  <div class="shell-in">
+    <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg> SovereignAI</div>
+    <div class="cols">
+      <a href="/">Home</a>
+      <a href="/watch">Watch</a>
+      <a href="/a-day">A day with it</a>
+      <a href="/command-center">Command center</a>
+      <a href="/playground">Playground</a>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/why">The thesis</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/blog">Blog</a>
+      <a href="/faq">FAQ</a>
+      <a href="/#install">Run the trial</a>
+      <a href="/#access">Request access</a>
+    </div>
+    <p>Own every layer you can. Rent nothing you can&#39;t walk away from. · SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years.</p>
+    <p>This website counts visits with Vercel Web Analytics — cookie-less, aggregate, no cross-site tracking. Your SovereignAI instance reports nothing to anyone, ever.</p>
+  </div>
+</footer>
+
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

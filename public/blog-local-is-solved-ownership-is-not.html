@@ -49,6 +49,9 @@
   .sources li { margin-bottom: 4px; }
   .sources a { color: inherit; }
   .limits { border-left: 3px solid var(--terra); padding: 4px 0 4px 16px; margin: 18px 0; }
+  .series { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--rule); margin-top: 36px; padding-top: 16px; font-size: 0.88rem; }
+  .series a { color: var(--terra); text-decoration: none; }
+  .series a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -74,7 +77,7 @@
 
 <main>
   <article class="wrap">
-    <p class="eyebrow"><a href="/blog" style="color:inherit;text-decoration:none">Blog</a> · August 25, 2026</p>
+    <p class="eyebrow"><a href="/blog" style="color:inherit;text-decoration:none">Blog</a> · Launch week, part 2 of 3 · August 25, 2026</p>
     <h1 class="serif">Local is solved. Ownership isn't.</h1>
     <p class="lede">In one August week, Perplexity and NVIDIA shipped a local-first agent, a Berkeley lab shipped an engine that runs 120B-class models on a gaming GPU, two of the best open models of the year dropped their weights, and two benchmark sites launched to help you choose between all of it. Here is what that week means — and what none of it says.</p>
     <p class="byline">By the SovereignAI team at Unify Dynamics · about nine minutes · every claim below links to its source at the end</p>
@@ -107,7 +110,7 @@
 
     <h2 class="serif">Where they are right, and we were behind</h2>
     <p>Credit where it is owed. Perplexity's per-step disclosure is the right instinct executed well: before anything leaves the machine, you see what would leave, and you say yes or no. We have disclosed <em>which</em> model answers and whether it is local since the first release. They show the <em>bytes</em>. That is better, and we were behind.</p>
-    <p>So we built it. As of today's build, before any request goes to a remote provider, SovereignAI shows you the customs declaration: the system prompt, the memories it is about to inject, the document excerpts it retrieved, the prior messages, and your new one — with sizes — and waits. Every answer that came back from a remote model carries a receipt of how much left and to which host. Local models never gate, because nothing leaves.</p>
+    <p>So we built it (<a href="/blog/the-customs-declaration">the deep dive</a> takes it apart). As of today's build, before any request goes to a remote provider, SovereignAI shows you the customs declaration: the system prompt, the memories it is about to inject, the document excerpts it retrieved, the prior messages, and your new one — with sizes — and waits. Every answer that came back from a remote model carries a receipt of how much left and to which host. Local models never gate, because nothing leaves.</p>
     <p>One deliberate difference: there is no PII classifier in front of that dialog. A classifier is one more model reading your data and making a judgment you cannot audit. You can read the bytes yourself; that is the whole point of showing them.</p>
 
     <h2 class="serif">What we are doing this week</h2>
@@ -133,6 +136,11 @@
       <p>The open trial is one Docker command — the real product, no account. The <a href="/sovereignty">ledger</a> lists what we cannot claim.</p>
       <p><a class="btn" href="/#install">Run it now</a></p>
     </div>
+
+    <nav class="series" aria-label="Launch week series">
+      <a href="/blog/introducing-sovereignai">← Previous: Introducing SovereignAI</a>
+      <a href="/blog/the-customs-declaration">Next: The customs declaration, in depth →</a>
+    </nav>
 
     <h2 class="serif" id="sources">Sources</h2>
     <ul class="sources">

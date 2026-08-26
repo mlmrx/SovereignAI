@@ -30,21 +30,37 @@
   "blogPost": [
     {
       "@type": "BlogPosting",
+      "headline": "Introducing SovereignAI",
+      "url": "https://mysovereign.ai/blog/introducing-sovereignai",
+      "datePublished": "2026-08-25",
+      "description": "What SovereignAI is, why it exists, what you own when you run it, what is not sovereign yet, and how to try it in two minutes."
+    },
+    {
+      "@type": "BlogPosting",
       "headline": "Local is solved. Ownership isn't.",
       "url": "https://mysovereign.ai/blog/local-is-solved-ownership-is-not",
       "datePublished": "2026-08-25",
       "description": "What one week of local-first AI releases — Perplexity's Portable Computer, FreeToken, Qwen3.8-27B, Nemotron 3.5 Lightning, local.ai and Pipette — means for sovereign AI, and what none of them say about who owns the result."
+    },
+    {
+      "@type": "BlogPosting",
+      "headline": "The customs declaration, in depth",
+      "url": "https://mysovereign.ai/blog/the-customs-declaration",
+      "datePublished": "2026-08-25",
+      "description": "A technical deep dive into how SovereignAI shows exactly what would leave the machine before any remote model call: the side-effect-free preview, the byte-identical manifest, the receipt, the parity test, and the deliberate omissions."
     }
   ]
 }
 </script>
 <style>
-  .posts { list-style: none; padding: 0; margin: 26px 0 10px; display: grid; gap: 14px; }
+  .series-head { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); margin: 30px 0 10px; }
+  .posts { list-style: none; padding: 0; margin: 0 0 10px; display: grid; gap: 14px; counter-reset: post; }
   .post {
-    display: block; text-decoration: none; color: inherit;
-    background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 22px 24px;
+    position: relative; display: block; text-decoration: none; color: inherit;
+    background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 22px 24px 22px 64px;
     transition: border-color 160ms ease, transform 160ms ease;
   }
+  .post::before { counter-increment: post; content: counter(post); position: absolute; left: 22px; top: 24px; width: 26px; height: 26px; border-radius: 50%; background: var(--terra); color: #fff; font-size: 0.8rem; font-weight: 700; display: grid; place-items: center; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
   .post:hover { border-color: var(--terra); transform: translateY(-2px); }
   .post .when { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--terra); margin: 0 0 8px; }
   .post h2 { margin: 0 0 8px; font-size: 1.35rem; line-height: 1.25; }
@@ -52,6 +68,7 @@
   .post .go { color: var(--terra); font-size: 0.82rem; font-weight: 650; letter-spacing: 0.04em; }
   .house { border-top: 1px solid var(--rule); margin-top: 40px; padding-top: 22px; font-size: 0.9rem; color: var(--dim); }
   @media (prefers-reduced-motion: reduce) { .post:hover { transform: none; } }
+  @media (max-width: 640px) { .post { padding-left: 24px; } .post::before { position: static; display: inline-grid; margin-bottom: 10px; } }
 </style>
 </head>
 <body>
@@ -79,18 +96,35 @@
   <div class="wrap">
     <p class="eyebrow">Blog · notes from the workshop</p>
     <h1 class="serif">What we learned building an AI you actually own</h1>
-    <p class="lede">The local-first wave, read through the three questions a sovereign product has to answer. Honest model sizing. What we refuse to build, and why. And what changed in the product — with the mechanism named, every time.</p>
+    <p class="lede">Start with what it is. Then the week that made it timely. Then one mechanism taken apart, down to the bytes. Read in order, or jump — each post stands on its own and names its sources.</p>
 
-    <ul class="posts">
+    <p class="series-head">Launch week · August 25, 2026 · three parts, in reading order</p>
+    <ol class="posts">
+      <li>
+        <a class="post" href="/blog/introducing-sovereignai">
+          <p class="when">Part 1 · Start here · seven minutes</p>
+          <h2 class="serif">Introducing SovereignAI</h2>
+          <p>One AI that runs on your machine, thinks with models you choose, remembers with receipts, and proves you can leave. What it is, why it exists, the twelve things you own when you run it, the three questions we answer about ourselves, what is not sovereign yet, and the two-minute trial.</p>
+          <span class="go">Read it →</span>
+        </a>
+      </li>
       <li>
         <a class="post" href="/blog/local-is-solved-ownership-is-not">
-          <p class="when">August 25, 2026 · nine minutes</p>
+          <p class="when">Part 2 · The week · nine minutes</p>
           <h2 class="serif">Local is solved. Ownership isn't.</h2>
           <p>In one August week, Perplexity and NVIDIA shipped a local-first agent, a Berkeley lab shipped an engine that runs 120B-class models on a gaming GPU, two of the year's best open models dropped their weights, and two benchmark sites launched to help you choose. What that week means for sovereign AI — and what none of it says about who owns the result.</p>
           <span class="go">Read it →</span>
         </a>
       </li>
-    </ul>
+      <li>
+        <a class="post" href="/blog/the-customs-declaration">
+          <p class="when">Part 3 · Deep dive · ten minutes</p>
+          <h2 class="serif">The customs declaration, in depth</h2>
+          <p>How SovereignAI shows you the exact bytes before they leave your machine: the side-effect-free preview, the manifest, the receipt on every remote answer, the parity test that proves the preview is the request, and the two things we deliberately refused to build.</p>
+          <span class="go">Read it →</span>
+        </a>
+      </li>
+    </ol>
 
     <div class="house">
       <p><strong>House rules.</strong> Every post links its sources. Every product claim names the shipped mechanism behind it, and where something is not sovereign yet we say so — the same rule as the <a href="/sovereignty">Sovereignty Ledger</a>. No newsletter, no tracking beyond the cookie-less visit count disclosed in the footer.</p>

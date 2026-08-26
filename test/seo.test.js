@@ -26,7 +26,9 @@ const PAGES = [
   ['watch.html', '/watch'],
   ['a-day.html', '/a-day'],
   ['blog.html', '/blog'],
+  ['blog-introducing-sovereignai.html', '/blog/introducing-sovereignai'],
   ['blog-local-is-solved-ownership-is-not.html', '/blog/local-is-solved-ownership-is-not'],
+  ['blog-the-customs-declaration.html', '/blog/the-customs-declaration'],
 ];
 
 // The playground: the product's real interface files, publicly hosted in

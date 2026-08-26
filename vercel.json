@@ -108,6 +108,14 @@
     {
       "source": "/blog/local-is-solved-ownership-is-not",
       "destination": "/blog-local-is-solved-ownership-is-not.html"
+    },
+    {
+      "source": "/blog/introducing-sovereignai",
+      "destination": "/blog-introducing-sovereignai.html"
+    },
+    {
+      "source": "/blog/the-customs-declaration",
+      "destination": "/blog-the-customs-declaration.html"
     }
   ],
   "headers": [
