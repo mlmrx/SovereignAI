@@ -48,6 +48,34 @@
       "url": "https://mysovereign.ai/blog/the-customs-declaration",
       "datePublished": "2026-08-25",
       "description": "A technical deep dive into how SovereignAI shows exactly what would leave the machine before any remote model call: the side-effect-free preview, the byte-identical manifest, the receipt, the parity test, and the deliberate omissions."
+    },
+    {
+      "@type": "BlogPosting",
+      "headline": "SovereignAI on NVIDIA: DGX Spark, RTX desktops, RTX workstations",
+      "url": "https://mysovereign.ai/blog/sovereignai-on-nvidia-dgx-spark-rtx-workstation",
+      "datePublished": "2026-08-25",
+      "description": "Which install path fits each NVIDIA machine, how to give Ollama the GPU, which models genuinely fit at 8, 24, 48, 96 and 128 GB, when FreeToken applies — and what does not work yet, including the Spark’s ARM CPU."
+    },
+    {
+      "@type": "BlogPosting",
+      "headline": "FreeToken in SovereignAI: frontier-class sparse models on the GPU you have",
+      "url": "https://mysovereign.ai/blog/freetoken-in-sovereignai",
+      "datePublished": "2026-08-25",
+      "description": "Requirements, install and serve, enabling it in Settings, what the doctor and the starter shelf tell you, sizing per RAM, the Docker wiring, the reasoning panel, and the limits."
+    },
+    {
+      "@type": "BlogPosting",
+      "headline": "Liquid AI’s device-native LFM models in SovereignAI",
+      "url": "https://mysovereign.ai/blog/liquid-ai-lfm-models-in-sovereignai",
+      "datePublished": "2026-08-25",
+      "description": "Pull LFM2.5 through Ollama, give a small Liquid model the cognition role so it writes your memory while anything else chats, build a persona on it, and read the license first."
+    },
+    {
+      "@type": "BlogPosting",
+      "headline": "SovereignAI with Perplexity’s Portable Computer: what works today",
+      "url": "https://mysovereign.ai/blog/sovereignai-and-perplexity-portable-computer",
+      "datePublished": "2026-08-25",
+      "description": "Same machine, shared GPU, two different jobs — with a hard line between what we verified, what Perplexity has stated, and what nobody has documented yet."
     }
   ]
 }
@@ -66,6 +94,9 @@
   .post h2 { margin: 0 0 8px; font-size: 1.35rem; line-height: 1.25; }
   .post p { margin: 0 0 10px; color: var(--dim); font-size: 0.95rem; }
   .post .go { color: var(--terra); font-size: 0.82rem; font-weight: 650; letter-spacing: 0.04em; }
+  .guides { counter-reset: none; }
+  .guides .post { padding-left: 24px; }
+  .guides .post::before { content: none; }
   .house { border-top: 1px solid var(--rule); margin-top: 40px; padding-top: 22px; font-size: 0.9rem; color: var(--dim); }
   @media (prefers-reduced-motion: reduce) { .post:hover { transform: none; } }
   @media (max-width: 640px) { .post { padding-left: 24px; } .post::before { position: static; display: inline-grid; margin-bottom: 10px; } }
@@ -96,7 +127,7 @@
   <div class="wrap">
     <p class="eyebrow">Blog · notes from the workshop</p>
     <h1 class="serif">What we learned building an AI you actually own</h1>
-    <p class="lede">Start with what it is. Then the week that made it timely. Then one mechanism taken apart, down to the bytes. Read in order, or jump — each post stands on its own and names its sources.</p>
+    <p class="lede">Start with what it is. Then the week that made it timely. Then one mechanism taken apart, down to the bytes. Below those, the guides: real hardware, real engines, every command checked. Each post stands on its own and names its sources.</p>
 
     <p class="series-head">Launch week · August 25, 2026 · three parts, in reading order</p>
     <ol class="posts">
@@ -125,6 +156,42 @@
         </a>
       </li>
     </ol>
+
+    <p class="series-head">Guides · setting it up on real hardware, with real engines</p>
+    <ul class="posts guides">
+      <li>
+        <a class="post" href="/blog/sovereignai-on-nvidia-dgx-spark-rtx-workstation">
+          <p class="when">Guide · twelve minutes</p>
+          <h2 class="serif">SovereignAI on NVIDIA: DGX Spark, RTX desktops, RTX workstations</h2>
+          <p>Which install path fits each NVIDIA machine, how to give Ollama the GPU, which models genuinely fit at 8, 24, 48, 96 and 128 GB, when FreeToken applies — and what does not work yet, including the Spark’s ARM CPU.</p>
+          <span class="go">Read it →</span>
+        </a>
+      </li>
+      <li>
+        <a class="post" href="/blog/freetoken-in-sovereignai">
+          <p class="when">Guide · ten minutes</p>
+          <h2 class="serif">FreeToken in SovereignAI: frontier-class sparse models on the GPU you have</h2>
+          <p>Requirements, install and serve, enabling it in Settings, what the doctor and the starter shelf tell you, sizing per RAM, the Docker wiring, the reasoning panel, and the limits.</p>
+          <span class="go">Read it →</span>
+        </a>
+      </li>
+      <li>
+        <a class="post" href="/blog/liquid-ai-lfm-models-in-sovereignai">
+          <p class="when">Guide · eight minutes</p>
+          <h2 class="serif">Liquid AI’s device-native LFM models in SovereignAI</h2>
+          <p>Pull LFM2.5 through Ollama, give a small Liquid model the cognition role so it writes your memory while anything else chats, build a persona on it, and read the license first.</p>
+          <span class="go">Read it →</span>
+        </a>
+      </li>
+      <li>
+        <a class="post" href="/blog/sovereignai-and-perplexity-portable-computer">
+          <p class="when">Guide · eight minutes</p>
+          <h2 class="serif">SovereignAI with Perplexity’s Portable Computer: what works today</h2>
+          <p>Same machine, shared GPU, two different jobs — with a hard line between what we verified, what Perplexity has stated, and what nobody has documented yet.</p>
+          <span class="go">Read it →</span>
+        </a>
+      </li>
+    </ul>
 
     <div class="house">
       <p><strong>House rules.</strong> Every post links its sources. Every product claim names the shipped mechanism behind it, and where something is not sovereign yet we say so — the same rule as the <a href="/sovereignty">Sovereignty Ledger</a>. No newsletter, no tracking beyond the cookie-less visit count disclosed in the footer.</p>

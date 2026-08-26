@@ -116,6 +116,22 @@
     {
       "source": "/blog/the-customs-declaration",
       "destination": "/blog-the-customs-declaration.html"
+    },
+    {
+      "source": "/blog/sovereignai-on-nvidia-dgx-spark-rtx-workstation",
+      "destination": "/blog-sovereignai-on-nvidia-dgx-spark-rtx-workstation.html"
+    },
+    {
+      "source": "/blog/freetoken-in-sovereignai",
+      "destination": "/blog-freetoken-in-sovereignai.html"
+    },
+    {
+      "source": "/blog/liquid-ai-lfm-models-in-sovereignai",
+      "destination": "/blog-liquid-ai-lfm-models-in-sovereignai.html"
+    },
+    {
+      "source": "/blog/sovereignai-and-perplexity-portable-computer",
+      "destination": "/blog-sovereignai-and-perplexity-portable-computer.html"
     }
   ],
   "headers": [

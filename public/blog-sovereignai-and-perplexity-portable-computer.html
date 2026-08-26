@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SovereignAI with Perplexity's Portable Computer: what works today</title>
+<meta name="description" content="How to run SovereignAI on the same machine as Perplexity's Portable Computer, share the GPU sensibly, and where the two can connect — with a clear line between what we have verified, what Perplexity has stated but not documented, and what does not exist yet. Different jobs: theirs is an agent harness, ours is the memory, knowledge, and exit you own underneath it." />
+<link rel="canonical" href="https://mysovereign.ai/blog/sovereignai-and-perplexity-portable-computer" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="SovereignAI with Perplexity's Portable Computer: what works today" />
+<meta property="og:description" content="Same machine, shared GPU, two different jobs — and an honest line between verified, stated, and not-yet." />
+<meta property="og:url" content="https://mysovereign.ai/blog/sovereignai-and-perplexity-portable-computer" />
+<meta property="og:site_name" content="SovereignAI" />
+<meta property="article:published_time" content="2026-08-25" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="SovereignAI with Perplexity's Portable Computer" />
+<meta name="twitter:description" content="Same machine, shared GPU, two different jobs — what works today." />
+<link rel="stylesheet" href="/doc.css" />
+<link rel="stylesheet" href="/shell.css" />
+<script src="/shell.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "SovereignAI with Perplexity's Portable Computer: what works today",
+  "description": "A guide to running SovereignAI beside Perplexity's Portable Computer on one NVIDIA machine: sharing the GPU, where the two can connect, and a clear line between verified, stated-but-undocumented, and not-yet.",
+  "datePublished": "2026-08-25",
+  "dateModified": "2026-08-25",
+  "inLanguage": "en",
+  "mainEntityOfPage": "https://mysovereign.ai/blog/sovereignai-and-perplexity-portable-computer",
+  "isPartOf": { "@type": "Blog", "name": "The SovereignAI blog", "url": "https://mysovereign.ai/blog" },
+  "author": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "publisher": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "keywords": "Perplexity Portable Computer, SovereignAI, local-first AI, DGX Spark, RTX, Ollama, vLLM, OpenAI-compatible endpoint"
+}
+</script>
+<style>
+  .byline { font-size: 0.82rem; color: var(--dim); margin: -6px 0 26px; letter-spacing: 0.02em; }
+  pre { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; margin: 0 0 16px; overflow-x: auto; font-size: 0.8rem; line-height: 1.5; }
+  pre code { background: none; padding: 0; }
+  .fit { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 10px; }
+  .fit li { border: 1px solid var(--rule); border-radius: 6px; padding: 12px 16px; background: var(--sheet); }
+  .fit b { display: block; margin-bottom: 2px; }
+  .tag { display: inline-block; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; border: 1px solid var(--rule); border-radius: 999px; padding: 1px 8px; margin-right: 6px; color: var(--dim); }
+  .tag.ok { border-color: var(--terra); color: var(--terra); }
+  .limits { border-left: 3px solid var(--terra); padding: 4px 0 4px 16px; margin: 18px 0; }
+  .series { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--rule); margin-top: 36px; padding-top: 16px; font-size: 0.88rem; }
+  .series a { color: var(--terra); text-decoration: none; }
+  .series a:hover { text-decoration: underline; }
+  .sources { font-size: 0.82rem; color: var(--dim); }
+  .sources li { margin-bottom: 4px; }
+  .sources a { color: inherit; }
+</style>
+</head>
+<body>
+
+<header class="shell-bar">
+  <div class="shell-in">
+    <a class="shell-brand" href="/">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+      SovereignAI
+    </a>
+    <nav class="shell-links">
+      <a href="/">Home</a>
+      <a href="/watch">Why</a>
+      <a href="/playground">What</a>
+      <a href="/command-center">How</a>
+      <a href="/sovereignty">Ledger</a>
+      <a href="/blog">Blog</a>
+      <span class="shell-theme" data-theme-mount></span>
+      <a class="shell-cta" href="/#install">Run it</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <article class="wrap">
+    <p class="eyebrow"><a href="/blog" style="color:inherit;text-decoration:none">Blog</a> · Guide · August 25, 2026</p>
+    <h1 class="serif">SovereignAI with Perplexity's Portable Computer: what works today</h1>
+    <p class="lede">Perplexity's Portable Computer launched this week as a local-first agent for NVIDIA machines. People with one of those machines asked us the obvious question: can SovereignAI and Portable Computer live on the same box, and can they talk to each other? Yes to the first. The second is more interesting — and this guide draws a hard line between what we have verified, what Perplexity has stated, and what nobody has documented yet.</p>
+    <p class="byline">By the SovereignAI team at Unify Dynamics · about eight minutes · Perplexity's statements are quoted from its launch coverage; we have not been given access to its documentation</p>
+
+    <h2 class="serif">Two products, two jobs</h2>
+    <p>Portable Computer is an <strong>agent harness</strong>: it runs multi-step tasks — research, files, code, connected apps — on a local model, inside an OS-enforced sandbox, and asks before escalating a step to a frontier model in the cloud. SovereignAI is the <strong>memory, knowledge, and exit</strong> layer: a private AI that knows you over time, records where every fact came from, parses your documents and history on your machine, and exports all of it in a verifiable format. One does tasks; the other holds the reassembled you. They are not substitutes, and on one machine they are not in each other's way — with one exception, the GPU, which we will get to.</p>
+
+    <h2 class="serif">What each one needs</h2>
+    <ul class="fit">
+      <li><b>Portable Computer, per Perplexity</b> Linux first (Windows in September; no macOS), DGX OS or Ubuntu on ARM or x64, an NVIDIA GPU with at least 24 GB of VRAM or a DGX Spark; installed as an apt repository; a Pro, Max, or Enterprise subscription. Local models at launch: Qwen 3.8 27B (a 3-bit build, 17.4 GB download, 32 GB of RAM required) or Perplexity's post-trained PPLX 27B, with Nemotron 3.5 Lightning listed as coming. vLLM underneath.</li>
+      <li><b>SovereignAI</b> Any machine, no GPU required by the app itself; an engine — Ollama, FreeToken, or an OpenAI-compatible server — for the models. No account. On x86_64 the Docker trial; on the Spark, source under Node 22 (our container image is x86_64-only today). The <a href="/blog/sovereignai-on-nvidia-dgx-spark-rtx-workstation">NVIDIA guide</a> covers both.</li>
+    </ul>
+
+    <h2 class="serif">Living on one machine</h2>
+    <p><span class="tag ok">verified</span> Nothing about the two conflicts on disk or on the network. Portable Computer's vLLM and SovereignAI's Ollama use different weight formats, so the models are not shared — budget disk for both. Ports do not collide in the default layouts: Ollama on 11434, FreeToken on 1919, SovereignAI on 4321.</p>
+    <p><span class="tag ok">verified</span> The GPU is the real constraint. A vLLM server pins its model and KV cache in VRAM for as long as it runs; with a 24 GB card and a 27B model resident, there is little left for a second engine. Three sane arrangements:</p>
+    <ul>
+      <li><strong>Take turns.</strong> Stop Portable Computer's server when you are working in SovereignAI, or the reverse. Ollama loads and unloads models in seconds.</li>
+      <li><strong>Give SovereignAI the CPU and RAM.</strong> Put a small model in the cognition role — a 2.6B Liquid model runs comfortably on CPU — and use Ollama's small shelf for chat. The GPU stays with the agent; your memory layer never stops.</li>
+      <li><strong>A workstation card or a Spark.</strong> With 48 GB, 96 GB, or the Spark's 128 GB of unified memory, both fit. On the Spark, everything shares one pool, so watch total usage rather than "VRAM".</li>
+    </ul>
+
+    <h2 class="serif">Connecting them</h2>
+    <p><span class="tag">stated, not documented</span> Perplexity says Portable Computer supports "bring-your-own model and inference server" through an advanced mode that lets you point it at your own inference endpoint. If that endpoint speaks the OpenAI chat-completions protocol — as vLLM, Ollama's <code>/v1</code> API, and FreeToken all do — then in principle you could serve one model once, through Ollama or FreeToken, and let both products use it. We have not seen the configuration, so we cannot give you the steps, and we will not invent them. When Perplexity documents the setting, this section gets the commands.</p>
+    <p><span class="tag">stated, not documented</span> The reverse direction: SovereignAI can use any OpenAI-compatible server as a provider — Settings → Providers → OpenAI-compatible, base URL and (optional) key. vLLM's own server exposes such an endpoint by default; whether Portable Computer's embedded vLLM listens on a local port that another program may use is not something Perplexity has published. If it does, adding it as a provider is one form. If it does not, it does not, and no amount of wishful documentation on our side changes that.</p>
+    <p><span class="tag ok">verified</span> What you can do today without either of those: use SovereignAI's MCP server and integrations where they are supported — Claude Desktop, Claude Code, Codex CLI, Cursor, Windsurf, Gemini CLI, the editors, the browser. Perplexity says Portable Computer converted MCP servers into compact command-line tools internally; whether users can add their own MCP servers is not stated. So SovereignAI's memory is not reachable from inside Portable Computer today, and this page will say so until it is.</p>
+
+    <h2 class="serif">Where the philosophies meet</h2>
+    <p>The part of Portable Computer we admire is the one we adopted: before a step goes to the cloud, show what would leave and ask. SovereignAI now does the same for every remote send — the <a href="/blog/the-customs-declaration">customs declaration</a> — with two differences. We show the bytes without a PII classifier in front of them, because a classifier is another model reading your data; and the declaration is part of a product that also answers the other two questions — can you read every line, can you take everything out and leave. Portable Computer answers neither: the harness is closed, the account is required, the connectors hold your credentials, and nothing in its launch material says where your memory lives or how you export it.</p>
+    <p>That is not a reason to avoid it. It is the reason to keep the layer that holds you somewhere you own, and let the agent be an agent.</p>
+
+    <h2 class="serif">A practical recommendation</h2>
+    <ul class="fit">
+      <li><b>If you have a 24 GB card</b> Run Portable Computer for tasks; run SovereignAI with a CPU-resident cognition model and a small chat model, or switch the GPU between them. Import your ChatGPT and Claude history into SovereignAI once — that is the part no agent harness gives you.</li>
+      <li><b>If you have a Spark or a workstation card</b> Run both resident. Consider FreeToken on x86_64 workstations for the 120B sparse class under SovereignAI; on the Spark, Ollama's <code>gpt-oss:120b</code> fits the unified pool.</li>
+      <li><b>Either way</b> Keep "cognition stays home" on, so that whatever you let an agent escalate to the cloud, the model that writes your memory never is.</li>
+    </ul>
+
+    <div class="limits">
+      <p>We have not run Portable Computer ourselves — it launched today, requires a subscription we do not hold, and its documentation is not public to us. Every statement about it above is attributed to Perplexity's launch coverage, and the two connection paths are marked as stated-but-undocumented on purpose. When either becomes verifiable, this guide changes; until then, treat those sections as a map of what to check, not a recipe.</p>
+    </div>
+
+    <div class="cta">
+      <h3 class="serif" style="margin-top:0">Let the agent be an agent. Own the rest.</h3>
+      <p>The <a href="/sovereignty">ledger</a> lists exactly which layers SovereignAI holds and which it borrows.</p>
+      <p><a class="btn" href="/#install">Run it now</a></p>
+    </div>
+
+    <nav class="series" aria-label="More guides">
+      <a href="/blog/liquid-ai-lfm-models-in-sovereignai">← Previous guide: Liquid AI's LFM models</a>
+      <a href="/blog">All posts and guides →</a>
+    </nav>
+
+    <h2 class="serif" id="sources">Sources</h2>
+    <ul class="sources">
+      <li>Perplexity Portable Computer, as reported at launch — <a href="https://venturebeat.com/infrastructure/perplexity-partners-with-nvidia-to-launch-portable-computer-a-fully-local-ai-agent-with-zero-token-costs" rel="noopener">VentureBeat</a> (vLLM, advanced-mode endpoint, MCP-to-CLI, benchmarks), <a href="https://www.marktechpost.com/2026/08/25/perplexity-ships-portable-computer-on-nvidia-dgx-spark-local-harness-os-enforced-sandbox-and-zero-per-token-cost-for-local-steps/" rel="noopener">MarkTechPost</a> (apt install, model sizes and RAM, sandbox, connectors, "bring-your-own model and inference server"), <a href="https://moorinsightsstrategy.com/field-notes/perplexity-computer-goes-local-with-portable-computer/" rel="noopener">Moor Insights &amp; Strategy</a>.</li>
+      <li>OpenAI-compatible serving — <a href="https://docs.vllm.ai/en/latest/serving/online_serving/openai_compatible_server/" rel="noopener">vLLM documentation</a>.</li>
+      <li>Our own claims are audited in the <a href="/sovereignty">Sovereignty Ledger</a>; the comparison is also answered in the <a href="/faq">FAQ</a>.</li>
+    </ul>
+  </article>
+</main>
+
+<footer class="shell-foot">
+  <div class="shell-in">
+    <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg> SovereignAI</div>
+    <div class="cols">
+      <a href="/">Home</a>
+      <a href="/watch">Watch</a>
+      <a href="/a-day">A day with it</a>
+      <a href="/command-center">Command center</a>
+      <a href="/playground">Playground</a>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/why">The thesis</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/blog">Blog</a>
+      <a href="/faq">FAQ</a>
+      <a href="/#install">Run the trial</a>
+      <a href="/#access">Request access</a>
+    </div>
+    <p>Own every layer you can. Rent nothing you can&#39;t walk away from. · SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years.</p>
+    <p>This website counts visits with Vercel Web Analytics — cookie-less, aggregate, no cross-site tracking. Your SovereignAI instance reports nothing to anyone, ever.</p>
+  </div>
+</footer>
+
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

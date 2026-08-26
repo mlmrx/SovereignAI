@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Liquid AI's device-native LFM models in SovereignAI</title>
+<meta name="description" content="How to use Liquid AI's LFM2.5 models — 230M to 8B, built for the edge — inside SovereignAI: pulling the official GGUF builds through Ollama, giving a small Liquid model the cognition role so it writes your memory while anything else chats, building a persona on it in Model Studio, the license terms to read first, and what device-native does and does not mean here." />
+<link rel="canonical" href="https://mysovereign.ai/blog/liquid-ai-lfm-models-in-sovereignai" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Liquid AI's device-native LFM models in SovereignAI" />
+<meta property="og:description" content="Pull LFM2.5 through Ollama, give a small Liquid model the cognition role, build a persona on it, and read the license first." />
+<meta property="og:url" content="https://mysovereign.ai/blog/liquid-ai-lfm-models-in-sovereignai" />
+<meta property="og:site_name" content="SovereignAI" />
+<meta property="article:published_time" content="2026-08-25" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Liquid AI's LFM models in SovereignAI" />
+<meta name="twitter:description" content="Small, fast, edge-first models doing the jobs where small and fast is the point." />
+<link rel="stylesheet" href="/doc.css" />
+<link rel="stylesheet" href="/shell.css" />
+<script src="/shell.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Liquid AI's device-native LFM models in SovereignAI",
+  "description": "A guide to using Liquid AI's LFM2.5 models inside SovereignAI through Ollama's GGUF support: the lineup, the cognition role, personas in Model Studio, the license, and what device-native means for a self-hosted server.",
+  "datePublished": "2026-08-25",
+  "dateModified": "2026-08-25",
+  "inLanguage": "en",
+  "mainEntityOfPage": "https://mysovereign.ai/blog/liquid-ai-lfm-models-in-sovereignai",
+  "isPartOf": { "@type": "Blog", "name": "The SovereignAI blog", "url": "https://mysovereign.ai/blog" },
+  "author": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "publisher": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "keywords": "Liquid AI, LFM2.5, LFM2, device-native models, edge AI, Ollama GGUF, memory extraction model, SovereignAI"
+}
+</script>
+<style>
+  .byline { font-size: 0.82rem; color: var(--dim); margin: -6px 0 26px; letter-spacing: 0.02em; }
+  pre { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; margin: 0 0 16px; overflow-x: auto; font-size: 0.8rem; line-height: 1.5; }
+  pre code { background: none; padding: 0; }
+  .fit { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 10px; }
+  .fit li { border: 1px solid var(--rule); border-radius: 6px; padding: 12px 16px; background: var(--sheet); }
+  .fit b { display: block; margin-bottom: 2px; }
+  .limits { border-left: 3px solid var(--terra); padding: 4px 0 4px 16px; margin: 18px 0; }
+  .series { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--rule); margin-top: 36px; padding-top: 16px; font-size: 0.88rem; }
+  .series a { color: var(--terra); text-decoration: none; }
+  .series a:hover { text-decoration: underline; }
+  .sources { font-size: 0.82rem; color: var(--dim); }
+  .sources li { margin-bottom: 4px; }
+  .sources a { color: inherit; }
+</style>
+</head>
+<body>
+
+<header class="shell-bar">
+  <div class="shell-in">
+    <a class="shell-brand" href="/">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+      SovereignAI
+    </a>
+    <nav class="shell-links">
+      <a href="/">Home</a>
+      <a href="/watch">Why</a>
+      <a href="/playground">What</a>
+      <a href="/command-center">How</a>
+      <a href="/sovereignty">Ledger</a>
+      <a href="/blog">Blog</a>
+      <span class="shell-theme" data-theme-mount></span>
+      <a class="shell-cta" href="/#install">Run it</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <article class="wrap">
+    <p class="eyebrow"><a href="/blog" style="color:inherit;text-decoration:none">Blog</a> · Guide · August 25, 2026</p>
+    <h1 class="serif">Liquid AI's device-native LFM models in SovereignAI</h1>
+    <p class="lede">Liquid AI builds models for the edge — 230 million to 8 billion parameters, unusually fast on CPU for their quality. In SovereignAI they are not the model you chat with about everything; they are the model that does the jobs where small and fast is the point, starting with the most important one: deciding what to remember about you.</p>
+    <p class="byline">By the SovereignAI team at Unify Dynamics · about eight minutes · model facts from Liquid's Hugging Face cards on the date above</p>
+
+    <h2 class="serif">What "device-native" means here, and what it does not</h2>
+    <p>Liquid describes its Liquid Foundation Models as device-native: designed to run on phones, laptops, and small boards, and shipped with a mobile SDK (LEAP) for building them into iOS and Android apps. SovereignAI is a different shape — a server that runs on a machine you own and that your phone reaches over your LAN or tailnet. So the device-native path for SovereignAI is not the mobile SDK; it is Liquid's official <strong>GGUF builds</strong>, which Ollama pulls straight from Hugging Face and runs on the same laptop or box SovereignAI runs on. The models are on-device in the sense that matters for sovereignty: your machine, your process, nothing leaves.</p>
+
+    <h2 class="serif">The lineup that applies</h2>
+    <ul class="fit">
+      <li><b>LFM2.5-2.6B</b> — the workhorse. Liquid's official GGUF at Q4_K_M is 1.59 GB; it runs on any machine with a couple of gigabytes free and answers fast on CPU alone. This is the entry on SovereignAI's starter shelf.</li>
+      <li><b>LFM2.5-8B-A1B</b> — a sparse mixture-of-experts, 8B total with about 1B active per token; Q4_K_M is 5.16 GB. Liquid's recommended sampling: temperature 0.2, top-k 80, repeat penalty 1.05. The strongest Liquid model that still feels instant.</li>
+      <li><b>LFM2.5-230M</b> — tiny, for machines where even 2 GB is too much, or for experiments in what a 230M model can classify.</li>
+      <li><b>LFM2.5-VL 450M / 1.6B</b> — vision variants with GGUF builds. SovereignAI's chat is text-only, so these are listed for completeness, not as a recipe.</li>
+      <li><b>LFM2-24B-A2B</b> — the previous generation's large sparse model (GGUF only); superseded for most uses by the 2.5 line.</li>
+    </ul>
+    <p>Liquid also publishes task-specific "Nanos" — extraction, retrieval-augmented answering, translation — which are interesting for a memory engine, but SovereignAI's extractor expects a general instruction-following model, so the recipes below use the instruct-tuned LFM2.5 models.</p>
+
+    <h2 class="serif">Read the license first</h2>
+    <p>The LFM2.5 GGUF repositories carry the <strong>LFM Open License v1.0</strong>. It is not Apache or MIT: the license file limits commercial use to entities under a revenue threshold (US$10 million a year, at the time of writing). SovereignAI prints the license on the starter shelf next to every entry for exactly this reason — open weights are not automatically an open license — and shows a repository's declared license in the Hugging Face browser before you pick a file. Read it once; if your organization is above the line, this guide is not for you.</p>
+
+    <h2 class="serif">Step 1 — pull the models through Ollama</h2>
+    <p>Ollama runs GGUF repositories directly by their Hugging Face path, quantization included. Liquid's own model cards give the commands:</p>
+<pre><code>ollama run hf.co/LiquidAI/LFM2.5-2.6B-GGUF:Q4_K_M
+ollama run hf.co/LiquidAI/LFM2.5-8B-A1B-GGUF:Q4_K_M</code></pre>
+    <p>Type a question, confirm it answers, and <code>/bye</code>. Ollama keeps the weights; SovereignAI will see them in its model list under those same names.</p>
+
+    <h2 class="serif">Step 2 — give a Liquid model the cognition role</h2>
+    <p>This is the use we designed the shelf around. SovereignAI can learn about you automatically — after an exchange, a model reads it and writes durable facts into memory, each fact naming the model that wrote it. That model does not have to be the one you chat with. The <strong>cognition role</strong> (<code>memory.extractionModel</code>) lets a small, local model own memory-writing while chat uses anything, including a frontier model with your API key.</p>
+    <p>A 2.6B Liquid model is close to ideal for that job: it follows the extraction format reliably, costs nothing per exchange, and finishes in a second on CPU. Two ways to set it:</p>
+    <ol>
+      <li><strong>The shelf.</strong> Model Studio → starter shelf → <em>Memory &amp; cognition</em> → LFM2.5 → <em>use for memory &amp; cognition</em>. That writes the model into the cognition role in one click.</li>
+      <li><strong>Settings.</strong> Settings → Memory → <em>extraction model</em> → <code>hf.co/LiquidAI/LFM2.5-2.6B-GGUF:Q4_K_M</code>, with automatic extraction switched on.</li>
+    </ol>
+    <p>Then turn on <strong>cognition stays home</strong> (<code>memory.extractLocalOnly</code>). With it on, a remote model may chat but may not write memory; with a Liquid model in the cognition role, memory-writing stays on your machine regardless of what answers the chat. The Mind view shows the policy, and every machine-written memory shows its author model — so you can see, later, that it was Liquid that decided a fact about you was worth keeping.</p>
+    <p>This is the honest division of labor: rent the frontier for the hard answer if you choose to, keep the reading of your life local.</p>
+
+    <h2 class="serif">Step 3 — a persona that runs entirely on Liquid</h2>
+    <p>For everyday questions, drafts, and anything that should be instant, LFM2.5-8B-A1B makes a good persona of its own. Model Studio saves a recipe — base model, system prompt, sampling, template, seed messages — as data you own, and can build it into a named artifact on your Ollama endpoint:</p>
+    <ul>
+      <li>Base model: <code>hf.co/LiquidAI/LFM2.5-8B-A1B-GGUF:Q4_K_M</code></li>
+      <li>Parameters: temperature 0.2, top-k 80, repeat penalty 1.05 — Liquid's recommendation for this model</li>
+      <li>License field: LFM Open License v1.0 (the browser fills it in when you pick the file)</li>
+    </ul>
+    <p>Build it as, say, <code>quick:latest</code>, assign it to a persona, and give that persona memory and knowledge access. Because everything about it is local, the chat shows the local path, the answer carries the exact weight digest that replied, and the outgoing-preview dialog never appears — nothing is leaving.</p>
+
+    <h2 class="serif">Where it fits, where it does not</h2>
+    <ul class="fit">
+      <li><b>Good at</b> memory extraction, summaries, quick drafts, classification, answering over retrieved excerpts, being the model that is always on because it costs nothing to keep warm.</li>
+      <li><b>Not the tool for</b> long multi-step reasoning or deep code work — that is what the 27B dense and the sparse frontier tier are for. The shelf is curated by job, and the job here is speed.</li>
+      <li><b>On a laptop without a GPU</b> this is the tier that stays pleasant. On a 16 GB machine, LFM2.5-2.6B in the cognition role plus Qwen3 8B for chat is a complete, fully local setup.</li>
+    </ul>
+
+    <h2 class="serif">Measuring instead of guessing</h2>
+    <p>Liquid also publishes Pipette, a benchmark suite that measures speed, latency and peak memory on your own device — phones included — with quality scored separately. SovereignAI's sizing is a rule of thumb; if you want measured numbers for a Liquid model on your exact hardware, that is the tool, and the shelf links to it. We have no relationship with Liquid AI.</p>
+
+    <div class="limits">
+      <p>Vision variants are not used by SovereignAI's text chat. The LFM Open License's commercial threshold is a real restriction — check it. And a model that writes your memory is a lens on your life: the cognition role makes that lens local and named, it does not make the model infallible. Every machine-written memory can be struck from the ledger, and the deletion zeroes the bytes.</p>
+    </div>
+
+    <div class="cta">
+      <h3 class="serif" style="margin-top:0">Small model, big job.</h3>
+      <p>Let a Liquid model decide what to remember, on your machine, with its name on every fact. The <a href="/sovereignty">ledger</a> explains the cognition layer in full.</p>
+      <p><a class="btn" href="/#install">Run it now</a></p>
+    </div>
+
+    <nav class="series" aria-label="More guides">
+      <a href="/blog/freetoken-in-sovereignai">← Previous guide: FreeToken in SovereignAI</a>
+      <a href="/blog/sovereignai-and-perplexity-portable-computer">Next guide: with Perplexity's Portable Computer →</a>
+    </nav>
+
+    <h2 class="serif" id="sources">Sources</h2>
+    <ul class="sources">
+      <li>Liquid AI on Hugging Face — <a href="https://huggingface.co/LiquidAI" rel="noopener">the organization</a>; model cards for <a href="https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF" rel="noopener">LFM2.5-2.6B-GGUF</a> and <a href="https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-GGUF" rel="noopener">LFM2.5-8B-A1B-GGUF</a> (sizes, commands, sampling parameters, license).</li>
+      <li>Liquid AI — <a href="https://www.liquid.ai/" rel="noopener">liquid.ai</a> ("device-native foundation models"); Pipette — <a href="https://pipette.liquid.ai/" rel="noopener">pipette.liquid.ai</a>.</li>
+      <li>SovereignAI's cognition role and "cognition stays home" are decision records ADR-20 and ADR-23 in the product's architecture notes; the cognition row of the <a href="/sovereignty">Sovereignty Ledger</a> states the trade-offs.</li>
+    </ul>
+  </article>
+</main>
+
+<footer class="shell-foot">
+  <div class="shell-in">
+    <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg> SovereignAI</div>
+    <div class="cols">
+      <a href="/">Home</a>
+      <a href="/watch">Watch</a>
+      <a href="/a-day">A day with it</a>
+      <a href="/command-center">Command center</a>
+      <a href="/playground">Playground</a>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/why">The thesis</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/blog">Blog</a>
+      <a href="/faq">FAQ</a>
+      <a href="/#install">Run the trial</a>
+      <a href="/#access">Request access</a>
+    </div>
+    <p>Own every layer you can. Rent nothing you can&#39;t walk away from. · SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years.</p>
+    <p>This website counts visits with Vercel Web Analytics — cookie-less, aggregate, no cross-site tracking. Your SovereignAI instance reports nothing to anyone, ever.</p>
+  </div>
+</footer>
+
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

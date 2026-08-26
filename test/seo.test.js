@@ -29,6 +29,10 @@ const PAGES = [
   ['blog-introducing-sovereignai.html', '/blog/introducing-sovereignai'],
   ['blog-local-is-solved-ownership-is-not.html', '/blog/local-is-solved-ownership-is-not'],
   ['blog-the-customs-declaration.html', '/blog/the-customs-declaration'],
+  ['blog-sovereignai-on-nvidia-dgx-spark-rtx-workstation.html', '/blog/sovereignai-on-nvidia-dgx-spark-rtx-workstation'],
+  ['blog-freetoken-in-sovereignai.html', '/blog/freetoken-in-sovereignai'],
+  ['blog-liquid-ai-lfm-models-in-sovereignai.html', '/blog/liquid-ai-lfm-models-in-sovereignai'],
+  ['blog-sovereignai-and-perplexity-portable-computer.html', '/blog/sovereignai-and-perplexity-portable-computer'],
 ];
 
 // The playground: the product's real interface files, publicly hosted in
