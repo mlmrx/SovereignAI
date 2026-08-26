@@ -118,7 +118,9 @@ test('llms.txt gives answer engines the product, the license, and the limits', (
 
 test('the public site never claims to be open source, and never links the private repo', () => {
   for (const [file] of PAGES) {
-    const html = pub(file);
+    // Judge our copy, not the slugs of pages we cite: a third party's URL may
+    // carry the phrase (NVIDIA's local-AI blog does); a link to it is not a claim.
+    const html = pub(file).replace(/href="https?:\/\/(?!github\.com|raw\.githubusercontent\.com)[^"]*"/g, 'href=""');
     // The phrase is allowed — "Is SovereignAI open source?" is a question real
     // people ask, and answering it is worth the traffic. What is forbidden is
     // letting it stand alone: the correction must always travel with the term.
