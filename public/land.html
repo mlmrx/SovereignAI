@@ -58,13 +58,6 @@
 <link rel="stylesheet" href="/shell.css" />
 <script src="/shell.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
-<!-- Waitlist wiring (CSP forbids inline scripts, so configuration lives here):
-     waitlist-endpoint is any URL accepting a JSON POST — in production it's
-     our own /api/access-request (Vercel function beside this file, delivers
-     via Resend). If the endpoint is empty or the POST fails, land.js falls
-     back to a mailto: to waitlist-email — a request is never dropped. -->
-<meta name="waitlist-endpoint" content="/api/access-request" />
-<meta name="waitlist-email" content="hello@mysovereign.ai" />
 <style>
 /* SovereignAI landing — the thesis is ownership, so the page argues it —
    and choosing your own look is part of the argument. Three named themes,
@@ -206,6 +199,9 @@ button { font: inherit; cursor: pointer; }
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px var(--glow); }
+.btn-github { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 12px 18px; color: var(--ink); text-decoration: none; font-size: 0.86rem; font-weight: 600; transition: border-color 160ms ease, color 160ms ease; }
+.btn-github:hover { border-color: var(--terra); color: var(--terra); }
+.btn-github svg { width: 16px; height: 16px; fill: currentColor; }
 .btn-ghost { color: var(--ink); text-decoration: none; font-size: 0.86rem; border-bottom: 1px solid var(--line); padding-bottom: 3px; }
 .btn-ghost:hover { color: var(--terra); border-color: var(--terra); }
 /* The om: replay the arrival, with sound. A quiet chip — the act is the loud part. */
@@ -469,32 +465,17 @@ section.band { padding: clamp(56px, 10vh, 110px) 0; }
 .waitlist h2 { font-size: clamp(1.8rem, 4.5vw, 2.8rem); line-height: 1.12; margin: 0 0 14px; letter-spacing: -0.01em; font-weight: 500; color: var(--on-terra); }
 .waitlist .wl-copy p { margin: 0 0 10px; font-size: 1rem; line-height: 1.6; color: var(--on-terra); opacity: 0.9; max-width: 46ch; }
 .waitlist .wl-copy .small { font-size: 0.78rem; opacity: 0.72; }
-.wl-form { display: flex; flex-direction: column; gap: 12px; background: var(--ground); color: var(--ink); border-radius: 16px; padding: 26px; }
-.wl-form label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
-.wl-form input, .wl-form select {
-  background: var(--raise); border: 1px solid var(--line); border-radius: 8px;
-  padding: 11px 13px; color: var(--ink); font: inherit; font-size: 0.9rem; width: 100%;
-}
-.wl-form input:focus, .wl-form select:focus { border-color: var(--terra); outline: none; }
-.wl-field { display: flex; flex-direction: column; gap: 6px; }
-.wl-form button {
-  background: var(--terra); color: var(--on-terra); border: none; border-radius: 8px;
-  padding: 13px; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.02em; margin-top: 4px;
-  transition: transform 160ms ease;
-}
-.wl-form button:hover { transform: translateY(-1px); }
-.wl-form button:disabled { opacity: 0.6; cursor: default; transform: none; }
-.wl-consent { font-size: 0.72rem; color: var(--dim); line-height: 1.5; }
-.wl-consent a { color: var(--terra-hot); }
-.wl-done { text-align: center; padding: 20px 6px; }
-.wl-done .big { font-size: 2rem; color: var(--terra); }
-.wl-done h3 { margin: 8px 0 6px; font-size: 1.1rem; }
-.wl-done p { margin: 0; font-size: 0.86rem; color: var(--dim); line-height: 1.55; }
-.wl-error { font-size: 0.78rem; color: var(--warn); min-height: 1.2em; }
-/* Honeypot: never shown to humans; bots that fill it are dropped server-side. */
-.wl-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.gh-card { display: grid; gap: 10px; background: var(--ground); color: var(--ink); border-radius: 16px; padding: 22px; }
+.gh-card a.gh { display: flex; align-items: center; justify-content: space-between; gap: 12px; text-decoration: none; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 13px 16px; font-size: 0.9rem; font-weight: 600; transition: border-color 160ms ease, background 160ms ease; }
+.gh-card a.gh:hover { border-color: var(--terra); background: var(--raise); }
+.gh-card a.gh .d { display: block; font-weight: 400; font-size: 0.74rem; color: var(--dim); margin-top: 2px; }
+.gh-card a.gh.primary { background: var(--terra); color: var(--on-terra); border-color: var(--terra); }
+.gh-card a.gh.primary .d { color: var(--on-terra); opacity: 0.82; }
+.gh-card a.gh .arrow { color: var(--terra); font-weight: 400; flex: none; }
+.gh-card a.gh.primary .arrow { color: var(--on-terra); }
+.gh-note { font-size: 0.72rem; color: var(--dim); line-height: 1.5; margin: 4px 0 0; }
+.gh-note a { color: var(--terra-hot); }
 @media (max-width: 780px) { .waitlist .wl-inner { grid-template-columns: 1fr; } }
-@media (prefers-reduced-motion: reduce) { .wl-form button:hover { transform: none; } }
 
 /* ---------- footer ---------- */
 footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; background: var(--band-bg); }
@@ -538,6 +519,7 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
       and proves you can leave. No cloud required. No account. Nothing to trust but code you can read.</p>
     <div class="hero-cta">
       <a class="btn-primary" href="#install">Run it on your machine <span aria-hidden="true">→</span></a>
+      <a class="btn-github" href="https://github.com/mlmrx/SovereignAI" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Source on GitHub</a>
       <a class="btn-ghost" href="#week">See how you take it back</a>
       <button class="btn-om" id="om-btn" type="button"
         title="Replay the arrival with a retro om — synthesized in your browser, no file, no request"
@@ -1057,14 +1039,15 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
       <div class="tier feature">
         <span class="name">Single binary</span>
         <span class="who">No Node, no Docker</span>
-        <p>One file for Windows, macOS, or Linux, delivered with an access grant — runtime, app, and UI
-          inside. Check it against the release's <code>SHA256SUMS.txt</code>, then run it.</p>
+        <p>One file for Windows, macOS, or Linux from the <a href="https://github.com/mlmrx/SovereignAI/releases" rel="noopener">Releases page</a> —
+          runtime, app, and UI inside. Make it executable and run it.</p>
       </div>
       <div class="tier">
         <span class="name">One-line install</span>
         <span class="who">Script it</span>
-        <p>A one-line installer — <code>irm … | iex</code> on Windows, <code>curl … | sh</code> on macOS and
-          Linux — with the exact command in your welcome note. Docker Compose if you prefer containers.</p>
+        <p>Windows: <code>irm https://raw.githubusercontent.com/mlmrx/SovereignAI/main/scripts/install.ps1 | iex</code>.
+          macOS and Linux: <code>curl -fsSL https://raw.githubusercontent.com/mlmrx/SovereignAI/main/scripts/install.sh | sh</code>.
+          Needs Node 22. Docker Compose if you prefer containers.</p>
       </div>
       <div class="tier">
         <span class="name">Any box you own</span>
@@ -1073,61 +1056,33 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
           and Docker — health-checked upgrades, export-to-owner, verifiable delete.</p>
       </div>
     </div>
-    <p class="tiers-note">Want the binary, the source, or someone else running the ops? <a href="#access">Request
-      access</a> — source access comes with the grant, and zero runtime dependencies means the audit is
-      actually finishable.</p>
+    <p class="tiers-note">The source is <a href="#access">on GitHub</a>, the binaries are on its Releases page, and zero
+      runtime dependencies means the audit is actually finishable. Someone else running the ops? Ask about the
+      managed edition below.</p>
   </div>
 </section>
 
-<!-- access requests: the one door in, work-email validated -->
+<!-- the code, in the open: read it, fork it, send a pull request -->
 <section class="waitlist" id="access">
   <div class="wrap band">
     <div class="wl-inner">
       <div class="wl-copy">
-        <p class="eyebrow" style="color: var(--on-terra); letter-spacing: 0.22em; opacity: 0.72;">Binaries · source · managed edition — every request read by a person</p>
-        <h2 class="serif">Request <em>access</em>.</h2>
-        <p>The trial above is yours already, no permission needed. This door is for the rest: the single
-          binary, source access for a finishable audit, or the managed edition if you'd rather we run the
-          ops while you keep the boundary, the export, and the exit. We review every request personally.</p>
-        <p class="small">Work email required — it's how we verify a request without asking for anything else.
-          No spam, no reselling your address. You'll be able to leave the product as easily as this list —
-          which is the whole point.</p>
+        <p class="eyebrow" style="color: var(--on-terra); letter-spacing: 0.22em; opacity: 0.72;">Fair source · FSL-1.1-MIT · MIT after two years</p>
+        <h2 class="serif">The code is <em>on GitHub</em>.</h2>
+        <p>Every line that runs is there to read — and with zero runtime dependencies, the audit is one you can
+          actually finish. Found something? Open a pull request. Contributions ship under the Developer
+          Certificate of Origin: sign your commit, no CLA to sign.</p>
+        <p class="small">Binaries for Windows, macOS, and Linux are on the Releases page. Prefer someone else running
+          the ops while you keep the boundary, the export, and the exit? Ask about the managed edition — a person
+          answers.</p>
       </div>
-      <form class="wl-form" id="wl-form" novalidate>
-        <div class="wl-field">
-          <label for="wl-email">Work email</label>
-          <input type="email" id="wl-email" name="email" required autocomplete="email" placeholder="you@yourfirm.com" />
-        </div>
-        <div class="wl-field">
-          <label for="wl-name">Name <span style="text-transform:none; letter-spacing:0">(optional)</span></label>
-          <input type="text" id="wl-name" name="name" autocomplete="name" placeholder="Jordan Rivera" />
-        </div>
-        <div class="wl-field">
-          <label for="wl-company">Company <span style="text-transform:none; letter-spacing:0">(optional)</span></label>
-          <input type="text" id="wl-company" name="company" autocomplete="organization" placeholder="Rivera & Partners" />
-        </div>
-        <div class="wl-field">
-          <label for="wl-use">What would you use it for?</label>
-          <select id="wl-use" name="use">
-            <option value="">Choose one…</option>
-            <option>Legal / compliance knowledge</option>
-            <option>Financial / advisory research</option>
-            <option>Research organization</option>
-            <option>Software agency / client context</option>
-            <option>Executive / investment research</option>
-            <option>Personal / self-hosting</option>
-            <option>Managed edition — run it for me</option>
-            <option>Something else</option>
-          </select>
-        </div>
-        <div class="wl-hp" aria-hidden="true">
-          <label for="wl-hp">Website</label>
-          <input type="text" id="wl-hp" name="website" tabindex="-1" autocomplete="off" />
-        </div>
-        <button type="submit" id="wl-submit">Request access ⬡</button>
-        <p class="wl-error" id="wl-error" role="alert"></p>
-        <p class="wl-consent">By requesting you agree we may email you about your access. We store only what you enter here.</p>
-      </form>
+      <div class="gh-card">
+        <a class="gh primary" href="https://github.com/mlmrx/SovereignAI" rel="noopener"><span>View the source<span class="d">mlmrx/SovereignAI · every line that runs</span></span><span class="arrow" aria-hidden="true">→</span></a>
+        <a class="gh" href="https://github.com/mlmrx/SovereignAI/compare" rel="noopener"><span>Open a pull request<span class="d">fork, change, send — DCO, no CLA</span></span><span class="arrow" aria-hidden="true">→</span></a>
+        <a class="gh" href="https://github.com/mlmrx/SovereignAI/issues/new" rel="noopener"><span>Report an issue<span class="d">bugs, gaps, claims we got wrong</span></span><span class="arrow" aria-hidden="true">→</span></a>
+        <a class="gh" href="https://github.com/mlmrx/SovereignAI/releases" rel="noopener"><span>Releases<span class="d">single binaries · Windows, macOS, Linux</span></span><span class="arrow" aria-hidden="true">→</span></a>
+        <p class="gh-note">Managed edition: <a href="mailto:hello@mysovereign.ai?subject=SovereignAI%20managed%20edition">hello@mysovereign.ai</a> — we store nothing you don't send.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -1147,7 +1102,7 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
       <a href="/blog">Blog</a>
       <a href="/faq">FAQ</a>
       <a href="/#install">Run the trial</a>
-      <a href="/#access">Request access</a>
+      <a href="/#access">GitHub</a>
     </div>
   </div>
   <div class="shell-in">

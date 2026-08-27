@@ -12,8 +12,9 @@ Both meanings are explained at /what-is-sovereign-ai.
 
 Made by Unify Dynamics. Site: https://mysovereign.ai
 Status (August 2026): open trial — one Docker command, no account
-(https://mysovereign.ai/#install). Binaries, source access, and the managed
-edition go through an access request a person reviews.
+(https://mysovereign.ai/#install). The source is on GitHub
+(https://github.com/mlmrx/SovereignAI), single binaries are on its Releases page, and
+the managed edition is by request (hello@mysovereign.ai).
 License: FSL-1.1-MIT — fair source, not open source. Self-hosting, forking,
 and internal use are unrestricted; only a competing commercial offering is
 barred; each release converts to plain MIT two years after it ships.

@@ -132,12 +132,12 @@ test('the public site never claims to be open source, and never links the privat
         `${file} says "open source" without "fair source" nearby — the core is FSL-licensed`
       );
     }
-    assert.doesNotMatch(html, /github(?:usercontent)?\.com\/mlmrx/, `${file} links a private repo that 404s for visitors`);
+    // The repository is public: linking it is the point (the landing test pins the door).
     // The rival framing concedes the model layer; ours is a dial, not a trade.
     assert.doesNotMatch(html, /rent the intelligence/i, `${file} uses the competitor's framing`);
   }
   const llms = pub('llms.txt');
-  assert.doesNotMatch(llms, /github(?:usercontent)?\.com\/mlmrx/);
+  assert.match(llms, /github\.com\/mlmrx\/SovereignAI/, 'answer engines are told where the source is');
 });
 
 test('one shell frames every page: same header, same footer, same theme control', () => {

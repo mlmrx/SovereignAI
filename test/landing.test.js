@@ -24,22 +24,6 @@ test('the landing page is a public, dataless marketing surface (no token, no wor
   assert.doesNotMatch(script, /\/api\/(status|chat|memories|documents|config|personas|model-recipes)/, 'landing page must not call private workspace APIs');
 });
 
-test('the waitlist form captures interest and never silently drops a lead', () => {
-  assert.match(html, /id="wl-form"/);
-  assert.match(html, /type="email"/);
-  assert.match(script, /WAITLIST_ENDPOINT/, 'submission target must be configurable');
-  assert.match(script, /mailto:/, 'must fall back to email so interest is never lost');
-  assert.match(script, /fetch\(window\.WAITLIST_ENDPOINT/, 'a configured endpoint must receive a POST');
-  assert.match(script, /\/\^\[\^\\s@\]\+@/, 'email must be validated before submit');
-  // CSP forbids inline scripts, so window globals can never be set on the
-  // served page — configuration must come from markup the script reads.
-  assert.match(html, /meta name="waitlist-endpoint"/, 'endpoint must be configurable without inline JS');
-  assert.match(html, /meta name="waitlist-email"/, 'fallback address must be configurable without inline JS');
-  assert.match(script, /meta\[name="waitlist-endpoint"\]/, 'script must read the endpoint from markup');
-  assert.doesNotMatch(html + script, /sovereignai\.app/, 'never point leads at a domain we do not own');
-  assert.match(script, /not in the queue until/i, 'the mailto fallback must not overclaim success');
-});
-
 test('the open trial is real and un-gated: one command, token required, exit printed beside it', () => {
   assert.match(html, /btn-primary" href="#install"/, 'the hero primary CTA leads to the trial, not a form');
   assert.match(
@@ -52,22 +36,22 @@ test('the open trial is real and un-gated: one command, token required, exit pri
   assert.match(script, /#run-copy/, 'the command is copyable in one click');
 });
 
-test('the access request remains the door for binaries, source, and the managed edition', () => {
-  assert.match(html, /id="access"/, 'the access-request band exists');
-  // The repo is private: public links to it would 404 for every visitor.
-  assert.doesNotMatch(html, /github(?:usercontent)?\.com\/mlmrx/, 'no links to the private repo on the public page');
-  // The bar is deliberately short, so the footer is what guarantees the door
-  // stays reachable from anywhere on the site.
-  assert.match(html, /<footer class="shell-foot">[\s\S]*href="\/#access"/, 'the access request stays reachable from the footer');
-  assert.match(html, /id="wl-company"/, 'company is captured (optional)');
-  // The work-email gate: personal domains are declined with an explanation
-  // and a direct escape hatch, so validation never silently drops a lead.
-  assert.match(script, /FREE_MAIL/, 'a personal-mail domain list gates the form');
-  for (const domain of ["'gmail.com'", "'outlook.com'", "'icloud.com'", "'proton.me'"]) {
-    assert.ok(script.includes(domain), `${domain} must be treated as personal`);
+test('the door is GitHub: source, pull requests, issues, releases — and the managed edition keeps a human', () => {
+  const REPO = 'https://github.com/mlmrx/SovereignAI';
+  assert.match(html, new RegExp(`class="btn-github" href="${REPO}"`), 'the hero carries the GitHub button beside the trial');
+  assert.match(html, /btn-primary" href="#install"[\s\S]*class="btn-github"/, 'the trial stays the primary call; GitHub follows it');
+  assert.match(html, /id="access"/, 'the band keeps its anchor so every footer link still lands');
+  const band = html.slice(html.indexOf('id="access"'), html.indexOf('<footer class="shell-foot">'));
+  for (const href of [REPO, `${REPO}/compare`, `${REPO}/issues/new`, `${REPO}/releases`]) {
+    assert.ok(band.includes(`href="${href}"`), `the band must link ${href}`);
   }
-  assert.match(script, /work email so we can verify/i, 'the decline explains itself');
-  assert.match(script, /No work email\?/i, 'personal-address requesters get a direct path, never a dead end');
+  assert.match(band, /mailto:hello@mysovereign\.ai/, 'the managed edition keeps a human door');
+  assert.match(band, /Developer\s+Certificate of Origin/, 'contribution terms are stated where the pull-request button is');
+  assert.match(html, /<footer class="shell-foot">[\s\S]*href="\/#access">GitHub</, 'the footer names the door for what it is');
+  // The gate is retired: no form, no work-email validation, no lead pipeline on the client.
+  assert.doesNotMatch(html, /id="wl-form"|waitlist-endpoint|access grant|Request access/);
+  assert.doesNotMatch(script, /WAITLIST_ENDPOINT|FREE_MAIL|access-request/);
+  assert.doesNotMatch(html + script, /sovereignai\.app/, 'never point anyone at a domain we do not own');
 });
 
 test('the arrival can be heard: a retro om, synthesized in-page, only ever behind a click', () => {
