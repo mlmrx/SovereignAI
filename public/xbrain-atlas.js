@@ -104,6 +104,65 @@ function extinguish() {
   $('#probe-note').textContent = 'no probe sent — the terrain rests dark';
 }
 
+/**
+ * A probe ends in the passage that answered it, not in a ranked directory of
+ * eight (ADR-27). The server already does the finding — it returns results in
+ * rank order, each carrying the `focus` window that holds the answer and the
+ * query `terms` it covers — and the Atlas was throwing all of that away to
+ * print a score column beside the first 280 characters of a chunk.
+ *
+ * The deepest sounding is read first, whole. The rest stay as soundings,
+ * because on a map the second reading still matters — just quietly.
+ */
+function markTerms(text, terms) {
+  const safe = esc(String(text ?? ''));
+  if (!Array.isArray(terms) || !terms.length) return safe;
+  // Escape first, then mark: no markup from a document ever reaches the DOM.
+  const pattern = terms
+    .filter((term) => typeof term === 'string' && term.length >= 3)
+    .map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .sort((a, b) => b.length - a.length)
+    .join('|');
+  if (!pattern) return safe;
+  return safe.replace(new RegExp(`\\b(${pattern}\\w*)`, 'gi'), '<mark>$1</mark>');
+}
+
+// How deep a sounding reads: the server's rank when it sent one, the older
+// score otherwise. One function so the hexagons, the ordering and the numbers
+// beside the soundings can never disagree about the same result.
+function depthOf(result) {
+  return Number.isFinite(result?.rank) ? result.rank : (result?.score ?? 0);
+}
+
+function renderSoundings(list, results, query) {
+  const [best, ...rest] = results;
+  const deepest = Math.max(...results.map(depthOf), 0.0001);
+  const passage = best.focus || String(best.content || '').slice(0, 280);
+  const covered = Array.isArray(best.terms) && best.terms.length ? best.terms : null;
+  const depth = (depthOf(best) / deepest).toFixed(2);
+  const lead = `
+    <div class="found">
+      <p class="found-label">the deepest sounding</p>
+      <p class="found-doc">${esc(best.document || 'document')}<span class="found-depth">depth ${esc(depth)}${covered ? ` · ${esc(covered.join(', '))}` : ''}</span></p>
+      <blockquote class="found-quote">${markTerms(passage, best.terms)}</blockquote>
+    </div>`;
+  const also = rest.length
+    ? `<p class="also-label">the terrain also answered</p>` +
+      rest
+        .slice(0, 7)
+        .map(
+          (r) => `
+        <div class="sounding">
+          <span class="score-col">${(depthOf(r) / deepest).toFixed(2)}</span>
+          <span><span class="doc">${esc(r.document || 'document')} <span class="method">${esc(r.method || '')}</span></span>
+          <span class="excerpt">${markTerms(r.focus || String(r.content || '').slice(0, 220), r.terms)}</span></span>
+        </div>`
+        )
+        .join('')
+    : `<p class="also-label">nothing else in the terrain answered “${esc(query)}”</p>`;
+  list.innerHTML = lead + also;
+}
+
 /* ---------- the probe ---------- */
 async function probe() {
   const query = $('#probe-input').value.trim();
@@ -113,15 +172,24 @@ async function probe() {
   $('#probe-note').textContent = 'probing…';
   try {
     const results = state.demo ? demoProbe(query) : await api('GET', `/api/search?q=${encodeURIComponent(query)}`);
+    // Rank, not score: since ADR-27 retrieval orders by how much of the query
+    // a passage actually covers, and the map claims to show the ordering the
+    // AI uses. Lighting by score contradicted the order of the soundings
+    // directly beneath it — the best find could read lower than a runner-up.
     const best = new Map(); // documentId → best result
     for (const result of results) {
       const current = best.get(result.documentId);
-      if (!current || (result.score ?? 0) > (current.score ?? 0)) best.set(result.documentId, result);
+      if (!current || depthOf(result) > depthOf(current)) best.set(result.documentId, result);
     }
+    // Shown relative to whichever answered best: rank is a sum of signals with
+    // no natural ceiling, and "2.01" on a hexagon means nothing to anyone.
+    const deepest = Math.max(...results.map(depthOf), 0.0001);
     for (const territory of state.territories) {
       const hit = best.get(territory.id);
       territory.el.classList.toggle('lit', Boolean(hit));
-      territory.el.querySelector('.score').textContent = hit ? (hit.score ?? 0).toFixed(2) : '';
+      const cell = territory.el.querySelector('.score');
+      cell.textContent = hit ? (depthOf(hit) / deepest).toFixed(2) : '';
+      if (hit) cell.title = `rank ${depthOf(hit).toFixed(2)} · ${Math.round((hit.coverage ?? 0) * 100)}% of your terms`;
     }
     const note = $('#probe-note');
     note.innerHTML = results.length
@@ -133,13 +201,7 @@ async function probe() {
     const list = $('#sounding-list');
     soundings.hidden = false;
     if (results.length) {
-      const top = Math.max(...results.map((r) => r.score ?? 0), 0.0001);
-      list.innerHTML = results.slice(0, 8).map((r) => `
-        <div class="sounding">
-          <span class="score-col">${(r.score ?? 0).toFixed(2)}<span class="score-bar"><i style="width:${Math.round(((r.score ?? 0) / top) * 100)}%"></i></span></span>
-          <span><span class="doc">${esc(r.document || 'document')} <span class="method">${esc(r.method || '')}</span></span>
-          <span class="excerpt">${esc(String(r.content || '').slice(0, 280))}</span></span>
-        </div>`).join('');
+      renderSoundings(list, results, query);
     } else {
       list.innerHTML = '<span class="none">No chunks ranked for this probe. Your AI would answer from the model and persona alone.</span>';
     }
@@ -213,18 +275,29 @@ const DEMO_TERRITORIES = [
   { name: 'STORE_SUBMISSION.md', chunk_count: 2, body: 'marketplace listings icons chrome firefox jetbrains' },
   { name: 'meeting-notes.txt', chunk_count: 1, body: 'roadmap priorities founder decisions launch' },
 ];
+// The demo answers in the SHAPE the real route returns — rank, coverage,
+// terms and a focus window included. A fixture that drops fields the UI reads
+// is a screen that only breaks in public, which is how issue #3 happened.
 function demoProbe(query) {
   const words = query.toLowerCase().split(/\W+/).filter((w) => w.length > 2);
   return state.territories
     .map((territory) => {
-      const hay = `${territory.name} ${territory.body || ''}`.toLowerCase();
-      const hits = words.filter((w) => hay.includes(w)).length;
-      return hits
-        ? { documentId: territory.id, document: territory.name, content: `…${territory.body}…`, score: Math.min(0.97, hits / Math.max(words.length, 1)), method: 'demo' }
-        : null;
+      const body = territory.body || '';
+      const hay = `${territory.name} ${body}`.toLowerCase();
+      const terms = words.filter((w) => hay.includes(w));
+      if (!terms.length) return null;
+      const score = Math.min(0.97, terms.length / Math.max(words.length, 1));
+      const coverage = Number((terms.length / Math.max(words.length, 1)).toFixed(2));
+      // The sentence that carries the most of what was asked, as the server does.
+      const sentences = body.split(/(?<=[.!?])\s+/).filter(Boolean);
+      const focus =
+        sentences
+          .map((sentence) => ({ sentence, hits: terms.filter((t) => sentence.toLowerCase().includes(t)).length }))
+          .sort((a, b) => b.hits - a.hits)[0]?.sentence || body.slice(0, 240);
+      return { documentId: territory.id, document: territory.name, content: `…${body}…`, score, method: 'demo', rank: Number((coverage + score).toFixed(4)), coverage, terms, focus };
     })
     .filter(Boolean)
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => b.rank - a.rank);
 }
 async function boot() {
   try {

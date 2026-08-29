@@ -151,7 +151,7 @@
       curatedAt: '2026-08',
       note: 'A dated, opinionated starter shelf — not a leaderboard. The landscape churns monthly: verify current versions and licenses on Hugging Face before relying on an entry. Weight licenses belong to their publishers.',
       sizedAgainst: 'this machine',
-      gpu: { vramGB: 8, name: 'NVIDIA GeForce RTX 4060', unifiedMemory: false, source: 'nvidia-smi' },
+      gpu: { vramGB: 8, name: 'NVIDIA GeForce RTX 4060', vendor: 'nvidia', unifiedMemory: false, source: 'nvidia-smi' },
       roles: [
         { role: 'everyday-chat', label: 'Everyday chat', job: 'The default local brain: general questions, drafting, summarizing.', models: [
           { base: 'gemma3:4b', hf: 'google/gemma-3-4b-it', paramsB: 4, license: 'Gemma Terms of Use (Google — use restrictions apply)', why: 'Best small all-rounder of its generation; strong multilingual.', architecture: 'dense', engine: 'ollama', approxGBAtQ4: 2.4, fit: 'fits', engineEnabled: null },
@@ -194,7 +194,7 @@
       corpus: { documents: 4, totalDocumentChars: 182400, memories: 8 },
       modelFit: { applies: true, totalMemoryGB: 32, budgetGB: 19.2, quant: 'Q4_K_M', approxParamsB: 32, label: '~32B at Q4_K_M', reasoning: 'This device reports 32 GB of memory. Reserving headroom for the OS, this app, and the context window, roughly 19.2 GB is usable for model weights — comfortable for a ~32B model at Q4_K_M. Larger context windows or running other memory-heavy apps at the same time will eat into this.' },
       fineTuning: { suggested: false, exampleCount: 0, reasoning: 'No approved training dataset yet. Retrieval (knowledge base + memory) already covers most personalization — Fine-Tuning Studio is worth it once you have a reviewed, locked set of examples that show the model *how* to respond, not just facts for it to draw on.' },
-      gpu: { vramGB: 8, name: 'NVIDIA GeForce RTX 4060', unifiedMemory: false, source: 'nvidia-smi' },
+      gpu: { vramGB: 8, name: 'NVIDIA GeForce RTX 4060', vendor: 'nvidia', unifiedMemory: false, source: 'nvidia-smi' },
       sparseFit: { applies: true, largest: { base: 'google/gemma-4-26B-A4B-it', paramsB: 25.2, activeParamsB: 3.8 }, reasoning: 'Sparse (MoE) models change the ceiling: with FreeToken, this machine’s 32 GB of RAM can hold the experts of google/gemma-4-26B-A4B-it (25.2B total) while the 8 GB GPU runs the ~3.8B active set. See the frontier tier on the starter shelf.' },
     },
   });

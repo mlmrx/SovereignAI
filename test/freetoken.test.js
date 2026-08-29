@@ -638,6 +638,7 @@ test('the first-run wizard offers a detected FreeToken engine, and only a detect
   // One model per process: reported, not chosen from a list.
   assert.match(js, /provider === 'freetoken'\) return \$\('#wz-freetoken-model'\)\?\.dataset\?\.model/, 'the model is whatever ft serve was started with');
   assert.match(js, /found\.ready && found\.model && !ollamaReady/, 'a working Ollama is never overridden — only an idle one is replaced');
+  assert.match(js, /typeof res\.ready === 'boolean' && typeof res\.url === 'string'/, 'only a positive answer counts — an empty body must not become a phantom engine');
   assert.match(js, /providersUpdate\.freetoken = \{ enabled: true \}/, 'finishing setup switches the provider on');
   assert.match(js, /FreeToken did not report which model it is serving/, 'a blank model is explained where it can be fixed: the engine');
 

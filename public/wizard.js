@@ -439,7 +439,10 @@
     let found = null;
     try {
       const res = await api('GET', '/api/providers/freetoken/detect', undefined, { timeoutMs: 6000 });
-      if (res && res.running !== false) found = res;
+      // A positive signal only. `{ running: false }` is the no answer, but so
+      // is any partial body — an empty object must never become a phantom
+      // engine offering a blank model.
+      if (res && typeof res.ready === 'boolean' && typeof res.url === 'string') found = res;
     } catch {
       found = null; // nothing running, or the probe failed: either way, offer nothing
     }

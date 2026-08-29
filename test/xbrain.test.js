@@ -101,3 +101,41 @@ test('Atlas probes the terrain with real retrieval and surveys territories', () 
   assert.match(surfaces.atlas, /class="terrain"/);
   assert.match(script, /demoProbe/, 'demo probe must be clearly separate from live retrieval');
 });
+
+// The same rule as the knowledge search (ADR-27): a probe ends in the passage
+// that answered it. The Atlas had every found signal in hand — the route
+// returns rank order, focus windows and covered terms — and was printing a
+// score column beside the first 280 characters of a chunk instead.
+test('the Atlas reads its deepest sounding, and lists only what came after it', () => {
+  const script = scriptOf(surfaces.atlas);
+  assert.match(script, /function renderSoundings/, 'the soundings are rendered as a find, not a table');
+  assert.match(script, /the deepest sounding/, 'the passage that answered is named as such');
+  assert.match(script, /best\.focus \|\|/, 'the focus window leads, with the chunk slice only as a fallback');
+  assert.match(script, /the terrain also answered/, 'the rest stay soundings — quietly');
+  assert.doesNotMatch(script, /content \|\| ''\)\.slice\(0, 280\)\}<\/span>/, 'the old 280-character slab is gone');
+
+  // Escape first, then mark: nothing from a document may reach the DOM as markup.
+  assert.match(script, /function markTerms/);
+  assert.match(script, /const safe = esc\(String\(text \?\? ''\)\);/, 'escaping happens before any mark is inserted');
+  assert.match(script, /\[\.\*\+\?\^\$\{\}\(\)\|\[\\\]\\\\\]/, 'query terms are escaped before becoming a RegExp');
+
+  // The public demo must answer in the shape the real route returns — a
+  // fixture that drops fields the UI reads only ever breaks in public.
+  const demo = script.slice(script.indexOf('function demoProbe'), script.indexOf('async function boot'));
+  for (const field of ['documentId', 'document', 'content', 'score', 'method', 'rank', 'coverage', 'terms', 'focus']) {
+    assert.match(demo, new RegExp(`\\b${field}\\s*[:,}]`), `the demo fixture must carry ${field}`);
+  }
+  assert.match(demo, /sort\(\(a, b\) => b\.rank - a\.rank\)/, 'and order by rank, as the server does');
+
+  // One depth function for the hexagons, the ordering and the numbers beside
+  // the soundings. Lighting by `score` while ordering by `rank` let the best
+  // find read LOWER than a runner-up directly beneath it.
+  assert.match(script, /function depthOf/);
+  assert.match(script, /Number\.isFinite\(result\?\.rank\) \? result\.rank/, 'rank is the ordering the AI actually uses');
+  assert.doesNotMatch(script, /\(hit\.score \?\? 0\)\.toFixed\(2\)/, 'the hexagons no longer light by a signal the ordering ignores');
+  assert.match(script, /depthOf\(hit\) \/ deepest/, 'depth is shown relative to the best answer — raw rank has no ceiling to read against');
+  assert.match(surfaces.atlas, /retrieval rank/, 'and the page claims rank, which is what it now shows');
+
+  assert.match(surfaces.atlas, /\.found-quote/, 'the found passage has a voice of its own on the page');
+  assert.match(surfaces.atlas, /mark \{ background: transparent/, 'marks are drawn in the map’s own gold, not a highlighter');
+});
