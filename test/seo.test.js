@@ -295,6 +295,35 @@ test('every public page is reachable: routes are wired and internal links resolv
   }
 });
 
+// The blog promises no newsletter, which leaves the feed as the only way to
+// follow it — so the feed has to be right, and it has to stay right when a
+// post is added. It is generated from the posts' own JSON-LD; this rebuilds
+// it in memory and fails if the committed file has drifted.
+test('the blog has a feed, generated from the posts and in sync with them', async () => {
+  const { readPosts, buildFeed } = await import('../scripts/build-feed.js');
+  const committed = pub('feed.xml').replace(/\r\n/g, '\n');
+  assert.equal(committed, buildFeed(readPosts()), 'public/feed.xml is stale — run: node scripts/build-feed.js');
+
+  const posts = readPosts();
+  const files = fs.readdirSync(path.join(root, 'public')).filter((f) => /^blog-.+\.html$/.test(f));
+  assert.equal(posts.length, files.length, 'every post is in the feed');
+  for (const post of posts) {
+    assert.ok(committed.includes(`<id>${post.url}</id>`), `the feed is missing ${post.slug}`);
+    assert.match(post.published, /^\d{4}-\d{2}-\d{2}$/, `${post.slug} needs a real datePublished`);
+    assert.ok(post.summary.length >= 80, `${post.slug} needs a summary a reader can judge from`);
+  }
+  // Discoverable by a reader that only has the page, and by a person reading it.
+  const index = pub('blog.html');
+  assert.match(index, /rel="alternate" type="application\/atom\+xml"[^>]*href="\/feed\.xml"/, 'the index must advertise the feed');
+  assert.match(index, /href="\/feed\.xml"[^>]*>|>an Atom feed</, 'a person must be able to find the feed without reading the source');
+  for (const file of files) {
+    assert.match(pub(file), /type="application\/atom\+xml"/, `${file} must advertise the feed too — most readers subscribe from a post`);
+  }
+  assert.ok(pub('.vercelignore').includes('!feed.xml'), 'the feed would not be deployed');
+  const headers = JSON.parse(rootFile('vercel.json')).headers.find((h) => h.source === '/feed.xml');
+  assert.match(headers?.headers?.[0]?.value ?? '', /application\/atom\+xml/, 'Atom has its own media type');
+});
+
 // The site ships zero inline executable script — every page loads its
 // behaviour from a same-origin file — so the strict policy costs nothing and
 // is measurably safe: all 21 routes were rendered under it in Chrome with no

@@ -165,6 +165,10 @@ the vendor's documentation on the date of writing):
   same machine, shared GPU, two jobs; connection paths marked verified /
   stated-but-undocumented / not yet.
 
+Feed: [Atom](https://mysovereign.ai/feed.xml) — generated from the posts
+themselves. There is no mailing list, on purpose: a subscriber list is a copy
+of someone's address in our hands, and a feed the reader pulls is not.
+
 ## Docs
 
 - [What is sovereign AI?](https://mysovereign.ai/what-is-sovereign-ai): both
