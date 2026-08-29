@@ -29,6 +29,11 @@ test('CI and release workflows use the bounded package suite and explicit artifa
 });
 
 test('release integration source versions align with the SovereignAI release', () => {
+  // The version the binaries, the CLI, the MCP server, and /api/status report
+  // lives in src/config.js; the first v0.6.0 build shipped 0.5.0 binaries because
+  // it had drifted from package.json. Pinned together here.
+  assert.equal(JSON.parse(read('package.json')).version, '0.6.0');
+  assert.match(read('src/config.js'), /export const VERSION = '0.6.0';/);
   assert.equal(JSON.parse(read('integrations/browser/manifest.json')).version, '0.6.0');
   assert.equal(JSON.parse(read('integrations/vscode/package.json')).version, '0.6.0');
   assert.match(read('integrations/jetbrains/build.gradle.kts'), /version = "0.6.0"/);
