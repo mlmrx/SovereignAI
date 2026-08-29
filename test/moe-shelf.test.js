@@ -9,7 +9,7 @@ import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { MODEL_SHELF, effectiveEngine, shelfWithFit, sparseCandidates } from '../src/model-shelf.js';
+import { FIT_LABELS, MODEL_SHELF, effectiveEngine, shelfFit, shelfWithFit, sparseCandidates } from '../src/model-shelf.js';
 import { buildModelRecommendation, estimateSparseFit } from '../src/model-recommendation.js';
 import { createGpuProbe, parseNvidiaSmi } from '../src/hardware.js';
 import { createApp } from '../src/server.js';
@@ -486,4 +486,58 @@ test('detectGpu re-probes an unknown result after the retry window, but keeps a 
   clock = 10_000_000;
   await steady();
   assert.equal(successes, 1, 'a real GPU is never re-probed');
+});
+
+// `shelfFit` answers a different question from `shelfWithFit`: not "what on
+// the shelf fits this machine" but "does the model this person already
+// configured fit it" — the question `sovereign doctor` asks (issue #11).
+test('shelfFit sizes a configured model id, in the shelf badge’s own words', () => {
+  const RAM32 = 32 * GB;
+  const fit = shelfFit('qwen3.8:27b', { totalMemoryBytes: RAM32 });
+  assert.equal(fit.needGB, 16.2, '27B × 0.6 GB/B at Q4');
+  assert.equal(fit.budgetGB, 19.2, '60% of 32 GB is the usable budget');
+  assert.equal(fit.fit, 'tight');
+  assert.equal(fit.label, FIT_LABELS.tight);
+  assert.equal(fit.engine, 'ollama');
+
+  // The id arrives in whichever dialect the user's engine speaks.
+  assert.equal(shelfFit('QWEN3.8:27B', { totalMemoryBytes: RAM32 })?.base, 'qwen3.8:27b', 'case is not identity');
+  assert.equal(shelfFit('qwen3.8:27b:latest', { totalMemoryBytes: RAM32 })?.base, 'qwen3.8:27b', "Ollama's :latest suffix");
+  assert.equal(shelfFit('Qwen/Qwen3.8-27B', { totalMemoryBytes: RAM32 })?.base, 'qwen3.8:27b', 'the Hugging Face id finds the same entry');
+  assert.equal(shelfFit('LiquidAI/LFM2.5-2.6B-GGUF', { totalMemoryBytes: RAM32 })?.needGB, 1.6, 'the hf.co/ prefix is not part of the name');
+  assert.equal(shelfFit(QWEN, { totalMemoryBytes: RAM32 })?.architecture, 'moe', 'a sparse entry sizes on TOTAL params, as it must');
+
+  // Unknown stays unknown: no parameter count, no claim.
+  assert.equal(shelfFit('someone/private-finetune', { totalMemoryBytes: RAM32 }), null);
+  assert.equal(shelfFit('', { totalMemoryBytes: RAM32 }), null);
+  assert.equal(shelfFit('qwen3:8b', { totalMemoryBytes: 0 }), null, 'a machine whose memory could not be read gets no verdict');
+});
+
+// "Comfortable from ~X GB" has to be a machine someone can buy, and it has to
+// agree with the prose already written on the shelf cards — those sentences
+// were written by hand against the same rule, and this is what keeps them from
+// drifting apart.
+test('the comfortable-from threshold matches the prose the shelf cards already carry', () => {
+  const at = (id) => shelfFit(id, { totalMemoryBytes: 32 * GB }).comfortableFromGB;
+  assert.equal(at('qwen3.8:27b'), 48, "the reasoning entry says 'tight there, comfortable from 48'");
+  assert.equal(at(QWEN), 48, "35B-A3B says 'comfortable from 48 GB of RAM, borderline at 32'");
+  assert.equal(at(NEMOTRON), 48, "Nemotron says '32 GB of RAM is tight and 48 comfortable'");
+  assert.equal(at('qwen3:8b'), 16, 'a small model does not demand a workstation');
+  for (const id of [QWEN, NEMOTRON, 'qwen3.8:27b', 'qwen3:8b', GPT_OSS_120B]) {
+    const roomy = shelfFit(id, { totalMemoryBytes: shelfFit(id, { totalMemoryBytes: 32 * GB }).comfortableFromGB * GB });
+    assert.equal(roomy.fit, 'fits', `${id} must actually fit at the size we send people shopping for`);
+  }
+});
+
+// One vocabulary for one verdict: the doctor imports these labels, and the
+// command center's shelf badge hard-codes them. If either side is reworded
+// alone, a user gets two different answers to the same question.
+test('the fit vocabulary is shared between the doctor and the shelf badge', () => {
+  const app = fs.readFileSync(path.join(import.meta.dirname, '..', 'public', 'app.js'), 'utf8');
+  const cli = fs.readFileSync(path.join(import.meta.dirname, '..', 'bin', 'sovereign.js'), 'utf8');
+  for (const phrase of Object.values(FIT_LABELS)) {
+    assert.ok(app.includes(`'${phrase}'`), `the shelf badge must still say "${phrase}"`);
+  }
+  assert.match(cli, /shelfFit/, 'the doctor takes its sizing from the shelf, never its own copy of the rule');
+  assert.doesNotMatch(cli, /0\.6\s*\*|GB_PER_BILLION/, 'the sizing rule must not be re-implemented in the CLI');
 });

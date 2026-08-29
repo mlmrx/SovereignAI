@@ -207,6 +207,44 @@ test('doctor reports local readiness and never prints configured secrets', (t) =
   assert.doesNotMatch(output, /\/private/);
 });
 
+// A model that will not fit is a bad afternoon that the doctor already had
+// every number to predict: the shelf sizes entries against RAM, and the
+// doctor knows the default model. The line is [info] — a tight fit is a slow
+// machine, not a broken install — and it is silent about what it cannot know.
+test('doctor sizes the default model against this machine, and stays silent when it cannot', (t) => {
+  const writeHome = (label, defaults, providers) => {
+    const home = makeTemp(t, label);
+    fs.writeFileSync(
+      path.join(home, 'sovereign.config.json'),
+      JSON.stringify({ name: 'Fit', setupComplete: true, providers, defaults, embeddings: { provider: 'ollama', model: '' } })
+    );
+    return home;
+  };
+  const localOllama = { ollama: { enabled: true, baseUrl: 'http://127.0.0.1:11434' } };
+
+  const shelved = runCli(['doctor', '--no-network'], { home: writeHome('fit-shelf', { provider: 'ollama', model: 'qwen3:8b' }, localOllama) });
+  const line = (shelved.stdout + shelved.stderr).split('\n').find((l) => l.includes('Model fit'));
+  assert.ok(line, 'a shelf model gets a fit line');
+  assert.match(line, /\[info\]/, 'sizing never changes the verdict');
+  assert.match(line, /qwen3:8b: ~4\.8 GB at Q4 against ~[\d.]+ GB of usable RAM/, 'the line shows the need and the budget it was judged against');
+  assert.match(line, /fits here|tight fit|needs more RAM/, 'it ends in the same words the shelf badge uses');
+
+  // Ollama appends :latest; the shelf entry is the same model.
+  const tagged = runCli(['doctor', '--no-network'], { home: writeHome('fit-tag', { provider: 'ollama', model: 'qwen3:8b:latest' }, localOllama) });
+  assert.match(tagged.stdout + tagged.stderr, /Model fit — qwen3:8b:/, 'the :latest suffix does not hide a known model');
+
+  // Unknown parameter count, so no claim: guessing a size from a name is how
+  // sizing advice becomes fiction.
+  const unknown = runCli(['doctor', '--no-network'], { home: writeHome('fit-unknown', { provider: 'ollama', model: 'someone/private-finetune' }, localOllama) });
+  assert.doesNotMatch(unknown.stdout + unknown.stderr, /Model fit/, 'a model off the shelf gets no invented number');
+
+  // The model does not run here, so this machine's RAM is not the constraint.
+  const remote = runCli(['doctor', '--no-network'], {
+    home: writeHome('fit-remote', { provider: 'openai', model: 'qwen3:8b' }, { openai: { enabled: true, baseUrl: 'https://api.example.com', apiKey: 'k' } }),
+  });
+  assert.doesNotMatch(remote.stdout + remote.stderr, /Model fit/, 'a remote endpoint is not sized against local RAM');
+});
+
 test('doctor diagnoses invalid config without echoing its contents', (t) => {
   const home = makeTemp(t, 'bad-config');
   const secret = 'never-echo-this-secret';

@@ -134,6 +134,72 @@ function round1(value) {
 }
 
 /**
+ * The words the shelf badge uses for a fit. Exported so anything else that
+ * reports a fit — `sovereign doctor` today — says exactly what the badge in
+ * the command center says; a test pins the two together.
+ */
+export const FIT_LABELS = { fits: 'fits here', tight: 'tight fit', 'too-big': 'needs more RAM' };
+
+// The memory sizes machines are actually sold in. A threshold is rounded UP
+// to one of these, because "comfortable from 36 GB" is advice nobody can act
+// on: the next machine you can buy has 48. This is also what makes the
+// computed threshold agree with the prose on the shelf cards, which was
+// written by hand against the same rule — 35B-A3B and Nemotron 30B both land
+// on 48 GB, exactly as their `why` lines already say.
+const COMMON_MEMORY_GB = [8, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512];
+
+/**
+ * How much total RAM makes `needGB` a comfortable fit rather than a tight one,
+ * inverting the same rule `fitWithin` applies: need ≤ 75% of the usable
+ * budget, and the budget is `USABLE_FRACTION` of total.
+ */
+function comfortableFromGB(needGB) {
+  const exact = needGB / (USABLE_FRACTION * 0.75);
+  return COMMON_MEMORY_GB.find((size) => size >= exact) ?? Math.ceil(exact);
+}
+
+/**
+ * Size a configured model id against this machine, for callers outside the
+ * shelf UI. Returns null when the id is not on the shelf: an unknown model's
+ * parameter count is unknown, and guessing it from the name would be the kind
+ * of confident wrongness this product exists to avoid.
+ *
+ * Matching is by Ollama tag or Hugging Face id, tolerating the `:latest`
+ * suffix Ollama adds and the `hf.co/` prefix it uses for direct GGUF pulls.
+ */
+export function shelfFit(modelId, { totalMemoryBytes }) {
+  const wanted = normalizeModelId(modelId);
+  if (!wanted) return null;
+  for (const group of MODEL_SHELF) {
+    for (const model of group.models) {
+      if (normalizeModelId(model.base) !== wanted && normalizeModelId(model.hf) !== wanted) continue;
+      const totalGB = Number.isFinite(totalMemoryBytes) && totalMemoryBytes > 0 ? totalMemoryBytes / 1024 ** 3 : null;
+      if (totalGB === null) return null;
+      const budgetGB = totalGB * USABLE_FRACTION;
+      const needGB = round1(model.paramsB * Q4_GB_PER_B);
+      const fit = fitWithin(needGB, budgetGB);
+      return {
+        base: model.base,
+        role: group.role,
+        engine: effectiveEngine(model, group),
+        architecture: model.architecture ?? 'dense',
+        needGB,
+        budgetGB: round1(budgetGB),
+        fit,
+        label: FIT_LABELS[fit],
+        comfortableFromGB: comfortableFromGB(needGB),
+      };
+    }
+  }
+  return null;
+}
+
+function normalizeModelId(id) {
+  if (typeof id !== 'string' || !id.trim()) return null;
+  return id.trim().toLowerCase().replace(/^hf\.co\//, '').replace(/:latest$/, '');
+}
+
+/**
  * Three-valued fit of `needGB` against a memory budget: comfortable, tight, or
  * not at all. Thresholds are rounded to the same one decimal as the need
  * values so binary float noise (4 × 0.6 × 0.75 is 1.7999…98) cannot flip a

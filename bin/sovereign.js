@@ -641,6 +641,7 @@ async function inspectProviders(config, { network, report }) {
     report('fail', 'Default model', 'none selected', 'Choose a default model in Settings.');
   } else {
     report('ok', 'Default model', defaultModel ? `${defaultProvider}/${oneLine(defaultModel)}` : `${defaultProvider}/provider default`);
+    await reportModelFit(config, { defaultProvider, defaultModel, report });
   }
 
   const checks = Object.values(providers).map(async (provider) => {
@@ -697,6 +698,39 @@ async function inspectProviders(config, { network, report }) {
   });
 
   await Promise.all(checks);
+}
+
+/**
+ * Whether the default model fits this machine — the question the doctor was
+ * missing between "a model is configured" and "the endpoint returns it".
+ * Informational only: it never changes the verdict, because a tight fit is a
+ * slow machine, not a broken install.
+ *
+ * Silent in three cases, each of them honest: a remote endpoint (the model
+ * does not run here, so this machine's RAM is not the constraint), a model
+ * that is not on the starter shelf (its parameter count is unknown, and
+ * guessing from a name is how sizing advice becomes fiction), and a machine
+ * whose memory could not be read.
+ */
+async function reportModelFit(config, { defaultProvider, defaultModel, report }) {
+  if (!defaultModel) return;
+  const { isLocalProviderEndpoint } = await import('../src/providers/index.js');
+  if (!isLocalProviderEndpoint(defaultProvider, config.providers?.[defaultProvider] ?? {})) return;
+  const { shelfFit } = await import('../src/model-shelf.js');
+  const fit = shelfFit(defaultModel, { totalMemoryBytes: os.totalmem() });
+  if (!fit) return;
+  const detail = `~${fit.needGB} GB at Q4 against ~${fit.budgetGB} GB of usable RAM — ${fit.label}`;
+  const roomier = fit.fit === 'fits' ? '' : `; comfortable from ~${fit.comfortableFromGB} GB`;
+  report(
+    'info',
+    'Model fit',
+    `${oneLine(fit.base)}: ${detail}${roomier}`,
+    fit.fit === 'too-big'
+      ? 'Pick a smaller model from the starter shelf in Model Studio, or add RAM — this one will swap or fail to load.'
+      : fit.fit === 'tight'
+        ? 'It should load, but expect little headroom for context. The starter shelf in Model Studio shows what fits comfortably.'
+        : undefined
+  );
 }
 
 /** Next-step wording per provider. Generic fallbacks apply to everything not listed. */
