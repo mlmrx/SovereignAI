@@ -101,7 +101,7 @@ ollama ps                       # after a chat: the PROCESSOR column should say 
 sudo nvidia-ctk runtime configure --runtime=docker &amp;&amp; sudo systemctl restart docker
 docker run -d --gpus=all -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
 docker exec -it ollama ollama pull qwen3:8b</code></pre>
-    <p>If you use our <code>docker-compose.yml</code> with the <code>--profile ollama</code> service, note that it does not reserve a GPU by default — a containerized Ollama without the reservation runs on the CPU. Since v0.6.1 the reservation ships as an overlay file you add on the command line:</p>
+    <p>If you use our <code>docker-compose.yml</code> with the <code>--profile ollama</code> service, note that it does not reserve a GPU by default — a containerized Ollama without the reservation runs on the CPU. The reservation ships as an overlay file, <code>docker-compose.gpu.yml</code>, which you add on the command line:</p>
 <pre><code>docker compose -f docker-compose.yml -f docker-compose.gpu.yml \
   --profile ollama up -d
 docker compose exec ollama nvidia-smi   # confirm the container sees it</code></pre>
