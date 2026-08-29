@@ -86,7 +86,7 @@
     <ul class="fit">
       <li><b>RTX desktop or laptop, Linux or Windows (x86_64)</b> Everything applies: the Docker trial, single binaries, source, Ollama with CUDA, and FreeToken for the sparse tier. Start with the trial command below.</li>
       <li><b>RTX workstation — RTX 6000 Ada (48 GB) or RTX PRO 6000 Blackwell (96 GB), Linux (x86_64)</b> Same paths as the desktop; the difference is that far larger models fit entirely in VRAM, so Ollama alone covers most of what FreeToken exists for.</li>
-      <li><b>DGX Spark (GB10, aarch64, 128 GB unified memory, DGX OS)</b> Ollama runs natively and well; NVIDIA publishes a playbook for it. Two honest caveats: our published Docker image is built for x86_64 only, and FreeToken supports Linux x86_64 only — so on the Spark you run SovereignAI from source under Node 22 and use Ollama as the engine. Details below. Perplexity's Portable Computer targets this same machine; the <a href="/blog/sovereignai-and-perplexity-portable-computer">companion guide</a> covers running both.</li>
+      <li><b>DGX Spark (GB10, aarch64, 128 GB unified memory, DGX OS)</b> Ollama runs natively and well; NVIDIA publishes a playbook for it. Since v0.6.0 the container image is one manifest for amd64 and arm64, so the same Docker trial command works on the Spark; there is a Linux arm64 single binary too. One honest caveat remains: FreeToken supports Linux x86_64 only, so on the Spark Ollama is the engine. Details below. Perplexity's Portable Computer targets this same machine; the <a href="/blog/sovereignai-and-perplexity-portable-computer">companion guide</a> covers running both.</li>
     </ul>
 
     <h2 class="serif">Step 1 — give Ollama the GPU</h2>
@@ -116,12 +116,12 @@ docker exec -it ollama ollama pull qwen3:8b</code></pre>
   -e OLLAMA_BASE_URL=http://host.docker.internal:11434 \
   -e SOVEREIGN_TOKEN=pick-a-long-secret ghcr.io/mlmrx/sovereignai:latest</code></pre>
     <p>Open <code>http://localhost:4321/#token=pick-a-long-secret</code> with your secret. The wizard probes Ollama, lists the models you pulled, and lets you pick one as the default. On Windows, Docker Desktop supports <code>host.docker.internal</code> natively and Ollama's Windows installer uses the GPU through the same driver — the command is identical.</p>
-    <p><strong>DGX Spark (aarch64):</strong> our image on GHCR carries a single x86_64 manifest, so it will not run natively on the Spark's Grace CPU, and there is no arm64 single binary either. The path that works today is source under Node 22, which exists for Linux arm64:</p>
+    <p><strong>DGX Spark (aarch64):</strong> the same trial command works — the GHCR image is multi-arch and Docker pulls the arm64 layer on the Spark. Prefer no container? The Releases page has a Linux arm64 single binary, and source under Node 22 (which exists for Linux arm64) is the third option:</p>
 <pre><code># Node 22.5+ for arm64 (nodejs.org, or your preferred version manager), then:
 cd SovereignAI
 SOVEREIGN_TOKEN=pick-a-long-secret node --no-warnings bin/sovereign.js start
 # the local Ollama at 127.0.0.1:11434 is the default endpoint - nothing to configure</code></pre>
-    <p>The source is <a href="https://github.com/mlmrx/SovereignAI" rel="noopener">on GitHub</a>. Building an arm64 image is on us; until it exists we would rather say so than hand you an emulated container.</p>
+    <p>The source is <a href="https://github.com/mlmrx/SovereignAI" rel="noopener">on GitHub</a>, and the arm64 image and binary ship with every release from v0.6.0 on.</p>
     <p>Whichever path: run <code>sovereign doctor</code> (or <code>node bin/sovereign.js doctor</code>) once. It checks the home directory, the config, the database, every enabled provider, and the model you set as default — and it tells you if it sees a FreeToken engine running that you have not enabled.</p>
 
     <h2 class="serif">Step 3 — pick models that actually fit</h2>
@@ -143,7 +143,7 @@ SOVEREIGN_TOKEN=pick-a-long-secret node --no-warnings bin/sovereign.js start
 
     <h2 class="serif">What does not work yet, plainly</h2>
     <div class="limits">
-      <p>No arm64 container image and no arm64 single binary — the Spark runs from source today. FreeToken does not run on the Spark (x86_64 only) or on Apple Silicon. Our Compose file's optional Ollama service is CPU-only unless you add the GPU reservation shown above. Rented-GPU provisioning (<code>byoc gpu</code>) has been tested against provider APIs, not on a live bill. And SovereignAI's database is not encrypted at rest — on a shared workstation, use full-disk encryption and per-user accounts.</p>
+      <p>FreeToken does not run on the Spark (x86_64 only) or on Apple Silicon. Our Compose file's optional Ollama service is CPU-only unless you add the GPU reservation shown above. Rented-GPU provisioning (<code>byoc gpu</code>) has been tested against provider APIs, not on a live bill. And SovereignAI's database is not encrypted at rest — on a shared workstation, use full-disk encryption and per-user accounts.</p>
     </div>
 
     <div class="cta">
@@ -163,7 +163,7 @@ SOVEREIGN_TOKEN=pick-a-long-secret node --no-warnings bin/sovereign.js start
       <li>NVIDIA's Ollama playbook for DGX Spark — <a href="https://github.com/NVIDIA/dgx-spark-playbooks/tree/main/nvidia/ollama" rel="noopener">NVIDIA/dgx-spark-playbooks</a>.</li>
       <li>FreeToken requirements (Linux x86_64, driver r580+, CUDA 13) — <a href="https://github.com/FlashML-org/FreeToken/blob/main/docs/install.md" rel="noopener">docs/install.md</a>.</li>
       <li>Qwen3.8-27B at 131 tokens per second on an RTX 5090 — <a href="https://blogs.nvidia.com/blog/local-ai-open-source-models-agents-nemotron/" rel="noopener">NVIDIA local AI blog</a>, August 2026.</li>
-      <li>Our own limits are recorded in the <a href="/sovereignty">Sovereignty Ledger</a>; the x86_64-only image is visible in the image manifest on GHCR.</li>
+      <li>Our own limits are recorded in the <a href="/sovereignty">Sovereignty Ledger</a>; the image's platforms are visible in its manifest on GHCR.</li>
     </ul>
   </article>
 </main>

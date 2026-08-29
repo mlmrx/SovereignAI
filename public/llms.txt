@@ -151,8 +151,8 @@ the vendor's documentation on the date of writing):
 
 - [SovereignAI on NVIDIA: DGX Spark, RTX desktops, RTX workstations](https://mysovereign.ai/blog/sovereignai-on-nvidia-dgx-spark-rtx-workstation):
   install path per machine, GPU-backed Ollama, which models fit at 8/24/48/96/
-  128 GB, when FreeToken applies; the Spark runs from source today (the
-  container image is x86_64-only).
+  128 GB, when FreeToken applies; the container image is multi-arch
+  (amd64 + arm64) since v0.6.0, so the Docker trial runs on the Spark.
 - [FreeToken in SovereignAI](https://mysovereign.ai/blog/freetoken-in-sovereignai):
   Linux x86_64 + NVIDIA driver r580/CUDA 13; `ft serve --model <hf-id>` on
   127.0.0.1:1919; enable in Settings → Providers; sizing per RAM; Docker wiring

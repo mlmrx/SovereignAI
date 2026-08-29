@@ -87,7 +87,7 @@
     <h2 class="serif">What each one needs</h2>
     <ul class="fit">
       <li><b>Portable Computer, per Perplexity and NVIDIA</b> An NVIDIA DGX Spark (GB10, 128 GB of unified memory, at least 1 TB of storage) running Linux, today; GeForce RTX and RTX PRO GPUs, Windows, and DGX Station are "coming soon". A Pro or Max subscription. One-click setup from the Perplexity app, or the apt repository below. Local models: the Qwen 3.8 27B orchestrator — a 4-bit build, 27.6 GB download, 24 GB of RAM — or Perplexity's post-trained PPLX 27B; Nemotron 3.5 Lightning (4-bit, 19 GB, 36 GB of RAM) listed as coming. Dictation runs locally on Nemotron 3.5 ASR. vLLM underneath, per Perplexity's engineers.</li>
-      <li><b>SovereignAI</b> Any machine, no GPU required by the app itself; an engine — Ollama, FreeToken, or an OpenAI-compatible server — for the models. No account. On x86_64 the Docker trial; on the Spark, source under Node 22 (our container image is x86_64-only today). The <a href="/blog/sovereignai-on-nvidia-dgx-spark-rtx-workstation">NVIDIA guide</a> covers both.</li>
+      <li><b>SovereignAI</b> Any machine, no GPU required by the app itself; an engine — Ollama, FreeToken, or an OpenAI-compatible server — for the models. No account. The Docker trial works on both — the image is multi-arch since v0.6.0 — and the Spark also has a Linux arm64 binary. The <a href="/blog/sovereignai-on-nvidia-dgx-spark-rtx-workstation">NVIDIA guide</a> covers both.</li>
     </ul>
     <p>Perplexity's published install commands for the Spark (Linux, apt), verbatim from its product page:</p>
 <pre><code>sudo curl -fsSL https://packages.perplexity.ai/perplexity.gpg -o /usr/share/keyrings/perplexity.gpg
@@ -116,7 +116,7 @@ sudo apt-get install perplexity</code></pre>
     <h2 class="serif">A practical recommendation</h2>
     <ul class="fit">
       <li><b>If you have a 24 GB RTX card</b> Portable Computer does not run on RTX yet — NVIDIA says "coming soon". Today the card is all SovereignAI's: <code>qwen3.8:27b</code> fits it whole. When RTX support lands, run Portable Computer for tasks and SovereignAI with a CPU-resident cognition model and a small chat model, or switch the GPU between them. Import your ChatGPT and Claude history into SovereignAI once — that is the part no agent harness gives you.</li>
-      <li><b>If you have a Spark</b> Run both resident: Portable Computer from the Perplexity app, SovereignAI from source with Ollama (our container image is x86_64-only today). Ollama's <code>gpt-oss:120b</code> fits the unified pool beside Perplexity's 27.6 GB orchestrator. On an x86_64 workstation card, SovereignAI runs today and FreeToken adds the 120B sparse class; Portable Computer joins when RTX PRO support ships.</li>
+      <li><b>If you have a Spark</b> Run both resident: Portable Computer from the Perplexity app, SovereignAI from the Docker trial (the image is multi-arch since v0.6.0) with Ollama. Ollama's <code>gpt-oss:120b</code> fits the unified pool beside Perplexity's 27.6 GB orchestrator. On an x86_64 workstation card, SovereignAI runs today and FreeToken adds the 120B sparse class; Portable Computer joins when RTX PRO support ships.</li>
       <li><b>Either way</b> Keep "cognition stays home" on, so that whatever you let an agent escalate to the cloud, the model that writes your memory never is.</li>
     </ul>
 
