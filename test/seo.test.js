@@ -191,14 +191,29 @@ test('one shell frames every page: same header, same footer, same theme control'
   assert.doesNotMatch(pub('land.js'), /theme-menu|localStorage\.setItem\('sovereign-theme'/, 'the landing must not keep a second theme system');
 });
 
-test('visitor counting is cookie-less and disclosed on every page that carries it', () => {
+// The site claimed to count visits with Vercel Web Analytics. Analytics was
+// never enabled on the project, so /_vercel/insights/script.js answered 404 as
+// text/plain and — with nosniff set — every page logged a refused-script error
+// while the footer described a counter that had never once run. On a site
+// whose footer says "we'd rather say so than be caught", that is the one bug
+// that matters most. The script is gone and the copy says what is true.
+//
+// If the counter is ever switched on, this test is the place to turn around:
+// re-require the script tag and restore the disclosure in the same commit.
+test('the site tells the truth about what it counts, and loads nothing that 404s', () => {
   for (const [file] of PAGES) {
     const html = pub(file);
-    assert.match(html, /_vercel\/insights\/script\.js/, `${file} must carry the counting script`);
-    // A privacy brand that counts visitors says so where it happens, and
-    // separates the site's counting from the product's architecture.
-    assert.match(html, /cookie-less/i, `${file} must disclose the counting in plain sight`);
+    assert.doesNotMatch(html, /_vercel\/insights/, `${file} loads an analytics script that is not enabled — it 404s as text/plain and nosniff refuses it`);
+    assert.doesNotMatch(html, /counts visits with Vercel/, `${file} still claims a counter that does not run`);
+    // The disclosure stays, in the negative: a privacy brand says what it does
+    // NOT do just as plainly, and keeps the site/product distinction.
+    assert.match(html, /counts nothing/i, `${file} must state plainly that nothing is counted`);
+    assert.match(html, /cookie-less/i, `${file} must name the thing it is not doing`);
     assert.match(html, /reports nothing to anyone/i, `${file} must state the product-vs-site distinction`);
+  }
+  // Nothing anywhere in the deploy may reference it, scripts and text alike.
+  for (const file of fs.readdirSync(path.join(root, 'public')).filter((f) => /\.(html|js|txt|xml)$/.test(f))) {
+    assert.doesNotMatch(pub(file), /_vercel\/insights/, `${file} references the disabled analytics endpoint`);
   }
 });
 
