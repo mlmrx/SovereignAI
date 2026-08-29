@@ -8,6 +8,13 @@
 # Pull models into the durable Ollama volume:
 #   docker compose exec ollama ollama pull llama3.1
 #
+# The containerized Ollama below runs on the CPU. To give it the GPU, add the
+# overlay (NVIDIA Container Toolkit required — see docker-compose.gpu.yml):
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml \
+#     --profile ollama up -d
+# It is a separate file because a GPU reservation on a host without the
+# toolkit fails the whole "up" rather than falling back to the CPU.
+#
 # To use Ollama running on the HOST instead, do not enable the profile and set:
 #   OLLAMA_BASE_URL=http://host.docker.internal:11434
 # Example:
@@ -38,6 +45,7 @@ services:
     profiles: ["ollama"]
     volumes:
       - ollama-models:/root/.ollama
+    # CPU-only as written. docker-compose.gpu.yml adds the NVIDIA reservation.
     restart: unless-stopped
 
 volumes:

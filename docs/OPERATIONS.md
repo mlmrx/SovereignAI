@@ -291,6 +291,27 @@ If the startup URL is lost while the container is still running,
 `docker compose logs sovereign` shows the URL printed at startup. Treat those
 local logs as secret-bearing.
 
+### Giving the containerized Ollama a GPU
+
+The `ollama` service above runs on the CPU. Add `docker-compose.gpu.yml` to
+reserve every NVIDIA device on the host:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml \
+  --profile ollama up -d
+docker compose exec ollama nvidia-smi   # confirm the container sees the GPU
+```
+
+The reservation is a separate file rather than a default because Compose has
+no conditional form for it: on a host without the [NVIDIA Container
+Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+a `devices` reservation fails the entire `up` with "could not select device
+driver" instead of falling back to the CPU. Keeping it opt-in means the plain
+command starts on any machine, and the GPU is something you ask for.
+
+Ollama running on the **host** already uses the GPU directly and needs no
+overlay — that path is below.
+
 To use an Ollama process already running on the Docker host, omit the profile
 and set its URL before starting:
 

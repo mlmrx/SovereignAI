@@ -101,14 +101,11 @@ ollama ps                       # after a chat: the PROCESSOR column should say 
 sudo nvidia-ctk runtime configure --runtime=docker &amp;&amp; sudo systemctl restart docker
 docker run -d --gpus=all -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
 docker exec -it ollama ollama pull qwen3:8b</code></pre>
-    <p>If you use our <code>docker-compose.yml</code> with the <code>--profile ollama</code> service, note that it does not reserve a GPU by default — a containerized Ollama without the reservation runs on the CPU. Add this to the <code>ollama</code> service, or simply run Ollama on the host and point SovereignAI at it as the trial command does:</p>
-<pre><code>    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]</code></pre>
+    <p>If you use our <code>docker-compose.yml</code> with the <code>--profile ollama</code> service, note that it does not reserve a GPU by default — a containerized Ollama without the reservation runs on the CPU. Since v0.6.1 the reservation ships as an overlay file you add on the command line:</p>
+<pre><code>docker compose -f docker-compose.yml -f docker-compose.gpu.yml \
+  --profile ollama up -d
+docker compose exec ollama nvidia-smi   # confirm the container sees it</code></pre>
+    <p>It is a separate file rather than the default because Compose has no conditional form for a device reservation: on a host without the NVIDIA Container Toolkit it fails the whole <code>up</code> with "could not select device driver" instead of falling back to the CPU. The alternative, and the one the trial command uses, is to run Ollama on the host and point SovereignAI at it — a host Ollama already has the GPU and needs no overlay.</p>
 
     <h2 class="serif">Step 2 — run SovereignAI and point it at the engine</h2>
     <p><strong>x86_64 (RTX desktop, RTX workstation):</strong> the open trial is the real product in a container, already wired to a host Ollama:</p>
@@ -144,7 +141,7 @@ SOVEREIGN_TOKEN=pick-a-long-secret node --no-warnings bin/sovereign.js start
 
     <h2 class="serif">What does not work yet, plainly</h2>
     <div class="limits">
-      <p>FreeToken does not run on the Spark (x86_64 only) or on Apple Silicon. Our Compose file's optional Ollama service is CPU-only unless you add the GPU reservation shown above. Rented-GPU provisioning (<code>byoc gpu</code>) has been tested against provider APIs, not on a live bill. And SovereignAI's database is not encrypted at rest — on a shared workstation, use full-disk encryption and per-user accounts.</p>
+      <p>FreeToken does not run on the Spark (x86_64 only) or on Apple Silicon. Our Compose file's optional Ollama service is CPU-only unless you add the <code>docker-compose.gpu.yml</code> overlay shown above, which needs the NVIDIA Container Toolkit on the host. Rented-GPU provisioning (<code>byoc gpu</code>) has been tested against provider APIs, not on a live bill. And SovereignAI's database is not encrypted at rest — on a shared workstation, use full-disk encryption and per-user accounts.</p>
     </div>
 
     <div class="cta">

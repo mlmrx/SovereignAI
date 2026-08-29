@@ -82,4 +82,33 @@ test('Compose profile resolves Ollama service and host override contracts', { sk
   });
   assert.equal(host.status, 0, host.stderr);
   assert.match(host.stdout, /OLLAMA_BASE_URL: http:\/\/host\.docker\.internal:11434/);
+
+  // The GPU is an explicit overlay, never the default: a devices reservation
+  // on a host without the NVIDIA Container Toolkit fails `up` outright rather
+  // than falling back to the CPU, so the base file must stay startable
+  // anywhere and the overlay must actually carry the reservation.
+  assert.doesNotMatch(profiled.stdout, /driver: nvidia/, 'the default Compose path must start on a machine with no GPU toolkit');
+  const gpu = spawnSync('docker', ['compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.gpu.yml', '--profile', 'ollama', 'config'], {
+    cwd: repo,
+    env: baseEnv,
+    encoding: 'utf8',
+    timeout: 20_000,
+  });
+  assert.equal(gpu.status, 0, gpu.stderr);
+  const ollamaService = gpu.stdout.slice(gpu.stdout.indexOf('  ollama:'));
+  assert.match(ollamaService, /driver: nvidia/, 'the overlay reserves an NVIDIA device');
+  assert.match(ollamaService, /- gpu/, 'with the gpu capability');
+  // Compose normalizes `count: all` to -1.
+  assert.match(ollamaService, /count: -1/, 'every GPU on the host, not a fixed number');
+});
+
+test('the Compose files document the GPU path and keep the CPU default honest', () => {
+  const base = read('docker-compose.yml');
+  const overlay = read('docker-compose.gpu.yml');
+  assert.match(base, /docker-compose\.gpu\.yml/, 'the base file must point at the overlay, or nobody finds it');
+  assert.match(base, /runs on the CPU/, 'the base file must say the containerized engine is CPU-only as written');
+  assert.match(overlay, /NVIDIA Container Toolkit/, 'the overlay must name its host requirement');
+  assert.match(overlay, /nvidia-smi/, 'and how to confirm the container actually sees the GPU');
+  const ops = read('docs/OPERATIONS.md');
+  assert.match(ops, /docker-compose\.gpu\.yml/, 'the operations guide must carry the GPU path too');
 });

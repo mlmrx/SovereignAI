@@ -1,0 +1,28 @@
+# GPU overlay for the containerized Ollama service.
+#
+# Compose cannot reserve an NVIDIA GPU conditionally: a `devices` reservation
+# on a host without the NVIDIA Container Toolkit does not degrade to the CPU,
+# it fails the whole `up` with "could not select device driver". So the
+# reservation lives here rather than in docker-compose.yml — the default path
+# starts anywhere, and asking for the GPU is an explicit second file:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml \
+#     --profile ollama up -d
+#
+# Requires the NVIDIA Container Toolkit on the host (`nvidia-ctk --version`),
+# plus a driver new enough for the models you intend to run. Confirm the
+# container actually sees the GPU:
+#
+#   docker compose exec ollama nvidia-smi
+#
+# Nothing here applies to Ollama running on the HOST — that path already uses
+# the GPU directly, and needs no overlay.
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
