@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { deepMerge, ssrfBlockedReason } from './util.js';
 
-export const VERSION = '0.5.0';
+export const VERSION = '0.6.0';
 
 // The SSRF guard lives in util.js (so safeFetch can reuse it without a
 // circular import); re-exported here to keep the config.js import path stable.
