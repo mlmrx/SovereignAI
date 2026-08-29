@@ -11,7 +11,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { FIT_LABELS, MODEL_SHELF, effectiveEngine, shelfFit, shelfWithFit, sparseCandidates } from '../src/model-shelf.js';
 import { buildModelRecommendation, estimateSparseFit } from '../src/model-recommendation.js';
-import { createGpuProbe, parseNvidiaSmi } from '../src/hardware.js';
+import { createGpuProbe, parseNvidiaSmi, parseRocmSmi } from '../src/hardware.js';
 import { createApp } from '../src/server.js';
 
 const GB = 1024 ** 3;
@@ -109,7 +109,7 @@ test('sparse entries carry the active-set numbers; dense entries stay dense', ()
 // ---------------------------------------------------------------- locality gate
 
 test('each entry is sized against this machine only when ITS engine is local', () => {
-  const gpu = { vramBytes: 8 * GB, name: 'Fake GPU', unifiedMemory: false, source: 'nvidia-smi' };
+  const gpu = { vramBytes: 8 * GB, name: 'Fake GPU', vendor: 'nvidia', unifiedMemory: false, source: 'nvidia-smi' };
   const ollamaLocalOnly = shelfWithFit({ totalMemoryBytes: 32 * GB, endpointLocal: true, engines: { freetoken: { enabled: true, local: false } }, gpu });
   assert.ok(servedBy(moeGroup(ollamaLocalOnly), 'freetoken').every((m) => m.fit === null), 'a remote FreeToken is not sized against this RAM');
   assert.ok(servedBy(moeGroup(ollamaLocalOnly), 'freetoken').every((m) => m.gpuFit === null), 'a remote FreeToken is not sized against this GPU either');
@@ -148,7 +148,7 @@ test('engineEnabled reflects the engine row: true, false, or null when unknown',
 // ---------------------------------------------------------------- GPU fit (active params)
 
 test('gpuFit sizes the ACTIVE set against 60% of dedicated VRAM, on sparse entries only', () => {
-  const gpu4 = { vramBytes: 4 * GB, name: 'NVIDIA GeForce RTX 3050 Ti Laptop GPU', unifiedMemory: false, source: 'nvidia-smi' };
+  const gpu4 = { vramBytes: 4 * GB, name: 'NVIDIA GeForce RTX 3050 Ti Laptop GPU', vendor: 'nvidia', unifiedMemory: false, source: 'nvidia-smi' };
   const at4 = shelfWithFit({ totalMemoryBytes: 32 * GB, endpointLocal: true, engines: LOCAL, gpu: gpu4 });
   const moe4 = byBase(moeGroup(at4).models);
   assert.equal(moe4[QWEN].gpuFit, 'fits', '1.8 GB active against a 2.4 GB VRAM budget (0.75 × 2.4 = 1.8)');
@@ -156,17 +156,17 @@ test('gpuFit sizes the ACTIVE set against 60% of dedicated VRAM, on sparse entri
   assert.equal(moe4[GPT_OSS_120B].gpuFit, 'too-big', '3.1 GB');
   assert.equal(moe4[NEMOTRON].gpuFit, null, 'Ollama keeps the whole weight set resident: no active-set VRAM rule, even though 1.8 GB would clear it');
   assert.ok(dense(at4).every((m) => m.gpuFit === undefined));
-  assert.deepEqual(at4.gpu, { vramGB: 4, name: gpu4.name, unifiedMemory: false, source: 'nvidia-smi' });
+  assert.deepEqual(at4.gpu, { vramGB: 4, name: gpu4.name, vendor: 'nvidia', unifiedMemory: false, source: 'nvidia-smi' });
 
   const at24 = shelfWithFit({ totalMemoryBytes: 64 * GB, endpointLocal: true, engines: LOCAL, gpu: { ...gpu4, vramBytes: 24 * GB } });
   assert.ok(servedBy(moeGroup(at24), 'freetoken').every((m) => m.gpuFit === 'fits'));
   assert.equal(byBase(moeGroup(at24).models)[NEMOTRON].gpuFit, null);
 
-  const unknownVram = shelfWithFit({ totalMemoryBytes: 64 * GB, endpointLocal: true, engines: LOCAL, gpu: { vramBytes: null, name: null, unifiedMemory: false, source: null } });
+  const unknownVram = shelfWithFit({ totalMemoryBytes: 64 * GB, endpointLocal: true, engines: LOCAL, gpu: { vramBytes: null, name: null, vendor: null, unifiedMemory: false, source: null } });
   assert.ok(moeGroup(unknownVram).models.every((m) => m.gpuFit === null));
-  assert.deepEqual(unknownVram.gpu, { vramGB: null, name: null, unifiedMemory: false, source: null });
+  assert.deepEqual(unknownVram.gpu, { vramGB: null, name: null, vendor: null, unifiedMemory: false, source: null });
 
-  const unified = shelfWithFit({ totalMemoryBytes: 64 * GB, endpointLocal: true, engines: LOCAL, gpu: { vramBytes: 64 * GB, name: 'Apple Silicon (unified memory)', unifiedMemory: true, source: 'unified' } });
+  const unified = shelfWithFit({ totalMemoryBytes: 64 * GB, endpointLocal: true, engines: LOCAL, gpu: { vramBytes: 64 * GB, name: 'Apple Silicon (unified memory)', vendor: 'apple', unifiedMemory: true, source: 'unified' } });
   assert.ok(moeGroup(unified).models.every((m) => m.gpuFit === null), 'unified memory: the RAM rule is the GPU rule');
   assert.ok(moeGroup(unified).models.every((m) => m.fit !== null));
 
@@ -230,13 +230,13 @@ test('estimateSparseFit is honest when nothing fits, when the engine is remote, 
 });
 
 test('buildModelRecommendation keeps its original shape and adds gpu + sparseFit', () => {
-  const gpu = { vramBytes: 8 * GB, name: 'Fake GPU', unifiedMemory: false, source: 'nvidia-smi' };
+  const gpu = { vramBytes: 8 * GB, name: 'Fake GPU', vendor: 'nvidia', unifiedMemory: false, source: 'nvidia-smi' };
   const args = { totalMemoryBytes: 16 * GB, endpointLocal: true, corpus: { documents: 0, totalDocumentChars: 0, memories: 0 }, maxTrainCount: 0 };
 
   const full = buildModelRecommendation({ ...args, gpu, sparse: { engineLocal: true, candidates: sparseCandidates() } });
   assert.deepEqual(full.hardware, { totalMemoryGB: 16 }, 'hardware must not grow keys');
   assert.equal(full.modelFit.label, '~14B at Q4_K_M');
-  assert.deepEqual(full.gpu, { vramGB: 8, name: 'Fake GPU', unifiedMemory: false, source: 'nvidia-smi' });
+  assert.deepEqual(full.gpu, { vramGB: 8, name: 'Fake GPU', vendor: 'nvidia', unifiedMemory: false, source: 'nvidia-smi' });
   assert.equal(full.sparseFit.applies, true);
   assert.equal(full.sparseFit.largest, null, '16 GB reserves 9.6 GB; the smallest sparse model needs 12.6');
 
@@ -278,7 +278,7 @@ test('parseNvidiaSmi reads "name, MiB" lines and keeps the largest adapter', () 
 test('detectGpu: nvidia-smi output becomes bytes, the larger of two adapters wins', async () => {
   const one = fakeSpawn({ stdout: 'NVIDIA GeForce RTX 3050 Ti Laptop GPU, 4096\n' });
   const gpu = await createGpuProbe({ platform: 'win32', arch: 'x64', env: {}, spawn: one.spawn, ...noSysfs })();
-  assert.deepEqual(gpu, { vramBytes: 4096 * 2 ** 20, name: 'NVIDIA GeForce RTX 3050 Ti Laptop GPU', unifiedMemory: false, source: 'nvidia-smi' });
+  assert.deepEqual(gpu, { vramBytes: 4096 * 2 ** 20, name: 'NVIDIA GeForce RTX 3050 Ti Laptop GPU', vendor: 'nvidia', unifiedMemory: false, source: 'nvidia-smi' });
   assert.equal(one.calls[0].cmd, 'nvidia-smi');
   assert.deepEqual(one.calls[0].args, ['--query-gpu=name,memory.total', '--format=csv,noheader,nounits']);
   assert.equal(one.calls[0].options.windowsHide, true);
@@ -296,13 +296,13 @@ test('detectGpu: no nvidia-smi falls through to sysfs on linux and to nulls else
     readFile: async (file) => (file.includes('card1') ? '17163091968\n' : '536870912\n'),
   };
   const linux = await createGpuProbe({ platform: 'linux', arch: 'x64', env: {}, spawn: missing.spawn, ...sysfs })();
-  assert.deepEqual(linux, { vramBytes: 17163091968, name: null, unifiedMemory: false, source: 'sysfs' });
+  assert.deepEqual(linux, { vramBytes: 17163091968, name: null, vendor: null, unifiedMemory: false, source: 'sysfs' });
 
   const windows = await createGpuProbe({ platform: 'win32', arch: 'x64', env: {}, spawn: fakeSpawn({ error: 'ENOENT' }).spawn, ...sysfs })();
-  assert.deepEqual(windows, { vramBytes: null, name: null, unifiedMemory: false, source: null });
+  assert.deepEqual(windows, { vramBytes: null, name: null, vendor: null, unifiedMemory: false, source: null });
 
   const garbage = await createGpuProbe({ platform: 'win32', arch: 'x64', env: {}, spawn: fakeSpawn({ stdout: 'NVIDIA-SMI has failed', code: 9 }).spawn, ...noSysfs })();
-  assert.deepEqual(garbage, { vramBytes: null, name: null, unifiedMemory: false, source: null });
+  assert.deepEqual(garbage, { vramBytes: null, name: null, vendor: null, unifiedMemory: false, source: null });
 
   const throwing = await createGpuProbe({ platform: 'win32', arch: 'x64', env: {}, spawn: () => { throw new Error('spawn EACCES'); }, ...noSysfs })();
   assert.equal(throwing.source, null);
@@ -313,18 +313,18 @@ test('detectGpu: a hung nvidia-smi is killed at the timeout and reported as unkn
   const started = Date.now();
   const gpu = await createGpuProbe({ platform: 'win32', arch: 'x64', env: {}, spawn: hung.spawn, timeoutMs: 50, ...noSysfs })();
   assert.ok(Date.now() - started < 1000, 'resolves promptly after the timeout');
-  assert.deepEqual(gpu, { vramBytes: null, name: null, unifiedMemory: false, source: null });
+  assert.deepEqual(gpu, { vramBytes: null, name: null, vendor: null, unifiedMemory: false, source: null });
 });
 
 test('detectGpu: the opt-out and Apple Silicon short-circuit without spawning; the result is memoized', async () => {
   const off = fakeSpawn();
   const disabled = await createGpuProbe({ platform: 'linux', arch: 'x64', env: { SOVEREIGN_HARDWARE_PROBE: 'off' }, spawn: off.spawn })();
-  assert.deepEqual(disabled, { vramBytes: null, name: null, unifiedMemory: false, source: 'disabled' });
+  assert.deepEqual(disabled, { vramBytes: null, name: null, vendor: null, unifiedMemory: false, source: 'disabled' });
   assert.equal(off.calls.length, 0);
 
   const mac = fakeSpawn();
   const apple = await createGpuProbe({ platform: 'darwin', arch: 'arm64', env: {}, spawn: mac.spawn })();
-  assert.deepEqual(apple, { vramBytes: null, name: 'Apple Silicon (unified memory)', unifiedMemory: true, source: 'unified' });
+  assert.deepEqual(apple, { vramBytes: null, name: 'Apple Silicon (unified memory)', vendor: 'apple', unifiedMemory: true, source: 'unified' });
   assert.equal(mac.calls.length, 0);
 
   const once = fakeSpawn({ stdout: 'NVIDIA GeForce RTX 4060, 8188\n' });
@@ -357,7 +357,7 @@ async function startTempApp(config = {}, { env = {}, hardware } = {}) {
 }
 
 const HERMETIC = { embeddings: { provider: 'ollama', model: '' }, providers: { ollama: { enabled: false } } };
-const fakeGpu = { vramBytes: 8 * GB, name: 'Fake GPU', unifiedMemory: false, source: 'nvidia-smi' };
+const fakeGpu = { vramBytes: 8 * GB, name: 'Fake GPU', vendor: 'nvidia', unifiedMemory: false, source: 'nvidia-smi' };
 
 test('GET /api/model-shelf and /api/model-recommendation carry the injected GPU and the sparse tier', async (t) => {
   let probes = 0;
@@ -367,7 +367,7 @@ test('GET /api/model-shelf and /api/model-recommendation carry the injected GPU 
   const shelfRes = await fetch(`${server.base}/api/model-shelf`);
   assert.equal(shelfRes.status, 200);
   const shelf = await shelfRes.json();
-  assert.deepEqual(shelf.gpu, { vramGB: 8, name: 'Fake GPU', unifiedMemory: false, source: 'nvidia-smi' });
+  assert.deepEqual(shelf.gpu, { vramGB: 8, name: 'Fake GPU', vendor: 'nvidia', unifiedMemory: false, source: 'nvidia-smi' });
   const group = shelf.roles.at(-1);
   assert.equal(group.role, 'frontier-moe');
   for (const model of servedBy(group, 'freetoken')) {
@@ -391,7 +391,7 @@ test('GET /api/model-shelf and /api/model-recommendation carry the injected GPU 
   assert.match(rec.modelFit.label, /^~\d+B at Q4_K_M$/, 'the dense recommendation is untouched');
   assert.equal(typeof rec.hardware.totalMemoryGB, 'number');
   assert.deepEqual(Object.keys(rec.hardware), ['totalMemoryGB']);
-  assert.deepEqual(rec.gpu, { vramGB: 8, name: 'Fake GPU', unifiedMemory: false, source: 'nvidia-smi' });
+  assert.deepEqual(rec.gpu, { vramGB: 8, name: 'Fake GPU', vendor: 'nvidia', unifiedMemory: false, source: 'nvidia-smi' });
   assert.equal(rec.sparseFit.applies, true, 'the default FreeToken URL is loopback');
   assert.equal(typeof rec.sparseFit.reasoning, 'string');
   assert.ok(rec.sparseFit.largest === null || typeof rec.sparseFit.largest.base === 'string');
@@ -471,21 +471,24 @@ test('detectGpu re-probes an unknown result after the retry window, but keeps a 
     return proc;
   };
   let clock = 0;
-  let failures = 0;
-  const flaky = createGpuProbe({ platform: 'win32', arch: 'x64', env: {}, now: () => clock, spawn: () => { failures++; return child(1); } });
+  // Counted per command, not per spawn: a failed cycle now tries nvidia-smi
+  // and then rocm-smi, and the point of the test is how many CYCLES run.
+  const tried = [];
+  const flaky = createGpuProbe({ platform: 'win32', arch: 'x64', env: {}, now: () => clock, spawn: (cmd) => { tried.push(cmd); return child(1); } });
   assert.equal((await flaky()).source, null);
+  assert.deepEqual(tried, ['nvidia-smi', 'rocm-smi'], 'NVIDIA is asked first — it is the only vendor the sparse tier can be served on');
   await flaky();
-  assert.equal(failures, 1, 'inside the window the unknown result is reused');
+  assert.equal(tried.length, 2, 'inside the window the unknown result is reused');
   clock = 61_000;
   await flaky();
-  assert.equal(failures, 2, 'after the window an unknown result is probed again');
+  assert.equal(tried.length, 4, 'after the window an unknown result is probed again');
 
   let successes = 0;
   const steady = createGpuProbe({ platform: 'win32', arch: 'x64', env: {}, now: () => clock, spawn: () => { successes++; return child(0, 'Fake GPU, 8192\n'); } });
   assert.equal((await steady()).vramBytes, 8192 * 2 ** 20);
   clock = 10_000_000;
   await steady();
-  assert.equal(successes, 1, 'a real GPU is never re-probed');
+  assert.equal(successes, 1, 'a real GPU is never re-probed, and a found NVIDIA card ends the cycle before rocm-smi');
 });
 
 // `shelfFit` answers a different question from `shelfWithFit`: not "what on
@@ -540,4 +543,173 @@ test('the fit vocabulary is shared between the doctor and the shelf badge', () =
   }
   assert.match(cli, /shelfFit/, 'the doctor takes its sizing from the shelf, never its own copy of the rule');
   assert.doesNotMatch(cli, /0\.6\s*\*|GB_PER_BILLION/, 'the sizing rule must not be re-implemented in the CLI');
+});
+
+// ---- AMD and Intel (issue #10) ----
+// FreeToken is NVIDIA-only, so none of this moves the sparse tier's engine
+// gate. It moves the BADGE: a machine that could run the dense shelf on its
+// GPU should not be told nothing about the card it has.
+
+test('parseRocmSmi reads AMD VRAM and product name, across the key names ROCm has used', () => {
+  const real = JSON.stringify({
+    card0: {
+      'GPU use (%)': '0',
+      'VRAM Total Memory (B)': '21458059264',
+      'VRAM Total Used Memory (B)': '27856896',
+      'Card Series': 'Radeon RX 7900 XT',
+      'Card Model': '0x744c',
+      'Card Vendor': 'Advanced Micro Devices, Inc.',
+    },
+  });
+  assert.deepEqual(parseRocmSmi(real), { vramBytes: 21458059264, name: 'Radeon RX 7900 XT' });
+
+  // The biggest adapter wins, exactly as with nvidia-smi.
+  const two = JSON.stringify({
+    card0: { 'VRAM Total Memory (B)': '8589934592', 'Card Series': 'Radeon 780M' },
+    card1: { 'VRAM Total Memory (B)': '25753026560', 'Card Series': 'Radeon PRO W7900' },
+  });
+  assert.equal(parseRocmSmi(two).name, 'Radeon PRO W7900');
+
+  // A PCI device id is not a name anyone recognizes: better blank than wrong.
+  assert.equal(parseRocmSmi(JSON.stringify({ card0: { 'VRAM Total Memory (B)': '1024', 'Card Model': '0x744c' } })).name, null);
+  // Older ROCm builds label it differently; the memory key is matched by shape.
+  assert.equal(parseRocmSmi(JSON.stringify({ card0: { 'VRAM Total Memory (b)': '2048', 'Card SKU': 'W7900' } })).vramBytes, 2048);
+
+  for (const junk of ['', 'not json', '{}', '[]', JSON.stringify({ card0: {} }), JSON.stringify({ system: { 'VRAM Total Memory (B)': '99' } }), null, undefined]) {
+    assert.equal(parseRocmSmi(junk), null, `refused: ${String(junk).slice(0, 30)}`);
+  }
+});
+
+test('detectGpu falls through to rocm-smi on an AMD machine, and the shelf badges it', async () => {
+  const child = (exitCode, stdout = '') => {
+    const proc = new EventEmitter();
+    proc.stdout = new EventEmitter();
+    setImmediate(() => {
+      if (stdout) proc.stdout.emit('data', Buffer.from(stdout));
+      proc.emit('close', exitCode);
+    });
+    return proc;
+  };
+  const rocm = JSON.stringify({ card0: { 'VRAM Total Memory (B)': String(24 * GB), 'Card Series': 'Radeon RX 7900 XTX' } });
+  const detect = createGpuProbe({
+    platform: 'linux',
+    arch: 'x64',
+    env: {},
+    // No NVIDIA driver on this box, so nvidia-smi is simply not there.
+    spawn: (cmd) => (cmd === 'rocm-smi' ? child(0, rocm) : child(127)),
+  });
+  const gpu = await detect();
+  assert.deepEqual(gpu, { vramBytes: 24 * GB, name: 'Radeon RX 7900 XTX', vendor: 'amd', unifiedMemory: false, source: 'rocm-smi' });
+
+  // The badge appears; the sparse tier still refuses to promise FreeToken.
+  const shelf = shelfWithFit({ totalMemoryBytes: 64 * GB, endpointLocal: true, engines: LOCAL, gpu });
+  assert.equal(shelf.gpu.vramGB, 24);
+  assert.equal(shelf.gpu.name, 'Radeon RX 7900 XTX');
+  assert.equal(shelf.gpu.source, 'rocm-smi');
+  const sparse = shelf.roles.find((role) => role.role === 'frontier-moe').models.find((m) => m.base === QWEN);
+  assert.equal(sparse.gpuFit, null, 'FreeToken is NVIDIA-only: an AMD card gets no active-set promise');
+  assert.equal(sparse.fit, 'fits', 'the RAM rule is unchanged and still applies');
+});
+
+test('sysfs finds an AMD or Intel card with no vendor tooling installed, and names its vendor', async () => {
+  const child = () => {
+    const proc = new EventEmitter();
+    proc.stdout = new EventEmitter();
+    setImmediate(() => proc.emit('close', 127));
+    return proc;
+  };
+  const fromFiles = (files) =>
+    createGpuProbe({
+      platform: 'linux',
+      arch: 'x64',
+      env: {},
+      spawn: child,
+      readdir: async () => ['card0', 'card1', 'renderD128', 'version'],
+      readFile: async (file) => {
+        if (file in files) return files[file];
+        throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      },
+    });
+
+  // Intel Arc under the newer xe driver reports through tile0/vram0.
+  const intel = await fromFiles({
+    '/sys/class/drm/card1/device/tile0/vram0/total_bytes': String(16 * GB),
+    '/sys/class/drm/card1/device/vendor': '0x8086\n',
+  })();
+  assert.deepEqual(intel, { vramBytes: 16 * GB, name: 'Intel GPU', vendor: 'intel', unifiedMemory: false, source: 'sysfs' });
+
+  // amdgpu — and Intel Arc under i915 — use the older path.
+  const amd = await fromFiles({
+    '/sys/class/drm/card0/device/mem_info_vram_total': String(20 * GB),
+    '/sys/class/drm/card0/device/vendor': '0x1002',
+  })();
+  assert.equal(amd.name, 'AMD GPU');
+  assert.equal(amd.vramBytes, 20 * GB);
+
+  // The largest discrete card wins; an integrated one reporting 0 is ignored.
+  const both = await fromFiles({
+    '/sys/class/drm/card0/device/mem_info_vram_total': '0',
+    '/sys/class/drm/card1/device/mem_info_vram_total': String(12 * GB),
+    '/sys/class/drm/card1/device/vendor': '0x1002',
+  })();
+  assert.equal(both.vramBytes, 12 * GB);
+
+  // A card with memory but no readable vendor is still a real number.
+  const nameless = await fromFiles({ '/sys/class/drm/card0/device/mem_info_vram_total': String(8 * GB) })();
+  assert.equal(nameless.name, null);
+  assert.equal(nameless.vramBytes, 8 * GB);
+
+  // Nothing readable stays unknown, and unknown is a real answer.
+  assert.equal((await fromFiles({})()).source, null);
+});
+
+test('the hardware opt-out still spawns nothing, now that there are two commands to spawn', async () => {
+  let spawned = 0;
+  const detect = createGpuProbe({ platform: 'linux', arch: 'x64', env: { SOVEREIGN_HARDWARE_PROBE: 'off' }, spawn: () => { spawned++; }, readdir: async () => { throw new Error('should not be read'); } });
+  assert.equal((await detect()).source, 'disabled');
+  assert.equal(spawned, 0);
+});
+
+// The other half of the same honesty: the recommendation must not size a
+// sparse model against a GPU FreeToken cannot address, and must say why.
+test('the sparse recommendation names the vendor as the blocker on an AMD or Intel card', () => {
+  const candidates = sparseCandidates();
+  for (const [gpuVendor, label] of [['amd', 'an AMD'], ['intel', 'an Intel']]) {
+    const verdict = estimateSparseFit({ totalMemoryBytes: 128 * GB, vramBytes: 24 * GB, gpuVendor, engineLocal: true, candidates });
+    assert.equal(verdict.applies, true, 'the question applies — the answer is just no');
+    assert.equal(verdict.largest, null, 'no sparse model is promised');
+    assert.match(verdict.reasoning, /FreeToken needs an NVIDIA GPU \(CUDA\)/, 'the blocker is named');
+    assert.match(verdict.reasoning, new RegExp(label), 'and so is what this machine actually has');
+    assert.match(verdict.reasoning, /dense shelf is unaffected/, 'the card is still useful, and we say so');
+  }
+  // An NVIDIA card, and an unknown vendor, are unchanged.
+  assert.ok(estimateSparseFit({ totalMemoryBytes: 128 * GB, vramBytes: 24 * GB, gpuVendor: 'nvidia', engineLocal: true, candidates }).largest);
+  assert.ok(estimateSparseFit({ totalMemoryBytes: 128 * GB, vramBytes: 24 * GB, engineLocal: true, candidates }).largest, 'no vendor probed is not the same as a wrong vendor');
+
+  // End to end through the route builder.
+  const rec = buildModelRecommendation({
+    totalMemoryBytes: 128 * GB,
+    endpointLocal: true,
+    corpus: { documents: 0, chunks: 0 },
+    maxTrainCount: 0,
+    gpu: { vramBytes: 24 * GB, name: 'Radeon RX 7900 XTX', vendor: 'amd', unifiedMemory: false, source: 'rocm-smi' },
+    sparse: { engineLocal: true, candidates },
+  });
+  assert.equal(rec.gpu.vendor, 'amd', 'the vendor reaches the client, which is what lets the UI explain itself');
+  assert.equal(rec.gpu.vramGB, 24, 'and the card is still reported, because it is real');
+  assert.equal(rec.sparseFit.largest, null);
+});
+
+// "Done when the shelf shows a GPU badge on that machine" (issue #10). Until
+// this, the probe result reached the browser and was never rendered.
+test('the shelf tells you what card was found, and why the sparse tier is quiet on it', () => {
+  const app = fs.readFileSync(path.join(import.meta.dirname, '..', 'public', 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(import.meta.dirname, '..', 'public', 'app.html'), 'utf8');
+  assert.match(html, /id="model-shelf-gpu"[^>]*hidden/, 'the line ships hidden — no probe, no claim');
+  assert.match(app, /function renderShelfGpu/);
+  assert.match(app, /renderShelfGpu\(shelf\.gpu\)/, 'and is fed by the route that already carried the answer');
+  assert.match(app, /Detected: \$\{card\}/, 'the card and its memory are named');
+  assert.match(app, /gpu\.vendor === 'amd' \|\| gpu\.vendor === 'intel'/, 'an AMD or Intel card gets the reason the sparse tier stays quiet');
+  assert.match(app, /dense models are unaffected/, 'and is told what it CAN do, not only what it cannot');
+  assert.match(app, /no Metal backend yet/, 'Apple Silicon keeps its own explanation');
 });

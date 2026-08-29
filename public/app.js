@@ -2259,6 +2259,35 @@ function applyHfBase(base, license = '') {
   toast(`Base model set to ${base}`, { type: 'success' });
 }
 
+/**
+ * What the probe found, said once above the shelf. Until now the GPU reached
+ * the client and was never shown, so a machine with a card it could size
+ * against was told nothing about it — and a machine whose card FreeToken
+ * cannot use had no way to learn why the sparse tier stayed quiet.
+ */
+function renderShelfGpu(gpu) {
+  const line = $('#model-shelf-gpu');
+  if (!line) return;
+  if (!gpu || (gpu.vramGB === null && !gpu.unifiedMemory)) {
+    // Unknown stays unknown: no probe, no claim, no line.
+    line.hidden = true;
+    line.textContent = '';
+    return;
+  }
+  const card = gpu.name || 'GPU';
+  const memory = gpu.unifiedMemory ? 'unified memory shared with the system' : gpu.vramGB !== null ? `${gpu.vramGB} GB VRAM` : 'memory size unknown';
+  // FreeToken is CUDA-only. Where the card cannot serve the sparse tier, say
+  // so here rather than leaving an unexplained silence next to those entries.
+  const sparse =
+    gpu.vendor === 'amd' || gpu.vendor === 'intel'
+      ? ' The sparse tier below is served by FreeToken, which needs an NVIDIA GPU — the dense models are unaffected and run on this card through Ollama.'
+      : gpu.unifiedMemory
+        ? ' FreeToken has no Metal backend yet, so the sparse tier is not sized for this machine.'
+        : '';
+  line.textContent = `Detected: ${card} · ${memory}${gpu.source ? ` (${gpu.source})` : ''}.${sparse}`;
+  line.hidden = false;
+}
+
 /* The starter shelf: curated small models by job, sized for this machine. */
 let shelfLoaded = false;
 async function loadModelShelf() {
@@ -2268,6 +2297,7 @@ async function loadModelShelf() {
   try {
     const shelf = await api.get('/api/model-shelf');
     $('#model-shelf-note').textContent = `Curated ${shelf.curatedAt}. ${shelf.note}`;
+    renderShelfGpu(shelf.gpu);
     const FIT = { fits: ['fits here', 'ok'], tight: ['tight fit', 'warn'], 'too-big': ['needs more RAM', 'bad'] };
     const GPU_FIT = { fits: ['GPU: fits', 'ok'], tight: ['GPU: tight', 'warn'], 'too-big': ['GPU: needs more VRAM', 'bad'] };
     const pill = (css, [label, tone], title) => `<span class="${css} ${tone}"${title ? ` title="${escapeHtml(title)}"` : ''}>${escapeHtml(label)}</span>`;

@@ -102,7 +102,7 @@ export function estimateModelFit({ totalMemoryBytes, endpointLocal }) {
  * VRAM unknown (no probe result) or unified memory (Apple Silicon) skips the
  * GPU rule — on unified memory the RAM rule already is the GPU rule.
  */
-export function estimateSparseFit({ totalMemoryBytes, vramBytes = null, unifiedMemory = false, engineLocal, candidates = [] }) {
+export function estimateSparseFit({ totalMemoryBytes, vramBytes = null, unifiedMemory = false, gpuVendor = null, engineLocal, candidates = [] }) {
   if (!engineLocal) {
     return {
       applies: false,
@@ -117,6 +117,13 @@ export function estimateSparseFit({ totalMemoryBytes, vramBytes = null, unifiedM
   if (unifiedMemory) {
     // FreeToken is x86_64 + NVIDIA today; a Metal backend is on its roadmap, not shipped.
     return { applies: true, largest: null, reasoning: 'FreeToken does not run on Apple Silicon yet (a Metal backend is on its roadmap), so the sparse tier is not sized for this machine.' };
+  }
+  if (gpuVendor === 'amd' || gpuVendor === 'intel') {
+    // The card is real and its memory is known; FreeToken simply cannot use
+    // it. Better to name the reason than to size an active set against a GPU
+    // no engine here will ever stream experts to.
+    const label = gpuVendor === 'amd' ? 'an AMD' : 'an Intel';
+    return { applies: true, largest: null, reasoning: `FreeToken needs an NVIDIA GPU (CUDA), and this machine has ${label} one, so the sparse tier is not sized for it. The dense shelf is unaffected — Ollama runs on this card.` };
   }
   const totalMemoryGB = totalMemoryBytes / 1024 ** 3;
   const budgetGB = totalMemoryGB * USABLE_MEMORY_FRACTION;
@@ -217,12 +224,13 @@ export function buildModelRecommendation({ totalMemoryBytes, endpointLocal, corp
     corpus,
     modelFit: estimateModelFit({ totalMemoryBytes, endpointLocal }),
     fineTuning: assessFineTuneReadiness({ maxTrainCount }),
-    gpu: gpu ? { vramGB, name: gpu.name ?? null, unifiedMemory: Boolean(gpu.unifiedMemory), source: gpu.source ?? null } : null,
+    gpu: gpu ? { vramGB, name: gpu.name ?? null, vendor: gpu.vendor ?? null, unifiedMemory: Boolean(gpu.unifiedMemory), source: gpu.source ?? null } : null,
     sparseFit: sparse
       ? estimateSparseFit({
           totalMemoryBytes,
           vramBytes: gpu?.vramBytes ?? null,
           unifiedMemory: Boolean(gpu?.unifiedMemory),
+          gpuVendor: gpu?.vendor ?? null,
           engineLocal: sparse.engineLocal,
           candidates: sparse.candidates,
         })

@@ -11,17 +11,28 @@
  *      VRAM number to read, and the RAM rule already covers it.
  *   2. `nvidia-smi --query-gpu=name,memory.total` — ships with the NVIDIA
  *      driver on every OS. FreeToken is NVIDIA-only (RTX 30-series and up),
- *      so this is the one probe that matters.
- *   3. Linux sysfs: /sys/class/drm/cardN/device/mem_info_vram_total (bytes;
- *      amdgpu exposes it, so AMD boxes still get an honest number).
- *   4. Otherwise unknown.
+ *      so this is the probe that decides whether the sparse tier is servable.
+ *   3. `rocm-smi --showmeminfo vram --showproductname --json` — AMD, where
+ *      ROCm is installed. Reports the product name too, so an AMD card is
+ *      badged with what it actually is.
+ *   4. Linux sysfs, which needs no vendor tooling at all:
+ *        device/mem_info_vram_total          (amdgpu, and Intel Arc under i915)
+ *        device/tile0/vram0/total_bytes      (Intel Arc under the newer xe driver)
+ *      The card gets its vendor name from device/vendor (0x1002 AMD,
+ *      0x8086 Intel, 0x10de NVIDIA) — sysfs has no product-name file, and a
+ *      vendor is more honest than a blank.
+ *   5. Otherwise unknown, and unknown is a real answer.
+ *
+ * The badge is the point of steps 3 and 4. FreeToken is NVIDIA-only, so the
+ * sparse tier's engine gate does not move: an AMD or Intel machine gets an
+ * honest GPU line and the dense shelf, not a promise about MoE.
  *
  * Deliberately NOT probed: the Windows registry (HardwareInformation.qwMemorySize
  * lives under a driver-class GUID whose subkey numbering is unstable) and WMI
  * (Win32_VideoController.AdapterRAM is a uint32 — it reports 4 GB for a 24 GB
  * card — and `wmic` was removed in Windows 11 24H2, so it would need a
- * PowerShell spawn per request). nvidia-smi covers the only GPUs FreeToken
- * can use, on every platform, without any of that.
+ * PowerShell spawn per request). Between nvidia-smi, rocm-smi and sysfs, every
+ * GPU we can size is covered without any of that.
  */
 import { spawn as spawnChild } from 'node:child_process';
 import { readdir as readdirFs, readFile as readFileFs } from 'node:fs/promises';
@@ -29,7 +40,7 @@ import { readdir as readdirFs, readFile as readFileFs } from 'node:fs/promises';
 const MIB = 2 ** 20;
 // An unknown result may be a slow first nvidia-smi that hit the timeout; retry it later.
 const RETRY_UNKNOWN_MS = 60_000;
-const UNKNOWN = Object.freeze({ vramBytes: null, name: null, unifiedMemory: false, source: null });
+const UNKNOWN = Object.freeze({ vramBytes: null, name: null, vendor: null, unifiedMemory: false, source: null });
 
 /**
  * Parse nvidia-smi CSV lines ("name, MiB") and keep the adapter with the most
@@ -50,7 +61,42 @@ export function parseNvidiaSmi(output) {
   return best ? { vramBytes: best.mib * MIB, name: best.name } : null;
 }
 
-function runNvidiaSmi(spawn, timeoutMs) {
+/**
+ * Parse `rocm-smi --showmeminfo vram --showproductname --json`, whose output
+ * is one object per card:
+ *   { "card0": { "VRAM Total Memory (B)": "21458059264",
+ *                "Card Series": "Radeon RX 7900 XT", ... } }
+ * Keys have varied across ROCm versions ("Card Series" / "Card SKU" /
+ * "Card model"), so the memory field is matched on shape rather than on an
+ * exact string, and the name is whichever of the known keys is present.
+ * Like the NVIDIA parser, the largest adapter wins.
+ */
+export function parseRocmSmi(output) {
+  let cards;
+  try {
+    cards = JSON.parse(String(output ?? ''));
+  } catch {
+    return null;
+  }
+  if (!cards || typeof cards !== 'object') return null;
+  let best = null;
+  for (const [card, fields] of Object.entries(cards)) {
+    if (!/^card\d+$/i.test(card) || !fields || typeof fields !== 'object') continue;
+    const memoryKey = Object.keys(fields).find((key) => /^vram total memory/i.test(key));
+    if (!memoryKey) continue;
+    const bytes = Number(String(fields[memoryKey]).trim());
+    if (!Number.isFinite(bytes) || bytes <= 0) continue;
+    const nameKey = Object.keys(fields).find((key) => /^card (series|model|sku)$/i.test(key));
+    const rawName = nameKey ? String(fields[nameKey]).trim() : '';
+    // "0x744c" is the PCI device id, not a name a person recognizes.
+    const name = rawName && !/^0x[0-9a-f]+$/i.test(rawName) ? rawName.slice(0, 120) : null;
+    if (!best || bytes > best.vramBytes) best = { vramBytes: bytes, name };
+  }
+  return best;
+}
+
+/** Run a probe binary, returning its stdout on exit 0 and null on anything else. */
+function runProbe(spawn, command, args, timeoutMs) {
   return new Promise((resolve) => {
     let child;
     let settled = false;
@@ -65,10 +111,7 @@ function runNvidiaSmi(spawn, timeoutMs) {
       finish(null);
     }, timeoutMs);
     try {
-      child = spawn('nvidia-smi', ['--query-gpu=name,memory.total', '--format=csv,noheader,nounits'], {
-        windowsHide: true,
-        stdio: ['ignore', 'pipe', 'ignore'],
-      });
+      child = spawn(command, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
     } catch {
       finish(null);
       return;
@@ -82,10 +125,25 @@ function runNvidiaSmi(spawn, timeoutMs) {
     child.once('error', () => finish(null));
     child.once('close', (code) => {
       if (code !== 0) return finish(null);
-      finish(parseNvidiaSmi(Buffer.concat(chunks).toString('utf8')));
+      finish(Buffer.concat(chunks).toString('utf8'));
     });
   });
 }
+
+// The vendors whose ids appear in /sys/class/drm/cardN/device/vendor. sysfs has
+// no product-name file, so the badge says "AMD GPU" rather than nothing — a
+// vendor is a real fact, and the VRAM number beside it is the one that matters.
+const PCI_VENDORS = {
+  '0x1002': { vendor: 'amd', name: 'AMD GPU' },
+  '0x8086': { vendor: 'intel', name: 'Intel GPU' },
+  '0x10de': { vendor: 'nvidia', name: 'NVIDIA GPU' },
+};
+
+// Where a discrete card reports its own memory, in bytes. The first covers
+// amdgpu and Intel Arc under i915; the second is Intel Arc under the newer xe
+// driver. Integrated graphics report 0 or nothing, which is correct: they have
+// no dedicated VRAM, and the RAM rule already covers them.
+const SYSFS_VRAM_FILES = ['device/mem_info_vram_total', 'device/tile0/vram0/total_bytes'];
 
 async function readSysfsVram(readdir, readFile) {
   let cards;
@@ -94,17 +152,29 @@ async function readSysfsVram(readdir, readFile) {
   } catch {
     return null;
   }
-  let max = 0;
+  let best = null;
   for (const card of cards) {
     if (!/^card\d+$/.test(card)) continue;
-    try {
-      const bytes = Number(String(await readFile(`/sys/class/drm/${card}/device/mem_info_vram_total`, 'utf8')).trim());
-      if (Number.isFinite(bytes) && bytes > max) max = bytes;
-    } catch {
-      /* not every card exposes it */
+    let bytes = 0;
+    for (const file of SYSFS_VRAM_FILES) {
+      try {
+        const value = Number(String(await readFile(`/sys/class/drm/${card}/${file}`, 'utf8')).trim());
+        if (Number.isFinite(value) && value > bytes) bytes = value;
+      } catch {
+        /* not every card or driver exposes every path */
+      }
     }
+    if (bytes <= 0 || (best && bytes <= best.vramBytes)) continue;
+    let identity = null;
+    try {
+      const id = String(await readFile(`/sys/class/drm/${card}/device/vendor`, 'utf8')).trim().toLowerCase();
+      identity = PCI_VENDORS[id] ?? null;
+    } catch {
+      /* the vendor file is optional too */
+    }
+    best = { vramBytes: bytes, name: identity?.name ?? null, vendor: identity?.vendor ?? null };
   }
-  return max > 0 ? max : null;
+  return best;
 }
 
 /**
@@ -112,8 +182,8 @@ async function readSysfsVram(readdir, readFile) {
  * never touch the real machine. The first call runs the probe, later calls
  * share its promise — hardware does not change under a running server.
  *
- * Resolves `{ vramBytes: number|null, name: string|null, unifiedMemory: boolean,
- * source: 'nvidia-smi'|'sysfs'|'unified'|'disabled'|null }`.
+ * Resolves `{ vramBytes: number|null, name: string|null, vendor: 'nvidia'|'amd'|'intel'|'apple'|null, unifiedMemory: boolean,
+ * source: 'nvidia-smi'|'rocm-smi'|'sysfs'|'unified'|'disabled'|null }`.
  */
 export function createGpuProbe({
   platform = process.platform,
@@ -130,13 +200,23 @@ export function createGpuProbe({
     try {
       if (env?.SOVEREIGN_HARDWARE_PROBE === 'off') return { ...UNKNOWN, source: 'disabled' };
       if (platform === 'darwin' && arch === 'arm64') {
-        return { vramBytes: null, name: 'Apple Silicon (unified memory)', unifiedMemory: true, source: 'unified' };
+        return { vramBytes: null, name: 'Apple Silicon (unified memory)', vendor: 'apple', unifiedMemory: true, source: 'unified' };
       }
-      const nvidia = await runNvidiaSmi(spawn, timeoutMs);
-      if (nvidia) return { vramBytes: nvidia.vramBytes, name: nvidia.name, unifiedMemory: false, source: 'nvidia-smi' };
+      // NVIDIA first: it is the only vendor FreeToken can serve the sparse
+      // tier on, so its answer settles the most.
+      const nvidia = parseNvidiaSmi(
+        await runProbe(spawn, 'nvidia-smi', ['--query-gpu=name,memory.total', '--format=csv,noheader,nounits'], timeoutMs)
+      );
+      if (nvidia) return { vramBytes: nvidia.vramBytes, name: nvidia.name, vendor: 'nvidia', unifiedMemory: false, source: 'nvidia-smi' };
+
+      const amd = parseRocmSmi(await runProbe(spawn, 'rocm-smi', ['--showmeminfo', 'vram', '--showproductname', '--json'], timeoutMs));
+      if (amd) return { vramBytes: amd.vramBytes, name: amd.name, vendor: 'amd', unifiedMemory: false, source: 'rocm-smi' };
+
+      // No vendor tooling required — this is what catches an AMD or Intel card
+      // on a machine with only the kernel driver installed.
       if (platform === 'linux') {
-        const bytes = await readSysfsVram(readdir, readFile);
-        if (bytes) return { vramBytes: bytes, name: null, unifiedMemory: false, source: 'sysfs' };
+        const card = await readSysfsVram(readdir, readFile);
+        if (card) return { vramBytes: card.vramBytes, name: card.name, vendor: card.vendor, unifiedMemory: false, source: 'sysfs' };
       }
       return { ...UNKNOWN };
     } catch {

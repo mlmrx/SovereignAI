@@ -241,7 +241,7 @@ export function shelfWithFit({ totalMemoryBytes, endpointLocal, engines = {}, gp
     // dense entries, FreeToken for the sparse tier.
     sizedAgainst: endpointLocal || Object.values(engines).some((engine) => engine?.local) ? 'this machine' : null,
     gpu: gpu
-      ? { vramGB: vramGB === null ? null : round1(vramGB), name: gpu.name ?? null, unifiedMemory: Boolean(gpu.unifiedMemory), source: gpu.source ?? null }
+      ? { vramGB: vramGB === null ? null : round1(vramGB), name: gpu.name ?? null, vendor: gpu.vendor ?? null, unifiedMemory: Boolean(gpu.unifiedMemory), source: gpu.source ?? null }
       : null,
     roles: MODEL_SHELF.map((group) => ({
       ...group,
@@ -259,7 +259,10 @@ export function shelfWithFit({ totalMemoryBytes, endpointLocal, engines = {}, gp
           sized.approxActiveGBAtQ4 = activeGB;
           // Same locality gate as `fit`: a remote engine's active set is not this GPU's problem.
           // Only FreeToken streams the active set to the GPU; under Ollama the rule is RAM alone.
-          sized.gpuFit = engine === 'freetoken' && vramBudgetGB !== null && local ? fitWithin(activeGB, vramBudgetGB) : null;
+          // FreeToken is CUDA-only, so an active-set fit is a claim only an
+          // NVIDIA card can carry. An AMD or Intel GPU gets its badge and its
+          // RAM verdict, and silence about a promise we cannot keep.
+          sized.gpuFit = engine === 'freetoken' && vramBudgetGB !== null && local && gpu?.vendor === 'nvidia' ? fitWithin(activeGB, vramBudgetGB) : null;
         }
         return sized;
       }),
