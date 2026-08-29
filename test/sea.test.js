@@ -40,7 +40,7 @@ test('SEA manifest embeds the full module graph and the entire web UI', () => {
 });
 
 test('SEA embed and the static server both refuse deploy scaffolding and hidden files', () => {
-  for (const scaffolding of ['.vercel/project.json', '.vercelignore', '.env.local', '.gitignore', 'vercel.json', 'api/access-request.js']) {
+  for (const scaffolding of ['.vercel/project.json', '.vercelignore', '.env.local', '.gitignore', 'vercel.json', 'api/anything.js']) {
     assert.equal(isPublicUiPath(scaffolding), false, `${scaffolding} must not count as web UI`);
   }
   assert.ok(isPublicUiPath('land.html') && isPublicUiPath('app.html'), 'the real UI must still count');

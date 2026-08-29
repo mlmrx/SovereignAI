@@ -295,6 +295,54 @@ test('every public page is reachable: routes are wired and internal links resolv
   }
 });
 
+// The site ships zero inline executable script — every page loads its
+// behaviour from a same-origin file — so the strict policy costs nothing and
+// is measurably safe: all 21 routes were rendered under it in Chrome with no
+// violation, structured data included (CSP does not apply to ld+json blocks).
+// 'unsafe-inline' survives for styles alone, which the pages do use.
+test('the static site carries a content security policy that its own markup can satisfy', () => {
+  const config = JSON.parse(rootFile('vercel.json'));
+  const all = config.headers.find((h) => h.source === '/(.*)');
+  const header = (key) => all.headers.find((h) => h.key === key)?.value ?? '';
+  const csp = header('Content-Security-Policy');
+  assert.ok(csp, 'every response must carry a CSP');
+  for (const directive of ["default-src 'self'", "script-src 'self'", "object-src 'none'", "base-uri 'none'", "frame-ancestors 'none'"]) {
+    assert.ok(csp.includes(directive), `the policy must set ${directive}`);
+  }
+  assert.doesNotMatch(csp.split('style-src')[0], /unsafe-inline|unsafe-eval/, "script-src must not be loosened — no page needs it");
+  assert.ok(header('Permissions-Policy').includes('camera=()'), 'a static site asks for no device permissions');
+
+  // The guard that keeps the policy true: the moment a page inlines script or
+  // an onclick handler, that page is broken in production, not merely lax.
+  for (const file of fs.readdirSync(path.join(root, 'public')).filter((f) => f.endsWith('.html'))) {
+    const html = pub(file);
+    for (const [tag] of html.matchAll(/<script[^>]*>/g)) {
+      const external = /\ssrc=/.test(tag);
+      const data = /type="application\/ld\+json"/.test(tag);
+      assert.ok(external || data, `${file} inlines executable script, which the CSP blocks: ${tag}`);
+    }
+    assert.doesNotMatch(html, /\son(click|load|error|submit|change|input|mouseover)="/, `${file} uses an inline event handler, which the CSP blocks`);
+  }
+});
+
+// The door is GitHub. The waitlist that preceded it left a serverless intake
+// behind in public/api — never wired (Vercel reads functions from the Root
+// Directory's /api, and ours is the repo root), so it was served as a plain
+// static file that published a personal address at a stable URL for anyone to
+// scrape. Deleting it is the fix; this is the tripwire.
+test('the deploy carries no intake endpoint, no mail relay, and no personal address', () => {
+  assert.ok(!fs.existsSync(path.join(root, 'public', 'api')), 'public/api is served as static files, never as functions — nothing belongs there');
+  assert.ok(!fs.existsSync(path.join(root, 'api')), 'a root /api would make every file in it a live endpoint — the door is GitHub, not an inbox');
+  const ignore = pub('.vercelignore');
+  assert.ok(!/^!api/m.test(ignore), 'the deploy allowlist must not readmit an api directory');
+  for (const file of fs.readdirSync(path.join(root, 'public'))) {
+    if (!/\.(html|js|txt|xml|css)$/.test(file)) continue;
+    const text = pub(file);
+    assert.doesNotMatch(text, /unifydynamics/i, `${file} ships a personal address — public mail is hello@ or security@ on our own domain`);
+    assert.doesNotMatch(text, /RESEND_API_KEY|api\.resend\.com/, `${file} ships a mail relay — an unauthenticated one is a spam amplifier under our domain`);
+  }
+});
+
 test('the blog is a real section: every post is routed, deployed, indexed, listed, dated, and sourced', () => {
   const config = JSON.parse(rootFile('vercel.json'));
   const routes = new Map(config.rewrites.map((r) => [r.source, r.destination]));
