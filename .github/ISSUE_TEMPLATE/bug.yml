@@ -1,0 +1,51 @@
+name: Bug
+description: Something fails, or does not do what the copy says it does.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks. Failures here are supposed to fail loudly — if one was silent, that is a bug in itself and worth saying.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "`sovereign --version`, the container tag, or the commit on main."
+      placeholder: v0.6.0 · ghcr.io/mlmrx/sovereignai:0.6.0 · main@abc1234
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How it is installed
+      options:
+        - Docker (one-command trial)
+        - Docker Compose
+        - Single binary
+        - From source (node bin/sovereign.js)
+        - BYOC / SSH deploy
+    validations:
+      required: true
+  - type: input
+    id: machine
+    attributes:
+      label: Machine
+      placeholder: Windows 11 · RTX 4060 8 GB · 32 GB RAM · Ollama 0.32 / FreeToken 0.1.2
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: 1. … 2. … 3. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: "`sovereign doctor` output (secrets are scrubbed by the command; check anyway)"
+      render: text

@@ -1,0 +1,62 @@
+name: Model & hardware report
+description: What fit, what didn't, and how fast — on your actual machine. The starter shelf's badges are a rule of thumb; your report is the measurement.
+labels: ["model report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The shelf sizes models at roughly 0.6 GB per billion parameters at 4-bit against 60% of your RAM (and your GPU for the sparse tier). That is an estimate. Reports like this one are how it gets corrected — with credit in the commit that changes it.
+  - type: input
+    id: machine
+    attributes:
+      label: Machine
+      description: CPU, RAM, GPU and its memory, OS. Unified-memory machines (Apple silicon, DGX Spark) — say so.
+      placeholder: DGX Spark GB10 · 128 GB unified · DGX OS
+    validations:
+      required: true
+  - type: input
+    id: engine
+    attributes:
+      label: Engine and version
+      placeholder: Ollama 0.32.9 · FreeToken 0.1.2 · llama.cpp b6xxx
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model, exactly as pulled
+      placeholder: qwen3.8:27b · nemotron-3.5-lightning:30b · Qwen/Qwen3.6-35B-A3B under FreeToken
+    validations:
+      required: true
+  - type: dropdown
+    id: badge
+    attributes:
+      label: What the starter shelf badge said
+      options:
+        - fits
+        - tight
+        - does not fit
+        - not shown / not on the shelf
+    validations:
+      required: true
+  - type: dropdown
+    id: reality
+    attributes:
+      label: What actually happened
+      options:
+        - Runs well
+        - Runs, but slowly or with swapping
+        - Loads but fails on long context
+        - Does not load
+    validations:
+      required: true
+  - type: input
+    id: speed
+    attributes:
+      label: Speed, if you measured it
+      placeholder: ~28 tok/s decode at 8K context (ollama ps showed 100% GPU)
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Context length used, quantization, what surprised you, links to a Pipette or local.ai measurement if you have one.

@@ -222,6 +222,12 @@ The suite includes 370+ core, UI-contract, integration, API, security, config, p
 - [x] The customs declaration: what leaves your machine is shown before it leaves — a side-effect-free preview byte-identical to the real request, a receipt on every remote answer, local endpoints never gating, and no PII classifier by design
 - [ ] Life Import rail #2 — bank/card statements (CSV/OFX), extending the same audit with authoritative amounts
 
+## Contributing
+
+The mechanics are short and live in [CONTRIBUTING.md](CONTRIBUTING.md): sign your commits (DCO, no CLA), never add a runtime dependency, keep the honesty rule, run `npm test`. Bug fixes and honest-gap closures: just send them. Features: open an issue first. Security: [SECURITY.md](SECURITY.md) — never a public issue. **Model and hardware reports are the contribution we value most** — the starter shelf's fit badges are a rule of thumb, and your machine is the measurement; there is an issue template for exactly that.
+
+Stated plainly: the core is fair source (FSL-1.1-MIT), not open source. If that is a line you don't cross, we understand — each release converts to MIT two years after it ships, and reports and issues need no license at all.
+
 ## License
 
 [FSL-1.1-MIT](LICENSE) — the Functional Source License. Free to use, read, modify, fork, and self-host, for individuals and companies alike; the only restricted act is selling a competing SovereignAI product or service on a release younger than two years. On its second anniversary, every release automatically becomes plain MIT — that grant is irrevocable and written into the license text itself.

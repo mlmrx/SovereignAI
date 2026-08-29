@@ -1,0 +1,46 @@
+name: Import failed
+description: A chat export, an inbox archive, or a document that should have imported and did not.
+labels: ["import"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Imports are parsed entirely on your machine, and a parser that fails should say why. **Never paste private content here** — a redacted structural sample (keys and shapes, values replaced) is all a parser fix needs.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What you were importing
+      options:
+        - ChatGPT export (ZIP)
+        - Claude export (ZIP)
+        - Gemini / Google Takeout
+        - Another assistant, via the generic JSON format
+        - Email archive (mbox / .eml)
+        - Document (PDF, DOCX, Markdown, text)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: SovereignAI version
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: The exact error or outcome
+      description: The CLI message, the UI toast, or "it said N imported but the conversations are missing".
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: sample
+    attributes:
+      label: Redacted structural sample
+      description: The smallest piece of the file that shows the shape — with every value replaced. For ZIPs, the file list inside.
+      render: json
+  - type: input
+    id: exported
+    attributes:
+      label: When and how the export was produced
+      placeholder: ChatGPT → Settings → Data controls → Export, 2026-08-20

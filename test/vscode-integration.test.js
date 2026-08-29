@@ -103,7 +103,7 @@ test('VS Code metadata and source enforce the v0.3 authentication and ingest con
   const root = path.join(__dirname, '..', 'integrations', 'vscode');
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
   const source = fs.readFileSync(path.join(root, 'extension.js'), 'utf8');
-  assert.equal(manifest.version, '0.5.0');
+  assert.equal(manifest.version, '0.6.0');
   assert.equal(manifest.contributes.configuration.properties['sovereignai.serverUrl'].scope, 'machine');
   assert.equal(manifest.contributes.configuration.properties['sovereignai.authToken'].scope, 'machine');
   assert.match(manifest.contributes.configuration.properties['sovereignai.authToken'].description, /including on localhost/);

@@ -1,0 +1,32 @@
+name: A claim we got wrong
+description: Something on the site, in the docs, in the ledger, or in the app's copy that is not true, not true anymore, or not backed by the code.
+labels: ["honest gap"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The rule here is that an unknown stays unknown and nothing claims a guarantee the code does not enforce. If we broke that rule, this is the fastest way to tell us — copy is reviewed to the same standard as code.
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      placeholder: https://mysovereign.ai/sovereignty, row "The model" · docs/SOVEREIGNTY.md · Settings → Providers copy
+    validations:
+      required: true
+  - type: textarea
+    id: claim
+    attributes:
+      label: The sentence, quoted
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it is wrong, with the source
+      description: A link to documentation, a model card, a test, or the line of code that contradicts it.
+    validations:
+      required: true
+  - type: textarea
+    id: fix
+    attributes:
+      label: What it should say instead (optional)

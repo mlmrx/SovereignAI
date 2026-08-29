@@ -5,7 +5,7 @@ info:
     Talk to the user's private, self-hosted sovereign AI: ask it questions
     (answered with the user's personas, long-term memory, and private knowledge
     base), search that knowledge base, and store memories or documents.
-  version: 0.5.0
+  version: 0.6.0
 servers:
   - url: https://YOUR-PUBLIC-TUNNEL-URL
     description: Public tunnel to your SovereignAI server (see README)

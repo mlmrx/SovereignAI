@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/mlmrx/SovereignAI/blob/main/SECURITY.md
+    about: Never a public issue — email security@mysovereign.ai. Acknowledged within 72 hours.
+  - name: Show your machine
+    url: https://github.com/mlmrx/SovereignAI/discussions
+    about: What you run it on, which models fit, what surprised you. Hardware reports are how the starter shelf gets honest.
+  - name: Read the decision records first
+    url: https://github.com/mlmrx/SovereignAI/blob/main/docs/ARCHITECTURE.md
+    about: Most "why is it built this way" questions are answered in the ADRs.
