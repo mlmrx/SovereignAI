@@ -1343,6 +1343,87 @@ async function deleteDocument(id) {
   } catch (error) { toast(error.message, { type: 'error', title: 'Delete failed' }); }
 }
 
+/* The found screen (ADR-27): a search ends in the passage that answers —
+   set large, its matching phrases lit, its source beneath it as a receipt —
+   with the rest as one-line glances and a receipt of what would reach the
+   model. The ranking and the focus window come from the server, so this is
+   exactly what the chat would receive; the screen only chooses what to show
+   first. Nothing from a document reaches the DOM unescaped. */
+function highlightTerms(text, terms) {
+  let html = escapeHtml(text);
+  for (const term of terms || []) {
+    if (term.length < 3) continue;
+    const safe = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    html = html.replace(new RegExp(`\\b(${safe}\\w*)`, 'gi'), '<mark>$1</mark>');
+  }
+  return html;
+}
+
+function renderKnowledgeResults({ results, query, lead = 0 }) {
+  const host = $('#kb-results');
+  if (!results.length) {
+    host.innerHTML = `<div class="kb-empty"><p>Nothing in your documents says that.</p><small>That silence is honest — your AI would answer from the model alone. Try a name or an exact phrase, or add the document it should have.</small></div>`;
+    return;
+  }
+  const ordered = [results[lead], ...results.filter((_, i) => i !== lead)];
+  const [best, ...rest] = ordered;
+  const top = Math.max(...results.map((r) => r.rank ?? r.score ?? 0), 0.0001);
+  const focus = best.focus || best.content.slice(0, 240);
+  const truncated = focus.length < best.content.length;
+  const documents = new Set(results.map((r) => r.documentId));
+  const wouldReach = results.slice(0, state.config?.limits?.ragChunks ?? 6).reduce((n, r) => n + r.content.length, 0);
+  const method = best.method === 'hybrid' ? 'meaning + keyword search' : 'keyword search';
+  host.innerHTML = `
+    <section class="kb-found">
+      <p class="kb-where"><span class="kb-label">Found in</span> <code title="${escapeHtml(best.document)}">${escapeHtml(best.document)}</code></p>
+      <blockquote class="kb-quote">${highlightTerms(focus, best.terms)}${truncated ? '…' : ''}</blockquote>
+      <div class="kb-acts">
+        <button class="text-btn kb-ask" type="button">Ask about this →</button>
+        <button class="text-btn quiet kb-open" type="button">Open the document</button>
+        ${truncated ? '<button class="text-btn quiet kb-more" type="button" aria-expanded="false">Show the whole passage</button>' : ''}
+      </div>
+      <div class="kb-full" hidden>${highlightTerms(best.content, best.terms)}</div>
+    </section>
+    ${rest.length ? `<section class="kb-also"><span class="kb-label">Also found</span>${rest.map((r) => `
+      <button class="kb-row" type="button" data-index="${results.indexOf(r)}">
+        <code title="${escapeHtml(r.document)}">${escapeHtml(r.document)}</code>
+        <span class="kb-snip">${highlightTerms(r.focus || r.content.slice(0, 200), r.terms)}</span>
+        <span class="kb-rel" aria-hidden="true"><i style="width:${Math.round(((r.rank ?? r.score ?? 0) / top) * 100)}%"></i></span>
+      </button>`).join('')}</section>` : ''}
+    <p class="kb-receipt">
+      <span><b>Receipt</b> ${method} on this machine</span>
+      <span>${results.length} passage${results.length === 1 ? '' : 's'} from ${documents.size} document${documents.size === 1 ? '' : 's'}</span>
+      <span>${wouldReach.toLocaleString()} characters would reach the model</span>
+      ${best.method === 'hybrid' ? '' : '<span>Add an embedding model in Settings for meaning-based matches</span>'}
+    </p>`;
+  host.classList.remove('kb-settle');
+  void host.offsetWidth;
+  host.classList.add('kb-settle');
+
+  $('.kb-ask', host).addEventListener('click', () => {
+    showView('chat', { focus: true });
+    const input = $('#input');
+    input.value = query;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.focus();
+  });
+  $('.kb-open', host).addEventListener('click', () => {
+    $('#document-filter').value = best.document;
+    renderDocuments();
+    $('#document-list').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  $('.kb-more', host)?.addEventListener('click', (event) => {
+    const full = $('.kb-full', host);
+    full.hidden = !full.hidden;
+    event.currentTarget.setAttribute('aria-expanded', String(!full.hidden));
+    event.currentTarget.textContent = full.hidden ? 'Show the whole passage' : 'Show less';
+  });
+  $$('.kb-row', host).forEach((row) => row.addEventListener('click', () => {
+    renderKnowledgeResults({ results, query, lead: Number(row.dataset.index) });
+    $('#kb-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+}
+
 $('#kb-search-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const query = $('#kb-search').value.trim();
@@ -1355,11 +1436,8 @@ $('#kb-search-form').addEventListener('submit', async (event) => {
   try {
     const results = await api.get(`/api/search?q=${encodeURIComponent(query)}&limit=8`);
     if (searchId !== state.knowledgeSearchId) return;
-    $('#kb-results').innerHTML = results.length ? results.map((result) => `
-      <article class="kb-result">
-        <div class="kb-result-head"><strong>${escapeHtml(result.document)}</strong><span class="retrieval-badge ${result.method === 'hybrid' ? 'semantic' : ''}">${result.method === 'hybrid' ? 'Semantic + keyword' : 'Keyword fallback'} · ${Math.round(result.score * 100)}%</span></div>
-        <p>${escapeHtml(result.content.slice(0, 650))}${result.content.length > 650 ? '…' : ''}</p>
-      </article>`).join('') : '<div class="results-empty">No matching excerpts. Try a name, exact phrase, or a more specific concept.</div>';
+    state.knowledgeResults = { results, query };
+    renderKnowledgeResults({ results, query });
     $('#kb-clear').hidden = false;
   } catch (error) {
     if (searchId !== state.knowledgeSearchId) return;
@@ -1373,8 +1451,10 @@ $('#kb-search-form').addEventListener('submit', async (event) => {
 });
 $('#kb-clear').addEventListener('click', () => {
   state.knowledgeSearchId++;
+  state.knowledgeResults = null;
   $('#kb-search').value = '';
   $('#kb-results').innerHTML = '';
+  $('#kb-results').classList.remove('kb-settle');
   $('#kb-clear').hidden = true;
   $('#kb-search-btn').disabled = false;
   $('#kb-search-btn').textContent = 'Search';

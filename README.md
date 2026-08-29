@@ -52,7 +52,7 @@ Training is disabled by default and has no hosted fallback. The workflow never c
 - **Command center** — see provider readiness, workspace counts, recent conversations, and context-aware workflows at a glance.
 - **Context you can trust** — every chat shows its active persona, model, local/remote data path, memory state, and knowledge state.
 - **Sources, not mystery** — knowledge-grounded answers include an expandable drawer with the exact retrieved excerpts, documents, methods, and scores.
-- **Retrieval preview** — search your local knowledge index directly to see what the model will receive before asking it anything.
+- **The found screen** — search your documents and get the passage that answers first, set large with your terms lit and its source beneath it as a receipt; the rest as one-line glances; and a receipt of the method and how much would reach the model. It is the same ranking and the same excerpts the chat uses, so the preview is never a different truth — and "Ask about this" carries the question into chat.
 - **Memory you control** — add, search, edit, or forget durable context; automatic extraction is an explicit opt-in.
 - **Weights you control** — curate immutable datasets and run actual LoRA/QLoRA training through a trainer you operate, with consent, holdout, lineage, and deployment gates.
 - **Responsive and accessible** — full mobile navigation, keyboard-visible actions, labeled controls, live generation status, and reduced-motion support.

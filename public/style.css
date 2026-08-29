@@ -522,14 +522,40 @@ textarea { resize: vertical; line-height: 1.5; }
 .upload-item small { color: var(--muted); }
 .search-block, .documents-block { margin-top: 14px; }
 .knowledge-search { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; padding: 0 20px 18px; }
-.kb-results { display: grid; gap: 8px; padding: 0 20px 20px; }
+.kb-results { padding: 0 20px 20px; }
 .kb-results:empty { display: none; }
-.kb-result { padding: 13px 14px; border: 1px solid var(--border); border-radius: 11px; background: var(--bg); }
-.kb-result-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
-.kb-result-head strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--accent-bright); font: 11px var(--mono); }
-.retrieval-badge { padding: 2px 7px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 9px; white-space: nowrap; }
-.retrieval-badge.semantic { border-color: rgba(140,168,255,.26); background: var(--remote-soft); color: var(--remote); }
-.kb-result p { margin: 0; color: var(--text-soft); font-size: 11px; line-height: 1.6; }
+/* The found screen (ADR-27): one object first, the rest quietly, a receipt last. */
+.kb-label { font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+.kb-found { padding: 16px 4px 4px; }
+.kb-where { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin: 0 0 10px; }
+.kb-where code { font: 11px var(--mono); color: var(--text-soft); }
+.kb-quote { margin: 0; font-size: 17px; line-height: 1.55; color: var(--text); max-width: 62ch; letter-spacing: -.005em; }
+.kb-quote mark, .kb-snip mark, .kb-full mark { background: var(--accent-soft); color: var(--text); border-radius: 3px; padding: 0 2px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.kb-acts { display: flex; gap: 16px; margin: 14px 0 0; flex-wrap: wrap; }
+.kb-acts .text-btn { padding: 0; }
+.kb-acts .text-btn.quiet { color: var(--text-soft); font-weight: 500; }
+.kb-full { margin-top: 12px; font-size: 12px; line-height: 1.6; color: var(--text-soft); white-space: pre-wrap; max-width: 72ch; }
+.kb-also { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 12px; display: grid; gap: 0; }
+.kb-also .kb-label { margin-bottom: 6px; }
+.kb-row { display: grid; grid-template-columns: 180px 1fr 42px; gap: 12px; align-items: center; width: 100%; padding: 9px 4px; background: none; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.kb-row:last-child { border-bottom: 0; }
+.kb-row:hover { background: var(--surface-hover); }
+.kb-row code { font: 11px var(--mono); color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kb-snip { font-size: 12px; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kb-rel { height: 3px; background: var(--border); border-radius: 2px; position: relative; }
+.kb-rel i { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 2px; }
+.kb-receipt { margin: 16px 4px 0; font-size: 11px; color: var(--muted); display: flex; gap: 6px 16px; flex-wrap: wrap; }
+.kb-receipt b { color: var(--text-soft); font-weight: 600; }
+.kb-empty { padding: 26px 4px 12px; }
+.kb-empty p { margin: 0 0 4px; font-size: 16px; color: var(--text); }
+.kb-empty small { color: var(--muted); font-size: 12px; line-height: 1.5; }
+/* The arrival: the passage settles, the rest follows, the receipt last. */
+.kb-settle .kb-found, .kb-settle .kb-also, .kb-settle .kb-receipt { animation: kb-settle 520ms cubic-bezier(.2,.7,.2,1) both; }
+.kb-settle .kb-also { animation-delay: 140ms; }
+.kb-settle .kb-receipt { animation-delay: 260ms; }
+@keyframes kb-settle { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .kb-settle .kb-found, .kb-settle .kb-also, .kb-settle .kb-receipt { animation: none; } }
+@media (max-width: 720px) { .kb-row { grid-template-columns: 1fr; gap: 3px; } .kb-rel { display: none; } }
 .results-empty, .panel-empty { padding: 28px 18px; color: var(--muted); font-size: 12px; text-align: center; }
 .doc-filter { width: 220px; }
 .document-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; padding: 0 16px 16px; }
