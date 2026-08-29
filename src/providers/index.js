@@ -1,7 +1,8 @@
 import { ollama } from './ollama.js';
-import { freetoken } from './freetoken.js';
+import { freetoken, isFreeTokenHealth, readFreeTokenHealth } from './freetoken.js';
 import { openai } from './openai.js';
 import { anthropic } from './anthropic.js';
+import { safeFetch } from '../util.js';
 
 // Local engines first: this order drives the /api/providers rows and the status
 // pills in the UI (the doctor prints its provider lines in completion order).
@@ -42,6 +43,46 @@ export function providerEndpointHost(cfg) {
     return new URL(cfg?.baseUrl ?? '').host || null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Is a FreeToken engine running on THIS machine, whether or not anyone has
+ * enabled the provider? `providerStatus` cannot answer that: a disabled
+ * provider is not "configured", so it is never health-checked, and a person
+ * who started `ft serve` before opening SovereignAI would see no sign of it.
+ * The first-run wizard and `sovereign doctor` both need the answer, so it
+ * lives here rather than twice.
+ *
+ * Only loopback is ever contacted. A disabled provider pointed at a LAN or
+ * remote host is left alone: detection is a courtesy for the engine on this
+ * machine, never a reason to send an unsolicited request to someone else's.
+ *
+ * Returns null when nothing FreeToken-shaped answers — including when
+ * something else is listening on the port. When one does answer, the verdict
+ * is read by the provider's own health parser, so the wizard, the Settings
+ * card, and the doctor describe one engine in one vocabulary.
+ */
+export async function detectLocalFreeToken(cfg, { timeoutMs = 1500 } = {}) {
+  const baseUrl = String(cfg?.baseUrl ?? '').replace(/\/+$/, '');
+  if (!baseUrl || !isLocalProviderEndpoint('freetoken', { baseUrl })) return null;
+  let body;
+  try {
+    const res = await safeFetch(`${baseUrl}/health`, { signal: AbortSignal.timeout(timeoutMs) });
+    if (!res.ok) return null;
+    body = await res.json();
+  } catch {
+    return null;
+  }
+  if (!isFreeTokenHealth(body)) return null;
+  const model = typeof body.model === 'string' && body.model.trim() ? body.model.trim().slice(0, 240) : null;
+  try {
+    const health = readFreeTokenHealth(body);
+    return { url: baseUrl, model, ready: true, detail: health.detail };
+  } catch (err) {
+    // Running, but not ready: loading, rebuilding, or errored. The reason is
+    // worth showing — "still loading, 42%" is a wait, not a failure.
+    return { url: baseUrl, model, ready: false, detail: err.message };
   }
 }
 

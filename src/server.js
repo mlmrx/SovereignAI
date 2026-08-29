@@ -13,7 +13,7 @@ import {
   VERSION,
 } from './config.js';
 import { ImportValidationError, ModelRecipeConflictError, openDb } from './db.js';
-import { providers, getProvider, providerStatus } from './providers/index.js';
+import { providers, getProvider, providerStatus, detectLocalFreeToken } from './providers/index.js';
 import { seedPersonas, shouldReplaceSeedPersonas } from './personas.js';
 import { chunkText } from './rag/chunker.js';
 import { retrieve, embedTexts } from './rag/retriever.js';
@@ -88,6 +88,16 @@ export function createApp(rootDir, { env = process.env, hardware } = {}) {
   }));
 
   route('GET', '/api/providers', async () => providerStatus(config));
+
+  // Whether a local FreeToken engine is running even though nobody has
+  // enabled the provider — the one thing /api/providers structurally cannot
+  // report, since it only health-checks providers that are already on. The
+  // first-run wizard asks so a person who started `ft serve` first is offered
+  // it instead of being sent to Settings afterwards. Loopback only.
+  route('GET', '/api/providers/freetoken/detect', async () => {
+    const found = await detectLocalFreeToken(config.providers.freetoken);
+    return found ?? { running: false };
+  });
 
   route('GET', '/api/models', async ({ query }) => {
     if (query.provider) {

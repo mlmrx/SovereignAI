@@ -11,7 +11,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { freetoken } from '../src/providers/freetoken.js';
-import { providers } from '../src/providers/index.js';
+import { providers, detectLocalFreeToken } from '../src/providers/index.js';
 import { DEFAULT_CONFIG, ConfigValidationError, loadConfig, mergeConfigUpdate } from '../src/config.js';
 import { createApp } from '../src/server.js';
 
@@ -536,4 +536,112 @@ test('doctor points a wrong default model at the id FreeToken actually serves', 
   } finally {
     await mock.close();
   }
+});
+
+// ---- detection, and the first-run wizard that depends on it (issue #5) ----
+
+// The gap this closes: /api/providers only health-checks providers that are
+// already enabled, so an engine somebody started before opening SovereignAI
+// was invisible until they found Settings on their own.
+test('a running FreeToken engine is detected even though nobody enabled the provider', async () => {
+  const mock = await startMockFreeToken();
+  try {
+    const found = await detectLocalFreeToken({ enabled: false, baseUrl: mock.url });
+    assert.equal(found.ready, true);
+    assert.equal(found.model, 'mock-model');
+    assert.equal(found.url, mock.url, 'the URL comes back without a trailing slash');
+    assert.match(found.detail, /FreeToken 0\.1\.2 · serving mock-model/, "the provider's own wording, not a second copy of it");
+  } finally {
+    await mock.close();
+  }
+});
+
+test('detection reports a loading engine as running-but-not-ready, with the reason', async () => {
+  const mock = await startMockFreeToken({
+    health: { status: 'loading', model: 'mock-model', instance_id: 'i-2', phase: 'weights', progress: { done_bytes: 42, total_bytes: 100 } },
+  });
+  try {
+    const found = await detectLocalFreeToken({ baseUrl: mock.url });
+    assert.equal(found.ready, false, 'running, but you cannot chat with it yet');
+    assert.equal(found.model, 'mock-model');
+    assert.match(found.detail, /still loading mock-model \(weights 42%\)/, 'a wait is not a failure — say how far along it is');
+  } finally {
+    await mock.close();
+  }
+});
+
+test('detection contacts loopback only, and never claims a stranger on the port is FreeToken', async () => {
+  // A LAN or remote address is left alone: detection is a courtesy for the
+  // engine on this machine, not a reason to poke someone else's host.
+  let fetched = 0;
+  await withFetch(async () => { fetched++; return jsonResponse(serving); }, async () => {
+    assert.equal(await detectLocalFreeToken({ baseUrl: 'http://192.168.1.50:1919' }), null);
+    assert.equal(await detectLocalFreeToken({ baseUrl: 'https://freetoken.example.com' }), null);
+    assert.equal(fetched, 0, 'no socket is opened for an endpoint that is not on this machine');
+  });
+
+  // Something is listening on 1919, but it is not FreeToken.
+  const impostor = http.createServer((req, res) => {
+    req.resume();
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok', service: 'something else entirely' }));
+  });
+  await new Promise((resolve) => impostor.listen(0, '127.0.0.1', resolve));
+  try {
+    assert.equal(await detectLocalFreeToken({ baseUrl: `http://127.0.0.1:${impostor.address().port}` }), null, 'no instance_id, no claim');
+  } finally {
+    await new Promise((resolve) => impostor.close(resolve));
+  }
+
+  assert.equal(await detectLocalFreeToken({ baseUrl: '' }), null);
+  assert.equal(await detectLocalFreeToken(undefined), null);
+  assert.equal(await detectLocalFreeToken({ baseUrl: 'http://127.0.0.1:1' }), null, 'a dead port is simply nothing');
+});
+
+test('GET /api/providers/freetoken/detect answers the wizard, and says so plainly when nothing runs', async () => {
+  const mock = await startMockFreeToken();
+  const running = await startTempApp({ providers: { freetoken: { enabled: false, baseUrl: mock.url } } });
+  try {
+    const res = await fetch(`${running.base}/api/providers/freetoken/detect`);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.ready, true);
+    assert.equal(body.model, 'mock-model');
+
+    // The provider row itself is unchanged: detection does not enable anything.
+    const rows = await (await fetch(`${running.base}/api/providers`)).json();
+    assert.equal(rows.find((row) => row.id === 'freetoken').enabled, false, 'finding an engine must never switch it on behind the user');
+  } finally {
+    await running.close();
+    await mock.close();
+  }
+
+  const alone = await startTempApp({ providers: { freetoken: { enabled: false, baseUrl: 'http://127.0.0.1:1' } } });
+  try {
+    assert.deepEqual(await (await fetch(`${alone.base}/api/providers/freetoken/detect`)).json(), { running: false });
+  } finally {
+    await alone.close();
+  }
+});
+
+test('the first-run wizard offers a detected FreeToken engine, and only a detected one', () => {
+  const js = fs.readFileSync(path.join(repo, 'public', 'wizard.js'), 'utf8');
+  const html = fs.readFileSync(path.join(repo, 'public', 'app.html'), 'utf8');
+
+  // Hidden until something answers: an option nobody can take is noise.
+  assert.match(html, /<div class="wz-choice" id="wz-choice-freetoken" hidden>/, 'the choice ships hidden');
+  assert.match(html, /name="wz-provider" value="freetoken"/, 'and is a real radio in the same group');
+  assert.match(html, /data-provider-fields="freetoken"/, 'so the shared field-group machinery shows and hides it');
+  assert.match(js, /'freetoken', 'ollama'/, 'FreeToken leads the provider list: a local engine already serving is the best default');
+  assert.match(js, /\/api\/providers\/freetoken\/detect/, 'the wizard asks the server, never the engine directly — the app CSP forbids the cross-origin call');
+
+  // One model per process: reported, not chosen from a list.
+  assert.match(js, /provider === 'freetoken'\) return \$\('#wz-freetoken-model'\)\?\.dataset\?\.model/, 'the model is whatever ft serve was started with');
+  assert.match(js, /found\.ready && found\.model && !ollamaReady/, 'a working Ollama is never overridden — only an idle one is replaced');
+  assert.match(js, /providersUpdate\.freetoken = \{ enabled: true \}/, 'finishing setup switches the provider on');
+  assert.match(js, /FreeToken did not report which model it is serving/, 'a blank model is explained where it can be fixed: the engine');
+
+  // The honesty note the Settings card carries travels with the choice.
+  assert.match(html + js, /no authentication/, 'the keyless-loopback caveat is stated in the wizard too');
+  assert.match(js, /never leave this device|over loopback/, 'and where the traffic goes is stated in the wizard vocabulary');
 });

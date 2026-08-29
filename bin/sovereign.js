@@ -764,23 +764,14 @@ function providerHints(providerId, { defaultModel, embeddingModel }) {
  * null. Any failure — refused, slow, wrong shape (some other server on the
  * port) — is null: the disabled line then reads exactly as it always did.
  */
+/**
+ * The doctor's view of a FreeToken engine nobody enabled. The detection
+ * itself lives in src/providers/index.js so the first-run wizard and this
+ * command cannot come to different conclusions about the same machine.
+ */
 async function detectFreeToken(baseUrl) {
-  try {
-    const { safeFetch } = await import('../src/util.js');
-    const { isFreeTokenHealth } = await import('../src/providers/freetoken.js');
-    const { isLocalProviderEndpoint } = await import('../src/providers/index.js');
-    // A disabled provider pointed at a LAN or remote host is left alone: detection is a
-    // courtesy for the engine on this machine, not a reason to contact someone else's.
-    if (!isLocalProviderEndpoint('freetoken', { baseUrl })) return null;
-    const url = `${String(baseUrl).replace(/\/+$/, '')}/health`;
-    const res = await safeFetch(url, { signal: AbortSignal.timeout(1500) });
-    if (!res.ok) return null;
-    const body = await res.json();
-    if (!isFreeTokenHealth(body)) return null;
-    return { url, model: typeof body.model === 'string' ? body.model : null };
-  } catch {
-    return null;
-  }
+  const { detectLocalFreeToken } = await import('../src/providers/index.js');
+  return await detectLocalFreeToken({ baseUrl });
 }
 
 function finishDoctor(result) {

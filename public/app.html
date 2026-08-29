@@ -901,6 +901,20 @@
           <h2>Pick its intelligence</h2>
           <p class="hint" id="wz-provider-hint">Checking the providers configured for this workspace…</p>
 
+          <!-- Shown only when a FreeToken engine is actually answering on this
+               machine; an option nobody can take is noise on a first run. -->
+          <div class="wz-choice" id="wz-choice-freetoken" hidden>
+            <input id="wz-provider-freetoken" type="radio" name="wz-provider" value="freetoken" aria-describedby="wz-privacy-note" />
+            <div class="choice-copy">
+              <label class="provider-choice-label" for="wz-provider-freetoken"><strong>FreeToken · running on this machine</strong><small>A local engine we found already serving. Prompts never leave this device.</small></label>
+              <div class="provider-fields" data-provider-fields="freetoken">
+                <span class="field-label">Model</span>
+                <p class="hint" id="wz-freetoken-model">—</p>
+                <p class="hint">FreeToken serves one model per process, so this is the model it is serving. It accepts requests on loopback with no authentication — anything else running as you on this machine can reach it too.</p>
+              </div>
+            </div>
+            <label class="choice-badge local" for="wz-provider-freetoken">Local</label>
+          </div>
           <div class="wz-choice">
             <input id="wz-provider-ollama" type="radio" name="wz-provider" value="ollama" aria-describedby="wz-privacy-note" checked />
             <div class="choice-copy">

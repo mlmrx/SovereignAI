@@ -29,32 +29,44 @@ export const freetoken = {
     } catch {
       body = null;
     }
-    if (!isFreeTokenHealth(body)) {
-      throw new Error('FreeToken health check returned an unexpected shape — is this a FreeToken server?');
-    }
-    const model = optionalText(body.model);
-    if (body.status === 'ok') {
-      // A missing maintenance field predates the field and means "serving".
-      const maintenance = optionalText(body.maintenance) ?? 'serving';
-      if (maintenance !== 'serving') throw new Error(`FreeToken is not serving right now (${maintenance})`);
-      const version = optionalText(body.version);
-      return { ok: true, detail: `FreeToken${version ? ` ${version}` : ''}${model ? ` · serving ${model}` : ''}` };
-    }
-    if (body.status === 'loading') {
-      const phase = optionalText(body.phase);
-      const done = Number(body.progress?.done_bytes);
-      const total = Number(body.progress?.total_bytes);
-      const pct = Number.isFinite(total) && total > 0 && Number.isFinite(done) ? Math.round((done / total) * 100) : null;
-      throw new Error(
-        `FreeToken is still loading ${model ?? 'its model'}` + (phase ? ` (${phase}${pct !== null ? ` ${pct}%` : ''})` : '')
-      );
-    }
-    if (body.status === 'error') {
-      throw new Error(`FreeToken engine error: ${optionalText(body.message) ?? 'no message'}`);
-    }
-    throw new Error(`FreeToken reported an unknown status (${clean(body.status)})`);
+    return readFreeTokenHealth(body);
   },
 };
+
+/**
+ * Turn a /health body into the provider's verdict: `{ ok, detail }` when the
+ * engine is serving, a throw carrying the reason when it is not. Split out
+ * from the fetch so detection (a wizard or the doctor asking whether an engine
+ * nobody enabled is nonetheless running) reads the same body with the same
+ * wording, from one request — two code paths describing one engine is how a
+ * setup screen and a diagnostic come to disagree about the same machine.
+ */
+export function readFreeTokenHealth(body) {
+  if (!isFreeTokenHealth(body)) {
+    throw new Error('FreeToken health check returned an unexpected shape — is this a FreeToken server?');
+  }
+  const model = optionalText(body.model);
+  if (body.status === 'ok') {
+    // A missing maintenance field predates the field and means "serving".
+    const maintenance = optionalText(body.maintenance) ?? 'serving';
+    if (maintenance !== 'serving') throw new Error(`FreeToken is not serving right now (${maintenance})`);
+    const version = optionalText(body.version);
+    return { ok: true, detail: `FreeToken${version ? ` ${version}` : ''}${model ? ` · serving ${model}` : ''}` };
+  }
+  if (body.status === 'loading') {
+    const phase = optionalText(body.phase);
+    const done = Number(body.progress?.done_bytes);
+    const total = Number(body.progress?.total_bytes);
+    const pct = Number.isFinite(total) && total > 0 && Number.isFinite(done) ? Math.round((done / total) * 100) : null;
+    throw new Error(
+      `FreeToken is still loading ${model ?? 'its model'}` + (phase ? ` (${phase}${pct !== null ? ` ${pct}%` : ''})` : '')
+    );
+  }
+  if (body.status === 'error') {
+    throw new Error(`FreeToken engine error: ${optionalText(body.message) ?? 'no message'}`);
+  }
+  throw new Error(`FreeToken reported an unknown status (${clean(body.status)})`);
+}
 
 /** Every /health shape FreeToken emits carries a string status and an instance_id. */
 export function isFreeTokenHealth(body) {
