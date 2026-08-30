@@ -1,0 +1,24 @@
+{
+  "date": "2026-08-30",
+  "published": true,
+  "route": "/blog/signals-2026-08-30",
+  "counts": {
+    "found": 23,
+    "shown": 20,
+    "held": 2,
+    "security": 1
+  },
+  "staleness": [],
+  "security": [
+    {
+      "title": "Wednesday, July 29, 2026 Security Releases",
+      "url": "https://nodejs.org/en/blog/vulnerability/july-2026-security-releases",
+      "date": "2026-07-29",
+      "summary": "",
+      "sourceId": "node-security",
+      "sourceLabel": "Node.js security",
+      "category": "security"
+    }
+  ],
+  "issue": "Automated watchtower run for 2026-08-30.\n\n## Security — read first\n\n- **Node.js security**: [Wednesday, July 29, 2026 Security Releases](https://nodejs.org/en/blog/vulnerability/july-2026-security-releases) — 2026-07-29\n\n## Engines\n\n- **Ollama**: [v0.33.2](https://github.com/ollama/ollama/releases/tag/v0.33.2) — 2026-08-28\n- **vLLM**: [v0.28.1rc0](https://github.com/vllm-project/vllm/releases/tag/v0.28.1rc0) — 2026-08-27\n- **Ollama**: [v0.33.2-rc0](https://github.com/ollama/ollama/releases/tag/v0.33.2-rc0) — 2026-08-27\n- **vLLM**: [v0.28.0](https://github.com/vllm-project/vllm/releases/tag/v0.28.0) — 2026-08-26\n- **FreeToken**: [v0.1.2](https://github.com/FlashML-org/FreeToken/releases/tag/v0.1.2) — 2026-08-19\n\n## Models\n\n- **NVIDIA models**: [nvidia/DeepSeek-V4-Pro-0813-NVFP4](https://huggingface.co/nvidia/DeepSeek-V4-Pro-0813-NVFP4) — 2026-08-27\n- **Trending GGUF**: [unsloth/GLM-5.3-Flash-GGUF](https://huggingface.co/unsloth/GLM-5.3-Flash-GGUF) — 2026-08-26\n- **Trending GGUF**: [unsloth/Qwen3.8-Flash-Next-GGUF](https://huggingface.co/unsloth/Qwen3.8-Flash-Next-GGUF) — 2026-08-26\n- **NVIDIA models**: [nvidia/Qwen3.8-2.4T-A95B-NVFP4](https://huggingface.co/nvidia/Qwen3.8-2.4T-A95B-NVFP4) — 2026-08-25\n- **Google open weights**: [google/timesfm-3.0-pytorch](https://huggingface.co/google/timesfm-3.0-pytorch) — 2026-08-24\n- **Qwen**: [Qwen/Qwen3.8-Flash-Next](https://huggingface.co/Qwen/Qwen3.8-Flash-Next) — 2026-08-24\n- **Qwen**: [Qwen/Qwen3.8-Flash-Next-FP8](https://huggingface.co/Qwen/Qwen3.8-Flash-Next-FP8) — 2026-08-24\n- **Google open weights**: [google/tipsv1-b14](https://huggingface.co/google/tipsv1-b14) — 2026-08-19\n\n## The local-first wave\n\n- **Jan**: [0.8.4](https://github.com/janhq/jan/releases/tag/v0.8.4) — 2026-07-23\n\n## Hardware and platform\n\n- **Node.js releases**: [2026-08-26, Version 24.20.0 'Krypton' (LTS), @aduh95](https://github.com/nodejs/node/releases/tag/v24.20.0) — 2026-08-26\n- **Node.js releases**: [2026-08-26, Version 26.8.0 (Current), @aduh95](https://github.com/nodejs/node/releases/tag/v26.8.0) — 2026-08-26\n- **Hugging Face blog**: [Training and Finetuning Multi-Vector Embedding Models with Sentence Transformers](https://huggingface.co/blog/train-multi-vector-encoder) — 2026-08-26\n- **Hugging Face blog**: [Granite 4.2 LLMs: How They're Built](https://huggingface.co/blog/ibm-granite/granite-4-2) — 2026-08-25\n- **NVIDIA blog**: [With Groq 3 LPX in Full Production, NVIDIA Extends Vera Rubin Inference for Agents](https://blogs.nvidia.com/blog/vera-rubin-lpx-spectrum-x-nvlink-fusion/) — 2026-08-24\n- **NVIDIA blog**: [Universitas Gadjah Mada, Indosat and NVIDIA Open Indonesia’s First University AI Center to Develop Local AI Talent](https://blogs.nvidia.com/blog/ugm-indosat-nvidia-ai-technology-center/) — 2026-08-14\n\n---\n\n23 new item(s) found, 20 published, 2 held back by the per-section cap."
+}

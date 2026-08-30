@@ -98,6 +98,12 @@
   .guides { counter-reset: none; }
   .guides .post { padding-left: 24px; }
   .guides .post::before { content: none; }
+  .sig-intro { color: var(--dim); font-size: 0.9rem; margin: 0 0 12px; }
+  .sig-archive { list-style: none; padding: 0; margin: 0 0 10px; display: grid; gap: 6px; font-size: 0.9rem; }
+  .sig-archive li { display: flex; gap: 10px; align-items: baseline; padding: 7px 12px; border: 1px solid var(--rule); border-radius: 5px; background: var(--sheet); }
+  .sig-archive a { color: inherit; text-decoration: none; font-weight: 600; }
+  .sig-archive a:hover { color: var(--terra); text-decoration: underline; }
+  .sig-count { color: var(--dim); font-size: 0.78rem; margin-left: auto; font-variant-numeric: tabular-nums; }
   .house { border-top: 1px solid var(--rule); margin-top: 40px; padding-top: 22px; font-size: 0.9rem; color: var(--dim); }
   @media (prefers-reduced-motion: reduce) { .post:hover { transform: none; } }
   @media (max-width: 640px) { .post { padding-left: 24px; } .post::before { position: static; display: inline-grid; margin-bottom: 10px; } }
@@ -194,8 +200,16 @@
       </li>
     </ul>
 
+
+    <p class="series-head">Signals · what shipped elsewhere, weekly, assembled automatically</p>
+    <p class="sig-intro">Each week a machine reads the release feeds and model registries listed in the repository and formats what is new. No summarizing, no commentary, no editor — every line is a project's own announcement, linked back to it. The written posts above are the ones we stand behind; these are the raw record beside them.</p>
+    <ul class="sig-archive">
+<!-- watchtower:signals -->
+        <li><a href="/blog/signals-2026-08-30">Week of August 30, 2026</a> <span class="sig-count">20 items</span></li>
+    </ul>
+
     <div class="house">
-      <p><strong>House rules.</strong> Every post links its sources. Every product claim names the shipped mechanism behind it, and where something is not sovereign yet we say so — the same rule as the <a href="/sovereignty">Sovereignty Ledger</a>. No newsletter, no tracking beyond the cookie-less visit count disclosed in the footer.</p>
+      <p><strong>House rules.</strong> Every post links its sources. Every product claim names the shipped mechanism behind it, and where something is not sovereign yet we say so — the same rule as the <a href="/sovereignty">Sovereignty Ledger</a>. No newsletter, and no tracking at all — the counter this used to point at was never switched on, so it was removed rather than left standing as a claim.</p>
       <p><strong>Following along.</strong> There is no mailing list to join, because a mailing list is a copy of your address in our hands. Instead there is <a href="/feed.xml">an Atom feed</a>: paste that link into any reader and it pulls new posts on your schedule, tells us nothing, and needs no account. Reading with the feed is the sovereign way to read a blog, and it would be strange for this one not to offer it.</p>
     </div>
   </div>

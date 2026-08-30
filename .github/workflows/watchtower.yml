@@ -1,0 +1,101 @@
+# The watchtower: read the primary sources weekly, publish a digest, open an
+# issue with everything the post left out.
+#
+# This is the one workflow that writes to the live site with nobody reading
+# first, so the risky verbs are all here, in the open, in order:
+#
+#   read -> build -> RUN THE WHOLE TEST SUITE -> commit -> push -> issue
+#
+# The test gate is not a formality. The published page is checked by the same
+# rules every hand-written post is held to (routes, deploy allowlist, sitemap,
+# structured data, a sources section, the content-security policy), plus the
+# watchtower's own suite. If any of it fails, nothing is committed and the
+# issue still gets opened — a bad week becomes a notification, never a page.
+#
+# To stop it without a commit: set the repository variable
+# WATCHTOWER_ENABLED to false (Settings -> Secrets and variables -> Actions).
+name: watchtower
+
+on:
+  schedule:
+    # Mondays, 07:00 UTC — after the weekend's releases, before the week starts.
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Read everything and report, but publish nothing'
+        type: boolean
+        default: false
+
+# Least privilege: it writes commits and opens issues, nothing else.
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: watchtower
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    # An explicit "false" stops it. An unset variable leaves it running, so a
+    # fresh clone of this repository behaves the way the code says it does.
+    if: vars.WATCHTOWER_ENABLED != 'false'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Read the sources and build the digest
+        id: watch
+        env:
+          GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          node scripts/watchtower.js ${{ inputs.dry_run && '--dry-run' || '' }}
+          echo "published=$(node -p "require('./watchtower/last-run.json').published")" >> "$GITHUB_OUTPUT"
+          echo "date=$(node -p "require('./watchtower/last-run.json').date")" >> "$GITHUB_OUTPUT"
+
+      - name: Regenerate the feed
+        if: steps.watch.outputs.published == 'true'
+        run: node scripts/build-feed.js
+
+      # The gate. The digest is held to every rule a written post is held to.
+      - name: Prove the site still holds together
+        if: steps.watch.outputs.published == 'true'
+        run: npm test
+
+      - name: Commit and push
+        if: steps.watch.outputs.published == 'true'
+        run: |
+          git config user.name 'sovereign-watchtower'
+          git config user.email 'watchtower@mysovereign.ai'
+          git add public vercel.json watchtower
+          git commit -m "Signals for the week of ${{ steps.watch.outputs.date }}
+
+          Assembled automatically from the primary sources listed in
+          src/watchtower/sources.js. Every entry is a project's own
+          announcement of its own work, linked back to it; nothing is
+          summarized or rephrased. The full test suite passed before this
+          landed. Revert this commit to unpublish.
+          "
+          git push
+
+      # Always: the issue carries what the post could not — the security
+      # advisories, the staleness chores, and everything held back by the caps.
+      - name: Open the run's issue
+        if: always() && steps.watch.conclusion == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node -p "require('./watchtower/last-run.json').issue" > /tmp/issue.md
+          gh issue create \
+            --title "Watchtower — week of ${{ steps.watch.outputs.date }}" \
+            --body-file /tmp/issue.md \
+            --label watchtower
+
+      - name: Say what happened when nothing was published
+        if: steps.watch.outputs.published != 'true'
+        run: echo "No post this week — nothing new in any watched source. A quiet week is allowed to be quiet."

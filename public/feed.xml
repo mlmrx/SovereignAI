@@ -6,7 +6,7 @@
   <link href="https://mysovereign.ai/feed.xml" rel="self" />
   <link href="https://mysovereign.ai/blog" />
   <id>https://mysovereign.ai/blog</id>
-  <updated>2026-08-25T00:00:00Z</updated>
+  <updated>2026-08-30T00:00:00Z</updated>
   <author><name>Unify Dynamics</name><uri>https://mysovereign.ai</uri></author>
   <rights>© Unify Dynamics. Quoting with attribution is welcome.</rights>
   <entry>
@@ -64,5 +64,13 @@
     <published>2026-08-25T00:00:00Z</published>
     <updated>2026-08-25T00:00:00Z</updated>
     <summary>A guide to running SovereignAI beside Perplexity's Portable Computer on one NVIDIA machine: sharing the GPU, where the two can connect, and a clear line between verified, stated-but-undocumented, and not-yet.</summary>
+  </entry>
+  <entry>
+    <title>Signals: what shipped in local AI, week of August 30, 2026</title>
+    <link href="https://mysovereign.ai/blog/signals-2026-08-30" />
+    <id>https://mysovereign.ai/blog/signals-2026-08-30</id>
+    <published>2026-08-30T00:00:00Z</published>
+    <updated>2026-08-30T00:00:00Z</updated>
+    <summary>Everything the watchtower found in local-AI primary sources for the week of 2026-08-30: 5 in engines, 8 in models, 1 in the local-first wave and 6 in hardware and platform. Every entry links the announcement it came from; nothing here is summarized or rewritten.</summary>
   </entry>
 </feed>

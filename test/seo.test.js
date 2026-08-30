@@ -15,8 +15,9 @@ const pub = (file) => fs.readFileSync(path.join(root, 'public', file), 'utf8');
 const rootFile = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
 const SITE = 'https://mysovereign.ai';
-// Every public page, with the clean path it is served at.
-const PAGES = [
+// The pages a person is meant to arrive at, named one by one on purpose: this
+// list is what catches a page silently disappearing from the deploy.
+const CORE_PAGES = [
   ['land.html', '/'],
   ['what-is-sovereign-ai.html', '/what-is-sovereign-ai'],
   ['sovereignty.html', '/sovereignty'],
@@ -26,14 +27,16 @@ const PAGES = [
   ['watch.html', '/watch'],
   ['a-day.html', '/a-day'],
   ['blog.html', '/blog'],
-  ['blog-introducing-sovereignai.html', '/blog/introducing-sovereignai'],
-  ['blog-local-is-solved-ownership-is-not.html', '/blog/local-is-solved-ownership-is-not'],
-  ['blog-the-customs-declaration.html', '/blog/the-customs-declaration'],
-  ['blog-sovereignai-on-nvidia-dgx-spark-rtx-workstation.html', '/blog/sovereignai-on-nvidia-dgx-spark-rtx-workstation'],
-  ['blog-freetoken-in-sovereignai.html', '/blog/freetoken-in-sovereignai'],
-  ['blog-liquid-ai-lfm-models-in-sovereignai.html', '/blog/liquid-ai-lfm-models-in-sovereignai'],
-  ['blog-sovereignai-and-perplexity-portable-computer.html', '/blog/sovereignai-and-perplexity-portable-computer'],
 ];
+// Blog posts are DERIVED from the filesystem rather than listed, because the
+// set grows on its own: the watchtower publishes a digest without a human in
+// the loop, and a machine editing this file to add itself to a test would make
+// the test worthless. Every rule the hardcoded list enforced still applies to
+// each derived post below — route, deploy, sitemap, index, structured data,
+// sources — so a post that skips the wiring still fails the build.
+const blogFiles = () => fs.readdirSync(path.join(root, 'public')).filter((f) => /^blog-.+\.html$/.test(f)).sort();
+const blogRoute = (file) => `/blog/${file.replace(/^blog-/, '').replace(/\.html$/, '')}`;
+const PAGES = [...CORE_PAGES, ...blogFiles().map((file) => [file, blogRoute(file)])];
 
 // The playground: the product's real interface files, publicly hosted in
 // their honestly-badged demo mode. Surfaces stand under their own names; the
@@ -205,6 +208,9 @@ test('the site tells the truth about what it counts, and loads nothing that 404s
     const html = pub(file);
     assert.doesNotMatch(html, /_vercel\/insights/, `${file} loads an analytics script that is not enabled — it 404s as text/plain and nosniff refuses it`);
     assert.doesNotMatch(html, /counts visits with Vercel/, `${file} still claims a counter that does not run`);
+    // The blog's house rules pointed at the counter too, and outlived it by a
+    // day. Any page that promises "tracking beyond" something is stale.
+    assert.doesNotMatch(html, /tracking beyond the cookie-less visit count/, `${file} still points readers at a counter that was removed`);
     // The disclosure stays, in the negative: a privacy brand says what it does
     // NOT do just as plainly, and keeps the site/product distinction.
     assert.match(html, /counts nothing/i, `${file} must state plainly that nothing is counted`);

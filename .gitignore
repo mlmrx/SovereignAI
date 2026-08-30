@@ -38,6 +38,10 @@ sovereign-export-*.json
 .DS_Store
 Thumbs.db
 
+# The watchtower keeps its last fetch only so --offline can replay it locally.
+# Its seen-URL record and last run ARE committed; this is scratch.
+watchtower/cache.json
+
 # Logs
 *.log
 logs/

@@ -132,6 +132,10 @@
     {
       "source": "/blog/sovereignai-and-perplexity-portable-computer",
       "destination": "/blog-sovereignai-and-perplexity-portable-computer.html"
+    },
+    {
+      "source": "/blog/signals-2026-08-30",
+      "destination": "/blog-signals-2026-08-30.html"
     }
   ],
   "headers": [
