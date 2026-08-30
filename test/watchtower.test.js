@@ -358,5 +358,13 @@ test('the runner exists, publishes only when there is something to publish, and 
   assert.match(workflow, /vars\.WATCHTOWER_ENABLED/, 'a repository variable can stop it without a commit');
   assert.match(workflow, /npm test/, 'nothing is committed that has not passed the whole suite');
   assert.match(runner, /worthAnIssue/, 'a week with nothing new opens no issue either');
+  // A commit is not a publication: this repository's Vercel project has no
+  // Git integration, so a push does not deploy. The workflow must either do
+  // it or say loudly that it did not.
+  assert.match(workflow, /vercel@latest deploy --prod/, 'the loop has to reach the site');
+  assert.match(workflow, /committed but not live/, 'and must say so when it cannot');
+  for (const line of workflow.split('\n')) {
+    if (/^\s*if:/.test(line)) assert.doesNotMatch(line, /secrets\./, `secrets is not a context a step-level if can read: ${line.trim()}`);
+  }
   assert.match(workflow, /steps.watch.outputs.issue == 'true'/, 'fifty-two empty issues a year would train everyone to ignore the one that matters');
 });
