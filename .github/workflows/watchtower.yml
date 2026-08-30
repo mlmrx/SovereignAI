@@ -92,7 +92,7 @@ jobs:
       # Always: the issue carries what the post could not — the security
       # advisories, the staleness chores, and everything held back by the caps.
       - name: Open the run's issue
-        if: always() && steps.watch.conclusion == 'success'
+        if: always() && steps.watch.conclusion == 'success' && steps.watch.outputs.issue == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

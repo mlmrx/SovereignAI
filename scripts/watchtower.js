@@ -162,7 +162,12 @@ async function main() {
   // Hand the verdict straight to the workflow rather than making it re-read a
   // file, so the gate can never be driven by a previous run's leftovers.
   if (process.env.GITHUB_OUTPUT) {
-    fs.appendFileSync(process.env.GITHUB_OUTPUT, `published=${result.published}\ndate=${result.date}\n`);
+    // An issue only when there is something in it. A week where every source
+    // was already seen and nothing has gone stale is a week with no post AND
+    // no notification — fifty-two empty issues a year would train everyone to
+    // ignore the one that matters.
+    const worthAnIssue = digest.counts.found > 0 || staleness.length > 0;
+    fs.appendFileSync(process.env.GITHUB_OUTPUT, `published=${result.published}\ndate=${result.date}\nissue=${worthAnIssue}\n`);
   }
   return result;
 }

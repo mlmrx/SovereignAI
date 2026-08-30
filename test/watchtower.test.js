@@ -357,4 +357,6 @@ test('the runner exists, publishes only when there is something to publish, and 
   assert.match(workflow, /workflow_dispatch:/, 'and can be run by hand');
   assert.match(workflow, /vars\.WATCHTOWER_ENABLED/, 'a repository variable can stop it without a commit');
   assert.match(workflow, /npm test/, 'nothing is committed that has not passed the whole suite');
+  assert.match(runner, /worthAnIssue/, 'a week with nothing new opens no issue either');
+  assert.match(workflow, /steps.watch.outputs.issue == 'true'/, 'fifty-two empty issues a year would train everyone to ignore the one that matters');
 });
