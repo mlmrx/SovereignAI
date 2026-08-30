@@ -53,10 +53,10 @@ jobs:
         id: watch
         env:
           GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          node scripts/watchtower.js ${{ inputs.dry_run && '--dry-run' || '' }}
-          echo "published=$(node -p "require('./watchtower/last-run.json').published")" >> "$GITHUB_OUTPUT"
-          echo "date=$(node -p "require('./watchtower/last-run.json').date")" >> "$GITHUB_OUTPUT"
+        # The script writes `published` and `date` to $GITHUB_OUTPUT itself.
+        # Reading them back out of the committed report instead would let a
+        # previous run's verdict drive this run's gate.
+        run: node scripts/watchtower.js ${{ inputs.dry_run && '--dry-run' || '' }}
 
       - name: Regenerate the feed
         if: steps.watch.outputs.published == 'true'
@@ -73,6 +73,12 @@ jobs:
           git config user.name 'sovereign-watchtower'
           git config user.email 'watchtower@mysovereign.ai'
           git add public vercel.json watchtower
+          # Belt and braces: if the gate ever says "published" while the tree
+          # is clean, stop rather than fail the run on an empty commit.
+          if git diff --cached --quiet; then
+            echo "Nothing staged despite a published verdict — not committing."
+            exit 0
+          fi
           git commit -m "Signals for the week of ${{ steps.watch.outputs.date }}
 
           Assembled automatically from the primary sources listed in

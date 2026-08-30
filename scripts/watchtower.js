@@ -147,10 +147,22 @@ async function main() {
     console.log(`Published ${digestFile(digest.date)} and wired 7 places.`);
   }
 
+  // The run report is always written, dry run included: it is this run's
+  // answer, and a caller that had to fall back to the previous run's file
+  // would read a stale verdict. That is not hypothetical — the first CI dry
+  // run did exactly that, saw `published: true` from a committed report, and
+  // walked into the commit step with nothing to commit.
+  writeFile(LAST_RUN, `${JSON.stringify(result, null, 2)}\n`);
+  // A dry run changes nothing else: the seen record and the fetch cache are
+  // the only state that would alter what a later real run decides.
   if (!dryRun) {
     writeFile(SEEN, `${JSON.stringify(nextSeen({ seen, fetched, now }), null, 0)}\n`);
-    writeFile(LAST_RUN, `${JSON.stringify(result, null, 2)}\n`);
     if (!offline) writeFile(CACHE, `${JSON.stringify(fetched.map(({ source, items }) => ({ sourceId: source.id, items })), null, 0)}\n`);
+  }
+  // Hand the verdict straight to the workflow rather than making it re-read a
+  // file, so the gate can never be driven by a previous run's leftovers.
+  if (process.env.GITHUB_OUTPUT) {
+    fs.appendFileSync(process.env.GITHUB_OUTPUT, `published=${result.published}\ndate=${result.date}\n`);
   }
   return result;
 }

@@ -19,6 +19,7 @@ const root = path.resolve(import.meta.dirname, '..');
 const DAY = 86_400_000;
 const NOW = Date.parse('2026-09-07T00:00:00Z');
 const src = (id, category = 'engines') => ({ id, label: id, category });
+const workflowText = () => fs.readFileSync(path.join(root, '.github', 'workflows', 'watchtower.yml'), 'utf8');
 const item = (over = {}) => ({ title: 'A release', url: `https://example.com/${Math.random()}`, date: '2026-09-06', summary: '', ...over });
 
 // ---------------------------------------------------------------- parsing
@@ -343,9 +344,15 @@ test('every source is a primary, keyless, categorized feed with a stated reason'
 
 test('the runner exists, publishes only when there is something to publish, and can be stopped', () => {
   const runner = fs.readFileSync(path.join(root, 'scripts', 'watchtower.js'), 'utf8');
-  assert.match(runner, /--dry-run/, 'it must be runnable without writing anything');
+  assert.match(runner, /--dry-run/, 'it must be runnable without publishing');
   assert.match(runner, /worthPublishing/, 'a quiet week is allowed to be quiet');
-  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'watchtower.yml'), 'utf8');
+  // The gate must be driven by THIS run. The first CI dry run read a
+  // committed report, saw published:true from a previous run, and walked
+  // into the commit step with nothing to commit.
+  assert.match(runner, /process\.env\.GITHUB_OUTPUT/, 'the verdict is handed to the workflow directly');
+  assert.match(runner, /published=\$\{result\.published\}/, 'and it is this run’s verdict');
+  assert.doesNotMatch(workflowText(), /require\('\.\/watchtower\/last-run\.json'\)\.published/, 'the gate must not re-read a file that may be stale');
+  const workflow = workflowText();
   assert.match(workflow, /schedule:/, 'it runs on a cadence');
   assert.match(workflow, /workflow_dispatch:/, 'and can be run by hand');
   assert.match(workflow, /vars\.WATCHTOWER_ENABLED/, 'a repository variable can stop it without a commit');
