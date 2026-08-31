@@ -330,48 +330,39 @@ as a tailnet; terminate HTTPS before exposing the service elsewhere.
 the product depends on it — an instance never contacts it — but the blog, the
 playground, and the watchtower's weekly digest all live there.
 
-Vercel serves a **deployment**, which is a snapshot uploaded to Vercel. It is
-not served from the GitHub repository, so a commit is not a publication.
-Whether a push reaches the site depends on one setting:
+**Pushing to `main` deploys the site.** The project's GitHub integration is
+connected, so a commit reaching `main` produces a production deployment within
+about a minute, whoever pushed it — a person, or the watchtower on a Monday.
+Nothing else is required, and no workflow should add a deploy step.
+
+Vercel serves an uploaded snapshot rather than reading the repository live, so
+if that connection is ever removed, commits stop reaching the site silently.
+The manual path still works from any checkout with the CLI logged in:
 
 ```bash
-# Always works, from a checkout with the Vercel CLI logged in:
 vercel deploy --prod --yes --scope maheshlambe-9997s-projects
 ```
 
-If the project's Git integration is connected
-([Settings → Git](https://vercel.com/maheshlambe-9997s-projects/sovereignai/settings/git)),
-a push to `main` deploys on its own and the command above is unnecessary.
+### Checking whether the connection is live
 
-### Telling which is true
-
-The Vercel dashboard distinguishes two things that look alike: your *account*
-being connected to GitHub (the app is installed, so repositories appear in the
-import list) and this *project* being linked to a repository. Only the second
-one deploys on push. Three checks answer it from outside the dashboard:
+Two checks answer it, and one popular one does not:
 
 ```bash
-# 1. Does GitHub have deployment records? Vercel writes one per push.
+# 1. GitHub records a deployment per push once the integration is connected.
 gh api repos/mlmrx/SovereignAI/deployments --jq 'length'
 
-# 2. Does a recent commit carry a Vercel check? (Only github-actions = no.)
-gh api repos/mlmrx/SovereignAI/commits/HEAD/check-runs --jq '.check_runs[].app.slug'
-
-# 3. Did a push produce a deployment, or only the manual runs?
+# 2. A push should produce a deployment within a minute or two.
 vercel list sovereignai --scope maheshlambe-9997s-projects
 ```
 
-Note that `vercel project inspect` does **not** report the Git connection in
-CLI 58.x — it shows no repository for any project, connected or not, so its
-silence proves nothing. That mistake cost an hour; the three checks above are
-the reliable ones.
+`vercel project inspect` reports **no** repository for any project on CLI 58.x,
+connected or not, so its silence proves nothing. Reading that as evidence cost
+an hour; it is recorded here so nobody repeats it. Vercel also uses GitHub's
+Deployments API rather than the Checks API, so `check-runs` on a commit shows
+only `github-actions` even when the integration is working.
 
-### Why it matters for the watchtower
-
-`.github/workflows/watchtower.yml` commits its weekly digest to `main`. If
-neither the Git integration nor a `VERCEL_TOKEN` secret exists, that post sits
-in the repository, correct and invisible, until someone deploys by hand — the
-one failure mode that looks like success. The workflow therefore deploys when
-the secret is present and emits a warning annotation naming the unpublished
-file when it cannot. Connecting the Git integration is the better fix: it needs
-no secret and covers every push, not only the watchtower's.
+The dashboard distinguishes two things that look alike: your *account* being
+connected to GitHub (the app is installed, so repositories appear in the import
+list) and this *project* being linked to a repository. Only the second deploys
+on push, and it lives at
+[Settings → Git](https://vercel.com/maheshlambe-9997s-projects/sovereignai/settings/git).

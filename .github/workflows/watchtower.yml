@@ -89,32 +89,14 @@ jobs:
           "
           git push
 
-      # A commit is not a publication. This repository's Vercel project has no
-      # Git integration connected, so pushing to main does NOT deploy — which
-      # would leave the post in the repository and off the site, the one
-      # failure mode that looks like success.
+      # Deployment is not this workflow's job: the Vercel project has its GitHub
+      # integration connected, so pushing to main deploys the site on its own
+      # (verified — a push produces a deployment within a minute, and GitHub
+      # records it under /deployments). A deploy step here would double-deploy.
       #
-      # Two ways to close the loop, either is enough:
-      #   - Connect the GitHub integration in the Vercel project (one click,
-      #     no secrets, and every push deploys, not just this one); or
-      #   - add a VERCEL_TOKEN secret plus VERCEL_ORG_ID and VERCEL_PROJECT_ID
-      #     variables, and this step does it.
-      - name: Deploy the site
-        if: steps.watch.outputs.published == 'true' && env.VERCEL_TOKEN != ''
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
-        run: npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN"
-
-      # `secrets` is not a context step-level `if` can read, so the token is
-      # bound to env first and the condition tests that.
-      - name: Say plainly that the post is committed but not live
-        if: steps.watch.outputs.published == 'true' && env.VERCEL_TOKEN == ''
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: |
-          echo "::warning::Published to the repository, but NOT deployed: no VERCEL_TOKEN secret and no Git integration on the Vercel project. The post is at public/blog-signals-${{ steps.watch.outputs.date }}.html and will go live on the next deploy."
+      # If that connection is ever removed, this workflow keeps publishing to
+      # the repository and the post silently never reaches the site. Checking
+      # it is in docs/OPERATIONS.md under "Deploying the public site".
 
       # Always: the issue carries what the post could not — the security
       # advisories, the staleness chores, and everything held back by the caps.
