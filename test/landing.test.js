@@ -143,3 +143,25 @@ test('the supported-today shelf promotes only what ships: dated, six groups, cav
   assert.doesNotMatch(band, /open source/i, 'the core is fair source');
   assert.match(band, /href="\/sovereignty"/, 'the shelf points at the audit that backs it');
 });
+
+// The reviewer take that prompted this: the pages that convinced a skeptic
+// were the honest ones, and none of them led the homepage — it went from the
+// argument straight to the promo shelf. The test now sits between them, and
+// the trial teaches the exit as day-one homework.
+test('the test leads and the exit is homework: three questions above the shelf, first export in the trial', () => {
+  assert.ok(html.indexOf('id="test"') > html.indexOf('id="why"'), 'the test follows the argument');
+  assert.ok(html.indexOf('id="test"') < html.indexOf('id="latest"'), 'and comes before the promo shelf — convince, then sell');
+  assert.match(html, /Can I read every line that runs\?/);
+  assert.match(html, /Can I take everything out, verified, in a documented format\?/);
+  assert.match(html, /When something isn't private, does the product tell me at that moment\?/);
+  assert.ok((html.match(/href="\/three-questions"/g) || []).length >= 4, 'every card and the note are doors to the citable page');
+  assert.match(html, /answers\s+we can't give yet/, 'the homepage admits the scorecard has gaps, in the same breath as the wins');
+
+  // Day one, step three: the export, before the AI knows anything worth
+  // keeping — the reviewer's advice, adopted as our own instruction.
+  const runbox = html.slice(html.indexOf('class="runbox"'), html.indexOf('class="tiers"'));
+  assert.match(runbox, /Step three, same day: take your first export/);
+  assert.match(runbox, /sovereign export --encrypt/);
+  assert.match(runbox, /someday stalls/, 'the honest reason is stated: projects can die, and you should not be trapped');
+  assert.match(runbox, /way out before asking you to stay/);
+});

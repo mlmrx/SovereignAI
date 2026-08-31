@@ -23,6 +23,7 @@ const CORE_PAGES = [
   ['sovereignty.html', '/sovereignty'],
   ['why.html', '/why'],
   ['faq.html', '/faq'],
+  ['three-questions.html', '/three-questions'],
   ['playground.html', '/playground'],
   ['watch.html', '/watch'],
   ['a-day.html', '/a-day'],
@@ -172,7 +173,7 @@ test('one shell frames every page: same header, same footer, same theme control'
     assert.deepEqual(hrefs, NAV, `${file} nav must match the canonical order`);
     // Everything cut from the bar must still be reachable from the footer.
     const foot = html.match(/<footer class="shell-foot">([\s\S]*?)<\/footer>/)[1];
-    for (const href of ['/why', '/what-is-sovereign-ai', '/a-day', '/faq', '/blog', '/#access']) {
+    for (const href of ['/why', '/what-is-sovereign-ai', '/a-day', '/faq', '/three-questions', '/blog', '/#access']) {
       assert.ok(foot.includes(`href="${href}"`), `${file} footer must still reach ${href}`);
     }
   }
@@ -420,4 +421,36 @@ test('the blog is a real section: every post is routed, deployed, indexed, liste
   }
   // The answer-engine index knows the blog exists.
   assert.match(pub('llms.txt'), /## Blog/, 'llms.txt must list the blog');
+});
+
+// The three-question test is the site's most portable asset — a BS detector a
+// reader can apply to any vendor, ours included, and quote without asking. Its
+// power depends on the wording being ONE wording: a test that shifts per
+// audience is failing its own third question. These are the canonical strings.
+test('the three-question test reads identically on every surface that states it', () => {
+  const QUESTIONS = [
+    'Can I read every line that runs?',
+    'Can I take everything out, verified, in a documented format?',
+    "When something isn't private, does the product tell me at that moment?",
+  ];
+  for (const file of ['land.html', 'three-questions.html', 'what-is-sovereign-ai.html', 'sovereignty.html', 'llms.txt']) {
+    const text = pub(file);
+    for (const question of QUESTIONS) {
+      assert.ok(text.includes(question), `${file} must carry the canonical wording: "${question}"`);
+    }
+  }
+  // The citable page holds the whole argument, not just the list: the dodges,
+  // the scorecard with receipts, and the answers that are unflattering.
+  const page = pub('three-questions.html');
+  assert.match(page, /How it's dodged/, 'each question names how vendors dodge it');
+  assert.match(page, /Our own scorecard/, 'a test you exempt yourself from is marketing');
+  assert.match(page, /Where our answers run out/, 'the scorecard includes what we fail');
+  assert.match(page, /borrowed/, 'borrowed weights are named');
+  assert.match(page, /not encrypted at rest/, 'the plaintext database is named');
+  assert.match(page, /href="\/sovereignty"/, 'and the ledger holds the full accounting');
+  assert.match(page, /Quote this test freely/, 'portability is the point');
+  // The surfaces that teach the test link the page that expands it.
+  assert.match(pub('what-is-sovereign-ai.html'), /href="\/three-questions"/);
+  assert.match(pub('sovereignty.html'), /href="\/three-questions"/);
+  assert.match(pub('llms.txt'), /mysovereign\.ai\/three-questions/);
 });

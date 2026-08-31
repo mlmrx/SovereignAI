@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Three-Question Test for Private AI</title>
+<meta name="description" content="Three questions that separate a privacy claim from a property, applicable to any AI product: can I read every line that runs, can I take everything out verified, and when something isn't private, does the product tell me at that moment? With our own scorecard — including the answers that are unflattering." />
+<link rel="canonical" href="https://mysovereign.ai/three-questions" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="The three-question test for private AI" />
+<meta property="og:description" content="Can I read every line that runs? Can I take everything out, verified? When something isn't private, does the product tell me at that moment? A test you can apply to any vendor — including the one publishing it." />
+<meta property="og:url" content="https://mysovereign.ai/three-questions" />
+<meta property="og:site_name" content="SovereignAI" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="The three-question test for private AI" />
+<meta name="twitter:description" content="Three questions that separate a privacy claim from a property. Applicable to any product, including this one." />
+<link rel="stylesheet" href="/doc.css" />
+<link rel="stylesheet" href="/shell.css" />
+<script src="/shell.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "The three-question test for private AI",
+  "description": "Three questions that separate a privacy claim from a property: source you can read, an exit you can verify, and disclosure at the moment data leaves. Defined, expanded, and applied to the product publishing them.",
+  "datePublished": "2026-08-31",
+  "dateModified": "2026-08-31",
+  "inLanguage": "en",
+  "mainEntityOfPage": "https://mysovereign.ai/three-questions",
+  "author": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "publisher": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "about": [
+    { "@type": "Thing", "name": "Private AI" },
+    { "@type": "Thing", "name": "Data sovereignty" },
+    { "@type": "Thing", "name": "Software auditing" }
+  ]
+}
+</script>
+<style>
+  .q { border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); padding: 20px 24px; margin: 0 0 16px; }
+  .q h2 { margin: 0 0 10px; font-size: 1.25rem; }
+  .q .num { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--terra); color: #fff; font-size: 0.8rem; font-weight: 700; margin-right: 10px; vertical-align: 2px; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+  .q p { margin: 0 0 10px; }
+  .q p:last-child { margin-bottom: 0; }
+  .dodge { color: var(--dim); font-size: 0.92rem; }
+  .dodge b { color: var(--ink); }
+  .card { overflow-x: auto; margin: 0 0 16px; }
+  .card table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  .card th, .card td { text-align: left; padding: 10px 14px; border: 1px solid var(--rule); vertical-align: top; }
+  .card th { background: var(--sheet); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); }
+  .card .yes { color: var(--terra); font-weight: 650; }
+  .fail { border-left: 3px solid var(--terra); padding: 4px 0 4px 16px; margin: 18px 0; }
+  .cite { border: 1px dashed var(--rule); border-radius: 8px; padding: 16px 20px; margin: 24px 0 0; color: var(--dim); font-size: 0.9rem; }
+  .cta { border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); padding: 22px 24px; margin-top: 32px; }
+  .btn { display: inline-block; background: var(--terra); color: #fff; text-decoration: none; border-radius: 8px; padding: 12px 20px; font-weight: 650; }
+</style>
+</head>
+<body>
+
+<header class="shell-bar">
+  <div class="shell-in">
+    <a class="shell-brand" href="/">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+      SovereignAI
+    </a>
+    <nav class="shell-links">
+      <a href="/">Home</a>
+      <a href="/watch">Why</a>
+      <a href="/playground">What</a>
+      <a href="/command-center">How</a>
+      <a href="/sovereignty">Ledger</a>
+      <a href="/blog">Blog</a>
+      <span class="shell-theme" data-theme-mount></span>
+      <a class="shell-cta" href="/#install">Run it</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <p class="eyebrow">The test · quotable, portable, applies to us</p>
+    <h1 class="serif">Three questions for anyone selling you private AI</h1>
+    <p class="lede">"Private" is the cheapest word in this industry: it can mean encrypted, or local, or merely
+      promised. These three questions turn the claim into something checkable. Ask them of any product that wants
+      your conversations, your documents, or your memory — including this one. No question requires trust to
+      answer; each has evidence that either exists or does not.</p>
+
+    <div class="q">
+      <h2 class="serif"><span class="num">1</span>Can I read every line that runs?</h2>
+      <p>Not "is there a repository somewhere." The code that touches your data — the whole path from your
+        keyboard to disk to any network socket — can it be inspected, by you or an auditor you hire? A partial
+        answer is a no: an open client in front of a closed service means the part you can read is not the part
+        that holds your life.</p>
+      <p class="dodge"><b>How it's dodged:</b> "the code is on GitHub" (a client wrapper is; the service holding
+        your data isn't) · "our infrastructure is SOC 2 audited" (someone else read something else, under NDA) ·
+        a repo with a thousand dependencies, where the audit is technically possible and practically
+        unfinishable.</p>
+    </div>
+
+    <div class="q">
+      <h2 class="serif"><span class="num">2</span>Can I take everything out, verified, in a documented format?</h2>
+      <p>Almost every product has an export button. The test is stricter than the button: is the export
+        <em>complete</em> — memory, history, documents, the derived things it learned about you — is the format
+        documented well enough that other software can read it, and can you <em>verify</em> the archive matches
+        what was inside, without trusting the vendor's word for it? An exit you cannot verify is a screenshot of
+        a door.</p>
+      <p class="dodge"><b>How it's dodged:</b> export gives you a CSV of chat titles · the format is
+        undocumented JSON that only re-imports into the same product · "contact support for a full data
+        request" — thirty days, mediated by the party you're leaving.</p>
+    </div>
+
+    <div class="q">
+      <h2 class="serif"><span class="num">3</span>When something isn't private, does the product tell me at that moment?</h2>
+      <p>Not in a policy PDF, and not in a settings page you read once — on screen, at the point of use, when
+        data is about to cross your boundary. Every real product has moments that aren't private: a remote model
+        call, a sync, an update check. The honest ones name the moment when it happens. This is the question to
+        ask first, because it reliably predicts the other two: a product willing to show you an uncomfortable
+        truth at the moment it's relevant is usually being straight with you everywhere else.</p>
+      <p class="dodge"><b>How it's dodged:</b> "see our privacy policy" · a toggle labeled "improve the product
+        for everyone" · silence — the request simply happens, and you'd need a packet capture to know.</p>
+    </div>
+
+    <h2 class="serif">Our own scorecard</h2>
+    <p>A test you exempt yourself from is marketing. Here is ours, with the receipts — and below it, the
+      answers we can't give yet.</p>
+    <div class="card">
+      <table>
+        <thead>
+          <tr><th>Question</th><th>Our answer</th><th>The receipt</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Read every line?</td>
+            <td><span class="yes">Yes.</span> The core has zero runtime dependencies — the audit is actually
+              finishable, not a gesture at a dependency tree.</td>
+            <td><a href="https://github.com/mlmrx/SovereignAI" rel="noopener">The source</a>; the
+              <code>package.json</code> has no dependencies field to argue with.</td>
+          </tr>
+          <tr>
+            <td>Take everything out, verified?</td>
+            <td><span class="yes">Yes.</span> One export covers all twelve data tables, carries a per-table
+              SHA-256 manifest, encrypts under a passphrase we never see, and <code>sovereign verify</code>
+              checks an archive without importing it.</td>
+            <td><a href="https://github.com/mlmrx/SovereignAI/blob/main/docs/EXPORT_FORMAT.md" rel="noopener">The
+              documented format</a>, and the verify command in any install.</td>
+          </tr>
+          <tr>
+            <td>Told at the moment?</td>
+            <td><span class="yes">Yes.</span> Before any message goes to a remote provider, the exact outgoing
+              bytes — system prompt, memories, excerpts, sizes, destination host — are shown for approval, and
+              every remote answer carries a receipt of what left.</td>
+            <td><a href="/blog/the-customs-declaration">The customs declaration</a>, including the test that pins
+              the preview to the real request, byte for byte.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="fail">
+      <p><strong>Where our answers run out.</strong> The test doesn't stop where our marketing would like it to.
+        The model weights are borrowed — even open weights are someone else's artifact, trained on a corpus
+        nobody outside can audit. The database is not encrypted at rest; the honest answer today is full-disk
+        encryption, and we say that rather than round it up. And this product is young: the export works and is
+        tested, but "trust us with your life's data" is earned by years, not by a page like this one. All of it
+        is tracked, layer by layer, in the <a href="/sovereignty">Sovereignty Ledger</a>.</p>
+    </div>
+
+    <h2 class="serif">How to use it</h2>
+    <p>In a sales conversation, ask all three and watch which one produces the subject change. On a website,
+      look for the export format documentation — its absence answers question two, and usually the other two as
+      well. For question three, find the product's most privacy-relevant moment (a cloud model call, a sync) and
+      check what the screen says while it happens. Silence is an answer.</p>
+    <p>Most products fail the third question first. Products that pass it tend to pass the others, because the
+      same instinct — disclose at the uncomfortable moment — is what produces readable code and verified exits.</p>
+
+    <div class="cite">
+      <p style="margin:0">Quote this test freely, with or against us — it works without attribution and on any
+        vendor. The canonical wording lives at <code>mysovereign.ai/three-questions</code>, and the questions
+        read the same everywhere we state them; a test that shifts its wording per audience is failing its own
+        third question.</p>
+    </div>
+
+    <div class="cta">
+      <h3 class="serif" style="margin-top:0">The product built to pass it</h3>
+      <p>SovereignAI is what the test looks like as software: local models, memory with receipts, disclosure at
+        the moment of use, and an exit you can verify before you need it. The trial is one Docker command, and
+        deleting the volume deletes every trace of you.</p>
+      <p><a class="btn" href="/#install">Run the open trial</a></p>
+    </div>
+  </div>
+</main>
+
+<footer class="shell-foot">
+  <div class="shell-in">
+    <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg> SovereignAI</div>
+    <div class="cols">
+      <a href="/">Home</a>
+      <a href="/watch">Watch</a>
+      <a href="/a-day">A day with it</a>
+      <a href="/command-center">Command center</a>
+      <a href="/playground">Playground</a>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/why">The thesis</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/blog">Blog</a>
+      <a href="/three-questions">The three questions</a>
+      <a href="/faq">FAQ</a>
+      <a href="/#install">Run the trial</a>
+      <a href="/#access">GitHub</a>
+    </div>
+    <p>Own every layer you can. Rent nothing you can&#39;t walk away from. · SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years.</p>
+    <p>This website counts nothing: no analytics, no cookie-less counter, no cross-site tracking. Your SovereignAI instance reports nothing to anyone either.</p>
+  </div>
+</footer>
+
+</body>
+</html>

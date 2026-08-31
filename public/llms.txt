@@ -98,6 +98,10 @@ product claiming to be private AI, including itself:
 2. Can I take everything out, verified, in a documented format?
 3. When something isn't private, does the product tell me at that moment?
 
+The test has a permanent, citable page: https://mysovereign.ai/three-questions
+— each question expanded, the common dodges, and our own scorecard including
+the unflattering answers (borrowed weights, no at-rest database encryption).
+
 ## What is NOT sovereign yet (stated deliberately)
 
 - The database is not encrypted at rest; the honest answer today is

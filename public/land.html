@@ -477,6 +477,17 @@ section.band { padding: clamp(56px, 10vh, 110px) 0; }
 .gh-note a { color: var(--terra-hot); }
 @media (max-width: 780px) { .waitlist .wl-inner { grid-template-columns: 1fr; } }
 
+/* ---------- the three-question test ---------- */
+.threeq { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.tq { display: block; border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; background: var(--raise); text-decoration: none; color: var(--ink); transition: border-color 160ms ease, transform 160ms ease; }
+.tq:hover { border-color: var(--terra); transform: translateY(-2px); }
+.tq-num { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--terra); color: var(--on-terra); font-size: 0.8rem; font-weight: 700; margin-bottom: 12px; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.tq-q { margin: 0 0 8px; font-size: 1.02rem; font-weight: 650; line-height: 1.35; }
+.tq-a { margin: 0; font-size: 0.85rem; color: var(--ink-2); line-height: 1.55; }
+.tq-note { margin-top: 18px; font-size: 0.85rem; color: var(--ink-2); max-width: 70ch; }
+.tq-note a { color: var(--terra); }
+@media (max-width: 860px) { .threeq { grid-template-columns: 1fr; } }
+
 /* ---------- footer ---------- */
 footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; background: var(--band-bg); }
 .foot-inner { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; font-size: 0.78rem; color: var(--band-dim); }
@@ -547,6 +558,40 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
           here; it's an <b>exit path we test</b>.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- the test: three questions, quotable, applied to ourselves. The pages that
+     convinced our first outside reviewer were the honest ones, and none of
+     them led the homepage — it went straight from the argument to the promo
+     shelf. The test now sits between them: convince, then sell. -->
+<section class="band" id="test">
+  <div class="wrap">
+    <div class="band-head">
+      <p class="eyebrow">The test · steal it, apply it to anyone</p>
+      <h2 class="serif">Three questions. Ask them of <em>anyone</em> — including us.</h2>
+      <p>Any product claiming to be private AI can be measured in three questions, no trust required.
+        Watch which one produces the subject change.</p>
+    </div>
+    <div class="threeq">
+      <a class="tq" href="/three-questions">
+        <span class="tq-num">1</span>
+        <p class="tq-q">Can I read every line that runs?</p>
+        <p class="tq-a">Ours: yes — the core has zero runtime dependencies, so the audit is finishable rather than a gesture at a dependency tree.</p>
+      </a>
+      <a class="tq" href="/three-questions">
+        <span class="tq-num">2</span>
+        <p class="tq-q">Can I take everything out, verified, in a documented format?</p>
+        <p class="tq-a">Ours: yes — one checksummed export in a documented format, and a verify command that checks the archive without importing it.</p>
+      </a>
+      <a class="tq" href="/three-questions">
+        <span class="tq-num">3</span>
+        <p class="tq-q">When something isn't private, does the product tell me at that moment?</p>
+        <p class="tq-a">Ours: yes — the exact outgoing bytes are shown before any remote send, and every remote answer carries a receipt of what left.</p>
+      </a>
+    </div>
+    <p class="tq-note">The full test — how each question gets dodged, and our own scorecard including the answers
+      we can't give yet — is at <a href="/three-questions">/three-questions</a>. Quote it freely, with or against us.</p>
   </div>
 </section>
 
@@ -1030,6 +1075,11 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
       <p class="run-then">Then open <code>http://localhost:4321/#token=pick-a-long-secret</code> — with the
         secret you chose — and the guided setup takes it from there. Drop in a ChatGPT or Claude export and
         your AI knows you within minutes.</p>
+      <p class="run-notes run-exit"><strong>⬡ Step three, same day: take your first export.</strong> Settings → Data
+        hands you the whole workspace as one checksummed file (on an installed copy,
+        <code>sovereign export --encrypt</code>). It's the best advice we've been given about our own product:
+        do it before the AI knows anything worth keeping, so you're never trapped — not by us, and not if this
+        project someday stalls. A vendor should show you the way out before asking you to stay.</p>
       <p class="run-notes">Bring a model, your dial: the command already points at an Ollama running on your
         machine — that's the <code>host.docker.internal</code> part — or skip Ollama and use your own API key
         for a frontier model in setup, disclosed on screen whenever it's used. Done trying?
@@ -1100,6 +1150,7 @@ footer { border-top: 1px solid var(--band-line); padding: 40px 0 60px; backgroun
       <a href="/why">The thesis</a>
       <a href="/sovereignty">Sovereignty ledger</a>
       <a href="/blog">Blog</a>
+      <a href="/three-questions">The three questions</a>
       <a href="/faq">FAQ</a>
       <a href="/#install">Run the trial</a>
       <a href="/#access">GitHub</a>

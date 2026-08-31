@@ -70,6 +70,10 @@
       "destination": "/faq.html"
     },
     {
+      "source": "/three-questions",
+      "destination": "/three-questions.html"
+    },
+    {
       "source": "/playground",
       "destination": "/playground.html"
     },
