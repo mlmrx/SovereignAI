@@ -323,3 +323,55 @@ docker compose up -d
 Plain HTTP exposes bearer tokens, prompts, and retrieved context to network
 observers. Use HTTP only on a trusted local network or encrypted overlay such
 as a tailnet; terminate HTTPS before exposing the service elsewhere.
+
+## Deploying the public site
+
+`mysovereign.ai` is the `public/` directory served by Vercel. Nothing about
+the product depends on it — an instance never contacts it — but the blog, the
+playground, and the watchtower's weekly digest all live there.
+
+Vercel serves a **deployment**, which is a snapshot uploaded to Vercel. It is
+not served from the GitHub repository, so a commit is not a publication.
+Whether a push reaches the site depends on one setting:
+
+```bash
+# Always works, from a checkout with the Vercel CLI logged in:
+vercel deploy --prod --yes --scope maheshlambe-9997s-projects
+```
+
+If the project's Git integration is connected
+([Settings → Git](https://vercel.com/maheshlambe-9997s-projects/sovereignai/settings/git)),
+a push to `main` deploys on its own and the command above is unnecessary.
+
+### Telling which is true
+
+The Vercel dashboard distinguishes two things that look alike: your *account*
+being connected to GitHub (the app is installed, so repositories appear in the
+import list) and this *project* being linked to a repository. Only the second
+one deploys on push. Three checks answer it from outside the dashboard:
+
+```bash
+# 1. Does GitHub have deployment records? Vercel writes one per push.
+gh api repos/mlmrx/SovereignAI/deployments --jq 'length'
+
+# 2. Does a recent commit carry a Vercel check? (Only github-actions = no.)
+gh api repos/mlmrx/SovereignAI/commits/HEAD/check-runs --jq '.check_runs[].app.slug'
+
+# 3. Did a push produce a deployment, or only the manual runs?
+vercel list sovereignai --scope maheshlambe-9997s-projects
+```
+
+Note that `vercel project inspect` does **not** report the Git connection in
+CLI 58.x — it shows no repository for any project, connected or not, so its
+silence proves nothing. That mistake cost an hour; the three checks above are
+the reliable ones.
+
+### Why it matters for the watchtower
+
+`.github/workflows/watchtower.yml` commits its weekly digest to `main`. If
+neither the Git integration nor a `VERCEL_TOKEN` secret exists, that post sits
+in the repository, correct and invisible, until someone deploys by hand — the
+one failure mode that looks like success. The workflow therefore deploys when
+the secret is present and emits a warning annotation naming the unpublished
+file when it cannot. Connecting the Git integration is the better fix: it needs
+no secret and covers every push, not only the watchtower's.
