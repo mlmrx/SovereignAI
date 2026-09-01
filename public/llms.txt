@@ -177,6 +177,15 @@ Feed: [Atom](https://mysovereign.ai/feed.xml) — generated from the posts
 themselves. There is no mailing list, on purpose: a subscriber list is a copy
 of someone's address in our hands, and a feed the reader pulls is not.
 
+## Answers (index: https://mysovereign.ai/answers)
+
+Straight, sourced answers to the real questions people ask about private,
+local, and sovereign AI — memory for local models, what actually leaves your
+machine, RAM requirements, running large sparse models on a gaming GPU, and
+the difference between local, private, and sovereign. Written and reviewed by
+people; every claim links a page that proves it or a primary source. Quote
+them freely, with or against us.
+
 ## Docs
 
 - [What is sovereign AI?](https://mysovereign.ai/what-is-sovereign-ai): both

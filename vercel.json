@@ -70,6 +70,10 @@
       "destination": "/faq.html"
     },
     {
+      "source": "/answers",
+      "destination": "/answers.html"
+    },
+    {
       "source": "/three-questions",
       "destination": "/three-questions.html"
     },
@@ -140,6 +144,18 @@
     {
       "source": "/blog/signals-2026-08-30",
       "destination": "/blog-signals-2026-08-30.html"
+    },
+    {
+      "source": "/answers/is-running-ai-locally-actually-private",
+      "destination": "/answers-is-running-ai-locally-actually-private.html"
+    },
+    {
+      "source": "/answers/give-a-local-llm-long-term-memory",
+      "destination": "/answers-give-a-local-llm-long-term-memory.html"
+    },
+    {
+      "source": "/answers/move-chatgpt-history-to-a-local-ai",
+      "destination": "/answers-move-chatgpt-history-to-a-local-ai.html"
     }
   ],
   "headers": [

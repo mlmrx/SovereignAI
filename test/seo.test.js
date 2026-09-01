@@ -24,6 +24,7 @@ const CORE_PAGES = [
   ['why.html', '/why'],
   ['faq.html', '/faq'],
   ['three-questions.html', '/three-questions'],
+  ['answers.html', '/answers'],
   ['playground.html', '/playground'],
   ['watch.html', '/watch'],
   ['a-day.html', '/a-day'],
@@ -37,7 +38,16 @@ const CORE_PAGES = [
 // sources — so a post that skips the wiring still fails the build.
 const blogFiles = () => fs.readdirSync(path.join(root, 'public')).filter((f) => /^blog-.+\.html$/.test(f)).sort();
 const blogRoute = (file) => `/blog/${file.replace(/^blog-/, '').replace(/\.html$/, '')}`;
-const PAGES = [...CORE_PAGES, ...blogFiles().map((file) => [file, blogRoute(file)])];
+// Answers are derived the same way and for the same reason: the answers engine
+// publishes them on a cadence without a human editing this file. Every SEO
+// invariant a hand-written page must pass applies to each derived answer.
+const answerFiles = () => fs.readdirSync(path.join(root, 'public')).filter((f) => /^answers-.+\.html$/.test(f)).sort();
+const answerRoute = (file) => `/answers/${file.replace(/^answers-/, '').replace(/\.html$/, '')}`;
+const PAGES = [
+  ...CORE_PAGES,
+  ...blogFiles().map((file) => [file, blogRoute(file)]),
+  ...answerFiles().map((file) => [file, answerRoute(file)]),
+];
 
 // The playground: the product's real interface files, publicly hosted in
 // their honestly-badged demo mode. Surfaces stand under their own names; the
@@ -115,9 +125,16 @@ test('llms.txt gives answer engines the product, the license, and the limits', (
   assert.match(llms, /fair source, not open source/i, 'the licensing distinction must be unambiguous');
   // If a model is going to summarize us, it should carry the caveats too.
   assert.match(llms, /not encrypted at rest/i, 'the at-rest gap must travel with the summary');
-  for (const [, route] of PAGES.slice(1)) {
-    assert.ok(llms.includes(`${SITE}${route}`), `llms.txt should point at ${route}`);
+  // Every CURATED page is named. The auto-published sections (the blog, the
+  // answers library) are represented by their index rather than enumerated:
+  // llms.txt is a guide a person and a model read, not a log that grows
+  // unbounded as the watchtower and the answers engine publish. The sitemap is
+  // where every individual page is listed.
+  for (const [, route] of CORE_PAGES.slice(1)) {
+    assert.ok(llms.includes(`${SITE}${route}`), `llms.txt should point at the curated page ${route}`);
   }
+  assert.match(llms, /## Answers/, 'the answers library is introduced to answer engines');
+  assert.match(llms, /## Blog/, 'so is the blog');
 });
 
 test('the public site never claims to be open source, and never links the private repo', () => {

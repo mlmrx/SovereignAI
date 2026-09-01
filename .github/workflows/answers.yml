@@ -1,0 +1,100 @@
+# Answers: publish the next reviewed answer from the bank, on a cadence.
+#
+# The honest engine for "be found by LLMs": it releases real, reviewed, sourced
+# answers on our own site — which is what answer engines crawl and cite — one
+# at a time, and stops when the reviewed bank is empty rather than padding a
+# schedule with filler. The Vercel project auto-deploys on push, so a committed
+# answer is a live page within a minute.
+#
+# The order is the same as the watchtower's, and the test gate is the same
+# promise: the published page is checked by every rule a hand-written page is
+# held to before anything is committed. A bad answer becomes a failed run, not
+# a live page.
+#
+# To stop it without a commit: set the repository variable ANSWERS_ENABLED to
+# false (Settings -> Secrets and variables -> Actions).
+name: answers
+
+on:
+  schedule:
+    # Tue / Thu / Sat, 09:00 UTC — interleaved with the Monday watchtower, a
+    # sustainable cadence rather than a daily content mill.
+    - cron: '0 9 * * 2,4,6'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Show what would publish, write nothing'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: answers
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    if: vars.ANSWERS_ENABLED != 'false'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Publish the next reviewed answer
+        id: pub
+        run: node scripts/answers-publish.js ${{ inputs.dry_run && '--dry-run' || '' }}
+
+      # Every rule a hand-written page must satisfy, before anything is committed.
+      - name: Prove the site still holds together
+        if: steps.pub.outputs.published == 'true'
+        run: npm test
+
+      - name: Commit and push
+        if: steps.pub.outputs.published == 'true'
+        run: |
+          git config user.name 'sovereign-answers'
+          git config user.email 'answers@mysovereign.ai'
+          git add public vercel.json
+          if git diff --cached --quiet; then
+            echo "Nothing staged despite a published verdict — not committing."
+            exit 0
+          fi
+          git commit -m "Answer: publish ${{ steps.pub.outputs.count }} from the bank (${{ steps.pub.outputs.remaining }} reviewed remaining)
+
+          Published from the reviewed bank in src/answers/bank.js. Every claim
+          links a page that proves it or a primary source; the full test suite
+          passed before this landed. The Vercel project deploys on push.
+          Revert this commit to unpublish.
+          "
+          git push
+
+      # Deployment is the Git integration's job (verified: a push deploys within
+      # a minute), so there is no deploy step here — one would double-deploy.
+
+      # Only when the reviewed bank has run dry: ask for more rather than pad.
+      - name: Ask for more answers when the bank is empty
+        if: always() && steps.pub.conclusion == 'success' && steps.pub.outputs.bank_empty == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Answer bank is empty — add reviewed answers"
+          existing=$(gh issue list --label answers --state open --search "$title" --json number --jq '.[0].number')
+          if [ -z "$existing" ]; then
+            gh issue create --title "$title" --label answers --body "The answers engine has published every reviewed answer in \`src/answers/bank.js\`.
+
+          To keep the cadence, add more answers to the bank with \`reviewed: true\` — real questions people ask, each claim linked or sourced, limits stated. The engine will pick them up on its next run (Tue/Thu/Sat 09:00 UTC).
+
+          It publishes nothing until then, on purpose: no filler to hit a schedule."
+          else
+            echo "Bank-empty issue #$existing already open."
+          fi
+
+      - name: Say what happened when nothing was published
+        if: steps.pub.outputs.published != 'true'
+        run: echo "No answer published — the reviewed bank is empty. Add reviewed answers to src/answers/bank.js."
