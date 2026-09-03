@@ -156,6 +156,10 @@
     {
       "source": "/answers/move-chatgpt-history-to-a-local-ai",
       "destination": "/answers-move-chatgpt-history-to-a-local-ai.html"
+    },
+    {
+      "source": "/answers/run-a-120b-model-on-a-gaming-gpu",
+      "destination": "/answers-run-a-120b-model-on-a-gaming-gpu.html"
     }
   ],
   "headers": [
