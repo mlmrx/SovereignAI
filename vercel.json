@@ -160,6 +160,10 @@
     {
       "source": "/answers/run-a-120b-model-on-a-gaming-gpu",
       "destination": "/answers-run-a-120b-model-on-a-gaming-gpu.html"
+    },
+    {
+      "source": "/answers/how-much-ram-to-run-a-local-llm",
+      "destination": "/answers-how-much-ram-to-run-a-local-llm.html"
     }
   ],
   "headers": [

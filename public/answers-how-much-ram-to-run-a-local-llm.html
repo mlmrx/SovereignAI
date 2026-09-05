@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>How much RAM do I need to run a local LLM?</title>
+<meta name="description" content="A useful rule of thumb: at 4-bit quantisation a model needs about 0.6 GB per billion parameters, against roughly 60% of your RAM as usable — so a model fits comfortably when its parameter count in billions is under your RAM in gigabytes." />
+<link rel="canonical" href="https://mysovereign.ai/answers/how-much-ram-to-run-a-local-llm" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="How much RAM do I need to run a local LLM?" />
+<meta property="og:description" content="A useful rule of thumb: at 4-bit quantisation a model needs about 0.6 GB per billion parameters, against roughly 60% of your RAM as usable — so a model fits comfortably when its parameter count in billions is under your RAM in gigabytes." />
+<meta property="og:url" content="https://mysovereign.ai/answers/how-much-ram-to-run-a-local-llm" />
+<meta property="og:site_name" content="SovereignAI" />
+<meta property="article:published_time" content="2026-09-01" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="How much RAM do I need to run a local LLM?" />
+<meta name="twitter:description" content="A dependable rule of thumb: at 4-bit quantisation a model needs roughly 0.6 GB of memory per billion parameters, and you can count on about 60% of your system RAM being usable for it — which nets out to a simple test, a model fits comfortably when its size in billions of parameters is below your RAM in gigabytes." />
+<link rel="stylesheet" href="/doc.css" />
+<link rel="stylesheet" href="/shell.css" />
+<script src="/shell.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "QAPage",
+  "inLanguage": "en",
+  "mainEntity": {
+    "@type": "Question",
+    "name": "How much RAM do I need to run a local LLM?",
+    "text": "How much RAM do I need to run a local LLM?",
+    "answerCount": 1,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "A dependable rule of thumb: at 4-bit quantisation a model needs roughly 0.6 GB of memory per billion parameters, and you can count on about 60% of your system RAM being usable for it — which nets out to a simple test, a model fits comfortably when its size in billions of parameters is below your RAM in gigabytes. Worked examples at 4-bit (Q4): an 8B model needs about 5 GB and is comfortable on 16 GB; a 27B model needs about 16 GB and is tight on 32 GB but comfortable from 48; a 70B-total model needs about 42 GB and wants 96–128 GB. Add headroom for the context window — a long context can cost several more gigabytes. Two refinements. First, quantisation is the dial: the same model at 8-bit needs roughly double, at 2-bit roughly half (with more quality loss). Q4 is the usual sweet spot. Second, sparse MoE models are sized on total parameters for RAM even though only a fraction is active per token, because the whole weight set still has to live in memory — see running a 120B model on a gaming GPU. You do not have to do this arithmetic by hand. SovereignAI’s starter shelf sizes every model against the machine it is running on before anything downloads, and `sovereign doctor` will tell you whether your configured default model actually fits — \"~16 GB at Q4 against ~19 GB of usable RAM: tight; comfortable from 48 GB\" — so you find out before the download, not after.",
+      "url": "https://mysovereign.ai/answers/how-much-ram-to-run-a-local-llm",
+      "author": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" }
+    },
+    "author": { "@type": "Organization", "name": "Unify Dynamics" }
+  },
+  "keywords": "how much RAM local LLM, RAM for running LLM, model size RAM calculator, quantization RAM, local model memory requirements",
+  "datePublished": "2026-09-01",
+  "dateModified": "2026-09-01",
+  "mainEntityOfPage": "https://mysovereign.ai/answers/how-much-ram-to-run-a-local-llm",
+  "publisher": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" }
+}
+</script>
+<style>
+  .a-lead { font-size: 1.18rem; line-height: 1.55; border-left: 3px solid var(--terra); padding: 6px 0 6px 18px; margin: 0 0 24px; color: var(--ink); }
+  .a-body p { margin: 0 0 16px; line-height: 1.7; }
+  .a-body a { color: var(--terra); }
+  .a-meta { font-size: 0.82rem; color: var(--dim); margin: -8px 0 24px; letter-spacing: 0.02em; }
+  .a-related { border-top: 1px solid var(--rule); margin-top: 34px; padding-top: 18px; }
+  .a-related h2 { font-size: 1.05rem; margin: 0 0 10px; }
+  .a-related ul { margin: 0 0 8px; padding-left: 20px; }
+  .a-related li { margin-bottom: 5px; }
+  .a-related a { color: var(--terra); }
+  .a-cta { border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); padding: 20px 24px; margin-top: 30px; }
+  .a-cta .btn { display: inline-block; background: var(--terra); color: #fff; text-decoration: none; border-radius: 8px; padding: 11px 20px; font-weight: 650; }
+  .sources { font-size: 0.86rem; color: var(--dim); }
+</style>
+</head>
+<body>
+
+<header class="shell-bar">
+  <div class="shell-in">
+    <a class="shell-brand" href="/">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+      SovereignAI
+    </a>
+    <nav class="shell-links">
+      <a href="/">Home</a>
+      <a href="/watch">Why</a>
+      <a href="/playground">What</a>
+      <a href="/command-center">How</a>
+      <a href="/sovereignty">Ledger</a>
+      <a href="/blog">Blog</a>
+      <span class="shell-theme" data-theme-mount></span>
+      <a class="shell-cta" href="/#install">Run it</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <article class="wrap">
+    <p class="eyebrow"><a href="/answers" style="color:inherit;text-decoration:none">Answers</a> · a straight answer, sourced</p>
+    <h1 class="serif">How much RAM do I need to run a local LLM?</h1>
+    <p class="a-meta">Written 2026-09-01 · reviewed before publishing · we link or source every claim</p>
+
+    <p class="a-lead">A dependable rule of thumb: at 4-bit quantisation a model needs roughly 0.6 GB of memory per billion parameters, and you can count on about 60% of your system RAM being usable for it — which nets out to a simple test, a model fits comfortably when its size in billions of parameters is below your RAM in gigabytes.</p>
+    <div class="a-body">
+      <p>Worked examples at 4-bit (Q4): an 8B model needs about 5 GB and is comfortable on 16 GB; a 27B model needs about 16 GB and is tight on 32 GB but comfortable from 48; a 70B-total model needs about 42 GB and wants 96–128 GB. Add headroom for the context window — a long context can cost several more gigabytes.</p>
+      <p>Two refinements. First, <strong>quantisation is the dial</strong>: the same model at 8-bit needs roughly double, at 2-bit roughly half (with more quality loss). Q4 is the usual sweet spot. Second, <strong>sparse MoE models are sized on total parameters for RAM</strong> even though only a fraction is active per token, because the whole weight set still has to live in memory — see <a href="/answers/run-a-120b-model-on-a-gaming-gpu">running a 120B model on a gaming GPU</a>.</p>
+      <p>You do not have to do this arithmetic by hand. SovereignAI’s starter shelf sizes every model against the machine it is running on before anything downloads, and `sovereign doctor` will tell you whether your configured default model actually fits — &quot;~16 GB at Q4 against ~19 GB of usable RAM: tight; comfortable from 48 GB&quot; — so you find out before the download, not after.</p>
+    </div>
+
+    <div class="a-related">
+      <h2 class="serif">Read further</h2>
+      <ul>
+      <li><a href="/command-center">The starter shelf, sized to your machine</a></li>
+      <li><a href="/answers/run-a-120b-model-on-a-gaming-gpu">Can I run a 120B model on a gaming GPU?</a></li>
+      </ul>
+    </div>
+
+    <div class="a-cta">
+      <h3 class="serif" style="margin-top:0">Own the answer, not just read it</h3>
+      <p>SovereignAI is private AI you run yourself: local models, memory with receipts, disclosure at the moment
+        anything leaves, and an exit you can verify. The trial is one Docker command, and deleting the volume
+        deletes every trace of you.</p>
+      <p><a class="btn" href="/#install">Run the open trial</a> · <a href="/three-questions">the test we hold ourselves to →</a></p>
+    </div>
+  </article>
+</main>
+
+<footer class="shell-foot">
+  <div class="shell-in">
+    <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg> SovereignAI</div>
+    <div class="cols">
+      <a href="/">Home</a>
+      <a href="/watch">Watch</a>
+      <a href="/a-day">A day with it</a>
+      <a href="/command-center">Command center</a>
+      <a href="/playground">Playground</a>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/why">The thesis</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/blog">Blog</a>
+      <a href="/answers">Answers</a>
+      <a href="/three-questions">The three questions</a>
+      <a href="/faq">FAQ</a>
+      <a href="/#install">Run the trial</a>
+      <a href="/#access">GitHub</a>
+    </div>
+    <p>Own every layer you can. Rent nothing you can&#39;t walk away from. · SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years.</p>
+    <p>This website counts nothing: no analytics, no cookie-less counter, no cross-site tracking. Your SovereignAI instance reports nothing to anyone either.</p>
+  </div>
+</footer>
+
+</body>
+</html>
