@@ -171,7 +171,7 @@ the vendor's documentation on the date of writing):
 
 Signals (weekly, assembled automatically from primary sources; each entry links the
 announcement it came from, nothing is summarized): most recent
-[week of 2026-08-30](https://mysovereign.ai/blog/signals-2026-08-30), 20 items.
+[week of 2026-09-07](https://mysovereign.ai/blog/signals-2026-09-07), 12 items.
 
 Feed: [Atom](https://mysovereign.ai/feed.xml) — generated from the posts
 themselves. There is no mailing list, on purpose: a subscriber list is a copy

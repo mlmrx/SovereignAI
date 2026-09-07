@@ -164,6 +164,10 @@
     {
       "source": "/answers/how-much-ram-to-run-a-local-llm",
       "destination": "/answers-how-much-ram-to-run-a-local-llm.html"
+    },
+    {
+      "source": "/blog/signals-2026-09-07",
+      "destination": "/blog-signals-2026-09-07.html"
     }
   ],
   "headers": [

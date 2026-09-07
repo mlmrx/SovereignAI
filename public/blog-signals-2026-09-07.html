@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Signals: what shipped in local AI, week of September 7, 2026</title>
+<meta name="description" content="Everything the watchtower found in local-AI primary sources for the week of 2026-09-07: 4 in engines, 5 in models and 3 in hardware and platform. Every entry links the announcement it came from; nothing here is summarized or rewritten." />
+<link rel="canonical" href="https://mysovereign.ai/blog/signals-2026-09-07" />
+<link rel="alternate" type="application/atom+xml" title="The SovereignAI blog" href="/feed.xml" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Signals: what shipped in local AI, week of September 7, 2026" />
+<meta property="og:description" content="12 releases and announcements from local-AI primary sources, week of 2026-09-07. Each one links its own announcement." />
+<meta property="og:url" content="https://mysovereign.ai/blog/signals-2026-09-07" />
+<meta property="og:site_name" content="SovereignAI" />
+<meta property="article:published_time" content="2026-09-07" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Signals, week of September 7, 2026" />
+<meta name="twitter:description" content="What actually shipped in local AI this week, from primary sources only." />
+<link rel="stylesheet" href="/doc.css" />
+<link rel="stylesheet" href="/shell.css" />
+<script src="/shell.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Signals: what shipped in local AI, week of September 7, 2026",
+  "description": "Everything the watchtower found in local-AI primary sources for the week of 2026-09-07: 4 in engines, 5 in models and 3 in hardware and platform. Every entry links the announcement it came from; nothing here is summarized or rewritten.",
+  "datePublished": "2026-09-07",
+  "dateModified": "2026-09-07",
+  "inLanguage": "en",
+  "mainEntityOfPage": "https://mysovereign.ai/blog/signals-2026-09-07",
+  "isPartOf": { "@type": "Blog", "name": "The SovereignAI blog", "url": "https://mysovereign.ai/blog" },
+  "author": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "publisher": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "keywords": "local AI, open weights, Ollama, FreeToken, Hugging Face, model releases, local-first AI"
+}
+</script>
+<style>
+  .byline { font-size: 0.82rem; color: var(--dim); margin: -6px 0 22px; letter-spacing: 0.02em; }
+  .machine { border-left: 3px solid var(--terra); padding: 4px 0 4px 16px; margin: 0 0 30px; font-size: 0.9rem; color: var(--dim); }
+  .machine strong { color: var(--ink); }
+  .sig-group { margin: 0 0 34px; }
+  .sig-group h2 { margin: 0 0 4px; font-size: 1.3rem; }
+  .sig-blurb { margin: 0 0 14px; color: var(--dim); font-size: 0.88rem; }
+  .signals { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  .signals li { border: 1px solid var(--rule); border-radius: 6px; padding: 13px 16px; background: var(--sheet); }
+  .sig-head { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; line-height: 1.45; }
+  .sig-head .who { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--terra); }
+  .sig-head a { color: inherit; font-weight: 600; text-decoration: none; }
+  .sig-head a:hover { text-decoration: underline; }
+  .sig-head .when { color: var(--dim); font-size: 0.72rem; font-variant-numeric: tabular-nums; margin-left: auto; }
+  .sig-note { margin: 6px 0 0; color: var(--dim); font-size: 0.85rem; line-height: 1.5; }
+  .series { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--rule); margin-top: 36px; padding-top: 16px; font-size: 0.88rem; }
+  .series a { color: var(--terra); text-decoration: none; }
+  .sources { font-size: 0.82rem; color: var(--dim); }
+  .sources li { margin-bottom: 4px; }
+  @media (max-width: 640px) { .sig-head .when { margin-left: 0; } }
+</style>
+</head>
+<body>
+
+<header class="shell-bar">
+  <div class="shell-in">
+    <a class="shell-brand" href="/">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+      SovereignAI
+    </a>
+    <nav class="shell-links">
+      <a href="/">Home</a>
+      <a href="/watch">Why</a>
+      <a href="/playground">What</a>
+      <a href="/command-center">How</a>
+      <a href="/sovereignty">Ledger</a>
+      <a href="/blog">Blog</a>
+      <span class="shell-theme" data-theme-mount></span>
+      <a class="shell-cta" href="/#install">Run it</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <article class="wrap">
+    <p class="eyebrow"><a href="/blog" style="color:inherit;text-decoration:none">Blog</a> · Signals · September 7, 2026</p>
+    <h1 class="serif">Signals: what shipped in local AI, week of September 7, 2026</h1>
+    <p class="lede">12 things shipped in local AI this week that we thought were worth knowing about. Every line below is a project's own announcement of its own work, linked back to where it was published.</p>
+    <p class="byline">Assembled automatically from primary sources · no editor read this before it went up</p>
+
+    <p class="machine"><strong>What this page is.</strong> A machine collected these from release feeds and model registries and formatted them. It did not summarize, rank by opinion, or add commentary — the words in each entry are the publisher's own words, and the date is theirs too. That is the whole reason it is allowed to publish itself: there is nothing here for a machine to get wrong except the copying, and the link beside every line is how you check it. Inclusion is not endorsement, and nothing here has been tested by us. The pages where we <em>do</em> make claims about our own product are written by people and reviewed, and our own limits stay recorded in the <a href="/sovereignty">Sovereignty Ledger</a>.</p>
+
+    <section class="sig-group">
+      <h2 class="serif">Engines</h2>
+      <p class="sig-blurb">The local runtimes SovereignAI talks to, and the ones it could.</p>
+      <ul class="signals">
+        <li>
+          <p class="sig-head"><span class="who">Ollama</span><a href="https://github.com/ollama/ollama/releases/tag/v0.34.0-rc1" rel="noopener nofollow">v0.34.0</a><span class="when">2026-09-05</span></p>
+<p class="sig-note">Use Ollama models in ChatGPT Desktop Ollama models can now be used directly in ChatGPT Desktop, so you can keep your existing workflow while running open models. Setup is available from the Ollama…</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">vLLM</span><a href="https://github.com/vllm-project/vllm/releases/tag/v0.29.0rc3" rel="noopener nofollow">v0.29.0rc3</a><span class="when">2026-09-04</span></p>
+<p class="sig-note">[CI] Remove deleted nvidia/Nemotron-3-Nano-Omni-30B-A3B-Reasoning-BF1…</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">vLLM</span><a href="https://github.com/vllm-project/vllm/releases/tag/v0.29.0rc4" rel="noopener nofollow">v0.29.0rc4: [Bugfix] Avoid sync in TRT-LLM ragged prefill</a><span class="when">2026-09-04</span></p>
+<p class="sig-note">Generated-by: Codex codex@openai.com Signed-off-by: Codex codex@openai.com</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">Ollama</span><a href="https://github.com/ollama/ollama/releases/tag/v0.34.0-rc0" rel="noopener nofollow">v0.34.0-rc0</a><span class="when">2026-09-04</span></p>
+<p class="sig-note">app: add Ollama to ChatGPT Desktop</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="sig-group">
+      <h2 class="serif">Models</h2>
+      <p class="sig-blurb">Open weights published in the open, newest first.</p>
+      <ul class="signals">
+        <li>
+          <p class="sig-head"><span class="who">Trending GGUF</span><a href="https://huggingface.co/Jackrong/Qwopus3.8-27B-Flash-GGUF" rel="noopener nofollow">Jackrong/Qwopus3.8-27B-Flash-GGUF</a><span class="when">2026-09-04</span></p>
+<p class="sig-note">60,343 downloads · 134 likes · gguf · text-generation</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">Trending GGUF</span><a href="https://huggingface.co/IFM/K2-Horizon-MoVA-36B-A4B-GGUF" rel="noopener nofollow">IFM/K2-Horizon-MoVA-36B-A4B-GGUF</a><span class="when">2026-09-03</span></p>
+<p class="sig-note">3,932 downloads · 80 likes · gguf · moe · text-generation</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">NVIDIA models</span><a href="https://huggingface.co/nvidia/Qwen3.8-Flash-Next-NVFP4" rel="noopener nofollow">nvidia/Qwen3.8-Flash-Next-NVFP4</a><span class="when">2026-09-02</span></p>
+<p class="sig-note">18,068 downloads · 129 likes</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">NVIDIA models</span><a href="https://huggingface.co/nvidia/Muse-Glimmer-30B-NVFP4" rel="noopener nofollow">nvidia/Muse-Glimmer-30B-NVFP4</a><span class="when">2026-08-27</span></p>
+<p class="sig-note">9,342 downloads · 6 likes</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">Qwen</span><a href="https://huggingface.co/Qwen/Qwen-Drive-1.0-4B" rel="noopener nofollow">Qwen/Qwen-Drive-1.0-4B</a><span class="when">2026-08-27</span></p>
+<p class="sig-note">985 downloads · 60 likes</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="sig-group">
+      <h2 class="serif">Hardware and platform</h2>
+      <p class="sig-blurb">The silicon and the runtime everything above depends on.</p>
+      <ul class="signals">
+        <li>
+          <p class="sig-head"><span class="who">NVIDIA blog</span><a href="https://blogs.nvidia.com/blog/local-ai-ifa-next-gen-agents-nv-pair-rtx-spark/" rel="noopener nofollow">Sparks Fly: NVIDIA Accelerates Local AI at IFA 2026</a><span class="when">2026-09-03</span></p>
+<p class="sig-note">Frontier intelligence is going local. At IFA 2026, NVIDIA, Microsoft and its partners are teaming up to provide faster inference and new tools that make agents easier to set up and run locally on…</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">Hugging Face blog</span><a href="https://huggingface.co/blog/allenai/benchmirt" rel="noopener nofollow">BenchMIRT: What are LLM benchmarks actually measuring?</a><span class="when">2026-09-01</span></p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">Hugging Face blog</span><a href="https://huggingface.co/blog/webgpu-kernels" rel="noopener nofollow">Introducing @huggingface/kernels: 200+ WebGPU Kernels for Local AI</a><span class="when">2026-09-01</span></p>
+        </li>
+      </ul>
+    </section>
+
+    <h2 class="serif" id="sources">Sources</h2>
+    <p>Every entry above links its own announcement. The feeds read this week:</p>
+    <ul class="sources">
+      <li>Ollama</li>
+      <li>vLLM</li>
+      <li>Trending GGUF</li>
+      <li>NVIDIA models</li>
+      <li>Qwen</li>
+      <li>NVIDIA blog</li>
+      <li>Hugging Face blog</li>
+    </ul>
+    <p class="sources">The full source list, with a note on why each one is watched, is <a href="https://github.com/mlmrx/SovereignAI/blob/main/src/watchtower/sources.js" rel="noopener">in the repository</a> — as is the code that assembled this page. Nothing was fetched that is not in that file.</p>
+
+    <div class="series">
+      <a href="/blog">← All posts</a>
+      <a href="/feed.xml">Follow by feed →</a>
+    </div>
+  </article>
+</main>
+
+<footer class="shell-foot">
+  <div class="shell-in">
+    <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg> SovereignAI</div>
+    <div class="cols">
+      <a href="/">Home</a>
+      <a href="/watch">Watch</a>
+      <a href="/a-day">A day with it</a>
+      <a href="/command-center">Command center</a>
+      <a href="/playground">Playground</a>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/why">The thesis</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/blog">Blog</a>
+      <a href="/answers">Answers</a>
+      <a href="/three-questions">The three questions</a>
+      <a href="/faq">FAQ</a>
+      <a href="/#install">Run the trial</a>
+      <a href="/#access">GitHub</a>
+    </div>
+    <p>Own every layer you can. Rent nothing you can&#39;t walk away from. · SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years.</p>
+    <p>This website counts nothing: no analytics, no cookie-less counter, no cross-site tracking. Your SovereignAI instance reports nothing to anyone either.</p>
+  </div>
+</footer>
+
+</body>
+</html>
