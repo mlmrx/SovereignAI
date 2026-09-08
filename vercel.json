@@ -168,6 +168,10 @@
     {
       "source": "/blog/signals-2026-09-07",
       "destination": "/blog-signals-2026-09-07.html"
+    },
+    {
+      "source": "/answers/local-vs-private-vs-sovereign-ai",
+      "destination": "/answers-local-vs-private-vs-sovereign-ai.html"
     }
   ],
   "headers": [
