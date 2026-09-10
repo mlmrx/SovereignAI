@@ -172,6 +172,10 @@
     {
       "source": "/answers/local-vs-private-vs-sovereign-ai",
       "destination": "/answers-local-vs-private-vs-sovereign-ai.html"
+    },
+    {
+      "source": "/answers/does-ollama-store-my-conversations",
+      "destination": "/answers-does-ollama-store-my-conversations.html"
     }
   ],
   "headers": [
