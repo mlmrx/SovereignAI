@@ -176,6 +176,10 @@
     {
       "source": "/answers/does-ollama-store-my-conversations",
       "destination": "/answers-does-ollama-store-my-conversations.html"
+    },
+    {
+      "source": "/answers/know-what-data-an-ai-app-sends-to-the-cloud",
+      "destination": "/answers-know-what-data-an-ai-app-sends-to-the-cloud.html"
     }
   ],
   "headers": [
