@@ -1,14 +1,14 @@
 {
-  "date": "2026-09-07",
+  "date": "2026-09-14",
   "published": true,
-  "route": "/blog/signals-2026-09-07",
+  "route": "/blog/signals-2026-09-14",
   "counts": {
-    "found": 12,
-    "shown": 12,
+    "found": 13,
+    "shown": 13,
     "held": 0,
     "security": 0
   },
   "staleness": [],
   "security": [],
-  "issue": "Automated watchtower run for 2026-09-07.\n\n## Engines\n\n- **Ollama**: [v0.34.0](https://github.com/ollama/ollama/releases/tag/v0.34.0-rc1) — 2026-09-05\n- **vLLM**: [v0.29.0rc3](https://github.com/vllm-project/vllm/releases/tag/v0.29.0rc3) — 2026-09-04\n- **vLLM**: [v0.29.0rc4: [Bugfix] Avoid sync in TRT-LLM ragged prefill](https://github.com/vllm-project/vllm/releases/tag/v0.29.0rc4) — 2026-09-04\n- **Ollama**: [v0.34.0-rc0](https://github.com/ollama/ollama/releases/tag/v0.34.0-rc0) — 2026-09-04\n\n## Models\n\n- **Trending GGUF**: [Jackrong/Qwopus3.8-27B-Flash-GGUF](https://huggingface.co/Jackrong/Qwopus3.8-27B-Flash-GGUF) — 2026-09-04\n- **Trending GGUF**: [IFM/K2-Horizon-MoVA-36B-A4B-GGUF](https://huggingface.co/IFM/K2-Horizon-MoVA-36B-A4B-GGUF) — 2026-09-03\n- **NVIDIA models**: [nvidia/Qwen3.8-Flash-Next-NVFP4](https://huggingface.co/nvidia/Qwen3.8-Flash-Next-NVFP4) — 2026-09-02\n- **NVIDIA models**: [nvidia/Muse-Glimmer-30B-NVFP4](https://huggingface.co/nvidia/Muse-Glimmer-30B-NVFP4) — 2026-08-27\n- **Qwen**: [Qwen/Qwen-Drive-1.0-4B](https://huggingface.co/Qwen/Qwen-Drive-1.0-4B) — 2026-08-27\n\n## Hardware and platform\n\n- **NVIDIA blog**: [Sparks Fly: NVIDIA Accelerates Local AI at IFA 2026](https://blogs.nvidia.com/blog/local-ai-ifa-next-gen-agents-nv-pair-rtx-spark/) — 2026-09-03\n- **Hugging Face blog**: [BenchMIRT: What are LLM benchmarks actually measuring?](https://huggingface.co/blog/allenai/benchmirt) — 2026-09-01\n- **Hugging Face blog**: [Introducing @huggingface/kernels: 200+ WebGPU Kernels for Local AI](https://huggingface.co/blog/webgpu-kernels) — 2026-09-01\n\n---\n\n12 new item(s) found, 12 published, 0 held back by the per-section cap.\n\n[Run log](https://github.com/mlmrx/SovereignAI/actions/runs/34127394427)"
+  "issue": "Automated watchtower run for 2026-09-14.\n\n## Engines\n\n- **FreeToken**: [Nightly (rolling)](https://github.com/FlashML-org/FreeToken/releases/tag/nightly) — 2026-09-14\n- **vLLM**: [v0.29.1rc0](https://github.com/vllm-project/vllm/releases/tag/v0.29.1rc0) — 2026-09-12\n- **vLLM**: [proto-v0.1.0](https://github.com/vllm-project/vllm/releases/tag/proto-v0.1.0) — 2026-09-11\n- **Ollama**: [v0.34.0](https://github.com/ollama/ollama/releases/tag/v0.34.0) — 2026-09-10\n- **Ollama**: [v0.34.0-rc3](https://github.com/ollama/ollama/releases/tag/v0.34.0-rc3) — 2026-09-09\n\n## Models\n\n- **Trending GGUF**: [agentionai/Signal-3.8-27B-GGUF](https://huggingface.co/agentionai/Signal-3.8-27B-GGUF) — 2026-09-09\n- **NVIDIA models**: [nvidia/DeepSeek-V4-Pro-0813-nvfp4-DSpark](https://huggingface.co/nvidia/DeepSeek-V4-Pro-0813-nvfp4-DSpark) — 2026-09-09\n- **Trending GGUF**: [openbmb/MiniCPM5-2B-GGUF](https://huggingface.co/openbmb/MiniCPM5-2B-GGUF) — 2026-09-05\n- **NVIDIA models**: [nvidia/Qwen3.8-27B-NVFP4](https://huggingface.co/nvidia/Qwen3.8-27B-NVFP4) — 2026-09-04\n- **Google open weights**: [google/gnm-v3](https://huggingface.co/google/gnm-v3) — 2026-09-01\n\n## Hardware and platform\n\n- **NVIDIA blog**: [d-Matrix Adopts NVIDIA NVLink Fusion for Rack-Scale XPU Deployment](https://blogs.nvidia.com/blog/d-matrix-nvlink-fusion/) — 2026-09-10\n- **Node.js releases**: [2026-09-09, Version 26.8.2 (Current), @aduh95](https://github.com/nodejs/node/releases/tag/v26.8.2) — 2026-09-09\n- **Node.js releases**: [2026-09-08, Version 24.21.0 'Krypton' (LTS), @aduh95](https://github.com/nodejs/node/releases/tag/v24.21.0) — 2026-09-08\n\n---\n\n13 new item(s) found, 13 published, 0 held back by the per-section cap.\n\n[Run log](https://github.com/mlmrx/SovereignAI/actions/runs/34851670950)"
 }
