@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>What is the best small local model to run on my own machine?</title>
+<meta name="description" content="There is no single best — it depends on your RAM and the job (chat, reasoning, coding, embeddings). A dated, honest shortlist beats a leaderboard, because this landscape changes monthly and the right pick is the one that fits your hardware." />
+<link rel="canonical" href="https://mysovereign.ai/answers/best-small-local-model-for-your-machine" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="What is the best small local model to run on my own machine?" />
+<meta property="og:description" content="There is no single best — it depends on your RAM and the job (chat, reasoning, coding, embeddings). A dated, honest shortlist beats a leaderboard, because this landscape changes monthly and the right pick is the one that fits your hardware." />
+<meta property="og:url" content="https://mysovereign.ai/answers/best-small-local-model-for-your-machine" />
+<meta property="og:site_name" content="SovereignAI" />
+<meta property="article:published_time" content="2026-09-01" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="What is the best small local model to run on my own machine?" />
+<meta name="twitter:description" content="There is no single best small local model — the right one depends on how much RAM you have and what you are doing (general chat, reasoning, coding, or embeddings) — so the useful answer is a dated, opinionated shortlist by job, checked against your machine, rather than a leaderboard that is stale the week you read it." />
+<link rel="stylesheet" href="/doc.css" />
+<link rel="stylesheet" href="/shell.css" />
+<script src="/shell.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "QAPage",
+  "inLanguage": "en",
+  "mainEntity": {
+    "@type": "Question",
+    "name": "What is the best small local model to run on my own machine?",
+    "text": "What is the best small local model to run on my own machine?",
+    "answerCount": 1,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "There is no single best small local model — the right one depends on how much RAM you have and what you are doing (general chat, reasoning, coding, or embeddings) — so the useful answer is a dated, opinionated shortlist by job, checked against your machine, rather than a leaderboard that is stale the week you read it. As a starting point in late 2026, by job: for everyday chat, Gemma 3 4B or Qwen3 8B if you have the RAM; for reasoning, Qwen3.8-27B is the strongest open dense model a 32 GB machine can run (tight there, comfortable from 48); for coding, Qwen2.5-Coder 7B; for embeddings (semantic search over your documents), nomic-embed-text. All run under Ollama on modest hardware. Treat any such list as a snapshot — verify the current version and its licence on Hugging Face before relying on it. The pick that matters most is the one that fits: a model that needs more RAM than you have will swap to disk and crawl, or fail to load. Match the model to your memory first (see how much RAM do I need), then choose within what fits. A model that fits and is a little weaker beats a stronger one that thrashes. SovereignAI keeps a curated starter shelf organised by job, each entry dated and carrying its licence, and sizes every one against the machine it is running on before you download anything — so \"best\" becomes \"best that actually runs here\", which is the only version of the question worth answering.",
+      "url": "https://mysovereign.ai/answers/best-small-local-model-for-your-machine",
+      "author": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" }
+    },
+    "author": { "@type": "Organization", "name": "Unify Dynamics" }
+  },
+  "keywords": "best small local model, best local LLM for my machine, small model Ollama, local model by RAM, best model to run locally",
+  "datePublished": "2026-09-01",
+  "dateModified": "2026-09-01",
+  "mainEntityOfPage": "https://mysovereign.ai/answers/best-small-local-model-for-your-machine",
+  "publisher": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" }
+}
+</script>
+<style>
+  .a-lead { font-size: 1.18rem; line-height: 1.55; border-left: 3px solid var(--terra); padding: 6px 0 6px 18px; margin: 0 0 24px; color: var(--ink); }
+  .a-body p { margin: 0 0 16px; line-height: 1.7; }
+  .a-body a { color: var(--terra); }
+  .a-meta { font-size: 0.82rem; color: var(--dim); margin: -8px 0 24px; letter-spacing: 0.02em; }
+  .a-related { border-top: 1px solid var(--rule); margin-top: 34px; padding-top: 18px; }
+  .a-related h2 { font-size: 1.05rem; margin: 0 0 10px; }
+  .a-related ul { margin: 0 0 8px; padding-left: 20px; }
+  .a-related li { margin-bottom: 5px; }
+  .a-related a { color: var(--terra); }
+  .a-cta { border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); padding: 20px 24px; margin-top: 30px; }
+  .a-cta .btn { display: inline-block; background: var(--terra); color: #fff; text-decoration: none; border-radius: 8px; padding: 11px 20px; font-weight: 650; }
+  .sources { font-size: 0.86rem; color: var(--dim); }
+</style>
+</head>
+<body>
+
+<header class="shell-bar">
+  <div class="shell-in">
+    <a class="shell-brand" href="/">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+      SovereignAI
+    </a>
+    <nav class="shell-links">
+      <a href="/">Home</a>
+      <a href="/watch">Why</a>
+      <a href="/playground">What</a>
+      <a href="/command-center">How</a>
+      <a href="/sovereignty">Ledger</a>
+      <a href="/blog">Blog</a>
+      <span class="shell-theme" data-theme-mount></span>
+      <a class="shell-cta" href="/#install">Run it</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <article class="wrap">
+    <p class="eyebrow"><a href="/answers" style="color:inherit;text-decoration:none">Answers</a> · a straight answer, sourced</p>
+    <h1 class="serif">What is the best small local model to run on my own machine?</h1>
+    <p class="a-meta">Written 2026-09-01 · reviewed before publishing · we link or source every claim</p>
+
+    <p class="a-lead">There is no single best small local model — the right one depends on how much RAM you have and what you are doing (general chat, reasoning, coding, or embeddings) — so the useful answer is a dated, opinionated shortlist by job, checked against your machine, rather than a leaderboard that is stale the week you read it.</p>
+    <div class="a-body">
+      <p>As a starting point in late 2026, by job: for <strong>everyday chat</strong>, Gemma 3 4B or Qwen3 8B if you have the RAM; for <strong>reasoning</strong>, Qwen3.8-27B is the strongest open dense model a 32 GB machine can run (tight there, comfortable from 48); for <strong>coding</strong>, Qwen2.5-Coder 7B; for <strong>embeddings</strong> (semantic search over your documents), nomic-embed-text. All run under Ollama on modest hardware. Treat any such list as a snapshot — verify the current version and its licence on Hugging Face before relying on it.</p>
+      <p>The pick that matters most is the one that <strong>fits</strong>: a model that needs more RAM than you have will swap to disk and crawl, or fail to load. Match the model to your memory first (see <a href="/answers/how-much-ram-to-run-a-local-llm">how much RAM do I need</a>), then choose within what fits. A model that fits and is a little weaker beats a stronger one that thrashes.</p>
+      <p>SovereignAI keeps a curated starter shelf organised by job, each entry dated and carrying its licence, and sizes every one against the machine it is running on before you download anything — so &quot;best&quot; becomes &quot;best that actually runs here&quot;, which is the only version of the question worth answering.</p>
+    </div>
+
+    <div class="a-related">
+      <h2 class="serif">Read further</h2>
+      <ul>
+      <li><a href="/command-center">The starter shelf</a></li>
+      <li><a href="/answers/how-much-ram-to-run-a-local-llm">How much RAM do I need to run a local LLM?</a></li>
+      </ul>
+    </div>
+
+    <div class="a-cta">
+      <h3 class="serif" style="margin-top:0">Own the answer, not just read it</h3>
+      <p>SovereignAI is private AI you run yourself: local models, memory with receipts, disclosure at the moment
+        anything leaves, and an exit you can verify. The trial is one Docker command, and deleting the volume
+        deletes every trace of you.</p>
+      <p><a class="btn" href="/#install">Run the open trial</a> · <a href="/three-questions">the test we hold ourselves to →</a></p>
+    </div>
+  </article>
+</main>
+
+<footer class="shell-foot">
+  <div class="shell-in">
+    <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg> SovereignAI</div>
+    <div class="cols">
+      <a href="/">Home</a>
+      <a href="/watch">Watch</a>
+      <a href="/a-day">A day with it</a>
+      <a href="/command-center">Command center</a>
+      <a href="/playground">Playground</a>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/why">The thesis</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/blog">Blog</a>
+      <a href="/answers">Answers</a>
+      <a href="/three-questions">The three questions</a>
+      <a href="/faq">FAQ</a>
+      <a href="/#install">Run the trial</a>
+      <a href="/#access">GitHub</a>
+    </div>
+    <p>Own every layer you can. Rent nothing you can&#39;t walk away from. · SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years.</p>
+    <p>This website counts nothing: no analytics, no cookie-less counter, no cross-site tracking. Your SovereignAI instance reports nothing to anyone either.</p>
+  </div>
+</footer>
+
+</body>
+</html>
