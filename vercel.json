@@ -188,6 +188,10 @@
     {
       "source": "/answers/best-small-local-model-for-your-machine",
       "destination": "/answers-best-small-local-model-for-your-machine.html"
+    },
+    {
+      "source": "/blog/signals-2026-09-21",
+      "destination": "/blog-signals-2026-09-21.html"
     }
   ],
   "headers": [
