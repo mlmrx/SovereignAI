@@ -1,14 +1,20 @@
 {
-  "date": "2026-09-28",
+  "date": "2026-10-05",
   "published": true,
-  "route": "/blog/signals-2026-09-28",
+  "route": "/blog/signals-2026-10-05",
   "counts": {
-    "found": 13,
-    "shown": 13,
+    "found": 12,
+    "shown": 12,
     "held": 0,
     "security": 0
   },
-  "staleness": [],
+  "staleness": [
+    {
+      "id": "blog",
+      "severity": "warn",
+      "message": "41 days since the last written post (2026-08-25). The monthly note is due."
+    }
+  ],
   "security": [],
-  "issue": "Automated watchtower run for 2026-09-28.\n\n## Engines\n\n- **Ollama**: [v0.40.0](https://github.com/ollama/ollama/releases/tag/v0.40.0-rc0) — 2026-09-25\n- **Ollama**: [v0.34.4](https://github.com/ollama/ollama/releases/tag/v0.34.4) — 2026-09-24\n- **vLLM**: [v0.30.1rc0: [ROCm][CI] Add MI355 dense NVFP4 and MoRI kernel mirrors (#58281)](https://github.com/vllm-project/vllm/releases/tag/v0.30.1rc0) — 2026-09-23\n\n## Models\n\n- **Trending GGUF**: [ukisai/Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF) — 2026-09-24\n- **Trending GGUF**: [unsloth/Qwen-Image-2.1-GGUF](https://huggingface.co/unsloth/Qwen-Image-2.1-GGUF) — 2026-09-21\n- **Liquid AI**: [LiquidAI/LFM2.5-VL-3B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-DSpark) — 2026-09-18\n- **Liquid AI**: [LiquidAI/LFM2.5-VL-3B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-DSpark-GGUF) — 2026-09-18\n- **NVIDIA models**: [nvidia/RT-DETR-Hand-Detector-v1](https://huggingface.co/nvidia/RT-DETR-Hand-Detector-v1) — 2026-09-15\n- **NVIDIA models**: [nvidia/NV-Reason-CT](https://huggingface.co/nvidia/NV-Reason-CT) — 2026-09-08\n\n## Hardware and platform\n\n- **Hugging Face blog**: [Accelerating vision-language models with LFM2.5-VL-DSpark](https://huggingface.co/blog/LiquidAI/lfm2-5-vl-dspark) — 2026-09-24\n- **Node.js releases**: [2026-09-23, Version 22.23.3 'Jod' (LTS), @aduh95 prepared by @juanarbol](https://github.com/nodejs/node/releases/tag/v22.23.3) — 2026-09-23\n- **Node.js releases**: [2026-09-22, Version 26.10.0 (Current), @aduh95](https://github.com/nodejs/node/releases/tag/v26.10.0) — 2026-09-22\n- **Hugging Face blog**: [Transformers now runs llama.cpp quants](https://huggingface.co/blog/transformers-llama-cpp-quants) — 2026-09-22\n\n---\n\n13 new item(s) found, 13 published, 0 held back by the per-section cap.\n\n[Run log](https://github.com/mlmrx/SovereignAI/actions/runs/36442073671)"
+  "issue": "Automated watchtower run for 2026-10-05.\n\n## Staleness\n\n- 41 days since the last written post (2026-08-25). The monthly note is due.\n\n## Engines\n\n- **llama.cpp**: [b11422: cuda: use the vector lightning indexer kernel on MUSA (#29990)](https://github.com/ggml-org/llama.cpp/releases/tag/b11422) — 2026-10-05\n- **vLLM**: [v0.31.0](https://github.com/vllm-project/vllm/releases/tag/v0.31.0) — 2026-10-05\n- **Ollama**: [v0.40.0](https://github.com/ollama/ollama/releases/tag/v0.40.0-rc3) — 2026-10-05\n- **Ollama**: [v0.40.0-rc1: mlx: match publisher tokenizer semantics (#18779)](https://github.com/ollama/ollama/releases/tag/v0.40.0-rc1) — 2026-10-04\n- **vLLM**: [v0.31.0rc4](https://github.com/vllm-project/vllm/releases/tag/v0.31.0rc4) — 2026-10-02\n\n## Models\n\n- **Google open weights**: [google/DiarizationLM-Gemma-4-E4B-v1](https://huggingface.co/google/DiarizationLM-Gemma-4-E4B-v1) — 2026-10-04\n- **NVIDIA models**: [nvidia/PixelDiT2-ImageNet](https://huggingface.co/nvidia/PixelDiT2-ImageNet) — 2026-10-01\n- **NVIDIA models**: [nvidia/PixelUMM](https://huggingface.co/nvidia/PixelUMM) — 2026-10-01\n- **Trending GGUF**: [ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF](https://huggingface.co/ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF) — 2026-09-26\n- **Trending GGUF**: [Viggle/Qwen-Image-2.1-viggle-turbo](https://huggingface.co/Viggle/Qwen-Image-2.1-viggle-turbo) — 2026-09-22\n\n## Hardware and platform\n\n- **NVIDIA blog**: [NVIDIA DGX Spark 64GB Gives Developers More Ways to Build and Scale Local AI](https://blogs.nvidia.com/blog/local-ai-dgx-spark-64gb-sync/) — 2026-10-02\n- **NVIDIA blog**: [How NVIDIA GPUs Help Accelerate OpenAI’s GPT-6 Astra Ultrafast](https://blogs.nvidia.com/blog/gpus-openai-gpt-6-astra-ultrafast/) — 2026-10-01\n\n---\n\n12 new item(s) found, 12 published, 0 held back by the per-section cap.\n\n[Run log](https://github.com/mlmrx/SovereignAI/actions/runs/37335792407)"
 }
