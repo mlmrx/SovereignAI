@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Signals: what shipped in local AI, week of October 19, 2026</title>
+<meta name="description" content="Everything the watchtower found in local-AI primary sources for the week of 2026-10-19: 5 in engines, 6 in models, 1 in the local-first wave and 5 in hardware and platform. Every entry links the announcement it came from; nothing here is summarized or rewritten." />
+<link rel="canonical" href="https://mysovereign.ai/blog/signals-2026-10-19" />
+<link rel="alternate" type="application/atom+xml" title="The SovereignAI blog" href="/feed.xml" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='%23d97757' d='M50 4 90 27v46L50 96 10 73V27z'/><path fill='%231f1e1d' d='M34 29h34v10H45v7h18v10H45v7h23v10H34z'/></svg>" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Signals: what shipped in local AI, week of October 19, 2026" />
+<meta property="og:description" content="17 releases and announcements from local-AI primary sources, week of 2026-10-19. Each one links its own announcement." />
+<meta property="og:url" content="https://mysovereign.ai/blog/signals-2026-10-19" />
+<meta property="og:site_name" content="SovereignAI" />
+<meta property="article:published_time" content="2026-10-19" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Signals, week of October 19, 2026" />
+<meta name="twitter:description" content="What actually shipped in local AI this week, from primary sources only." />
+<link rel="stylesheet" href="/doc.css" />
+<link rel="stylesheet" href="/shell.css" />
+<script src="/shell.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Signals: what shipped in local AI, week of October 19, 2026",
+  "description": "Everything the watchtower found in local-AI primary sources for the week of 2026-10-19: 5 in engines, 6 in models, 1 in the local-first wave and 5 in hardware and platform. Every entry links the announcement it came from; nothing here is summarized or rewritten.",
+  "datePublished": "2026-10-19",
+  "dateModified": "2026-10-19",
+  "inLanguage": "en",
+  "mainEntityOfPage": "https://mysovereign.ai/blog/signals-2026-10-19",
+  "isPartOf": { "@type": "Blog", "name": "The SovereignAI blog", "url": "https://mysovereign.ai/blog" },
+  "author": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "publisher": { "@type": "Organization", "name": "Unify Dynamics", "url": "https://mysovereign.ai" },
+  "keywords": "local AI, open weights, Ollama, FreeToken, Hugging Face, model releases, local-first AI"
+}
+</script>
+<style>
+  .byline { font-size: 0.82rem; color: var(--dim); margin: -6px 0 22px; letter-spacing: 0.02em; }
+  .machine { border-left: 3px solid var(--terra); padding: 4px 0 4px 16px; margin: 0 0 30px; font-size: 0.9rem; color: var(--dim); }
+  .machine strong { color: var(--ink); }
+  .sig-group { margin: 0 0 34px; }
+  .sig-group h2 { margin: 0 0 4px; font-size: 1.3rem; }
+  .sig-blurb { margin: 0 0 14px; color: var(--dim); font-size: 0.88rem; }
+  .signals { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  .signals li { border: 1px solid var(--rule); border-radius: 6px; padding: 13px 16px; background: var(--sheet); }
+  .sig-head { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; line-height: 1.45; }
+  .sig-head .who { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--terra); }
+  .sig-head a { color: inherit; font-weight: 600; text-decoration: none; }
+  .sig-head a:hover { text-decoration: underline; }
+  .sig-head .when { color: var(--dim); font-size: 0.72rem; font-variant-numeric: tabular-nums; margin-left: auto; }
+  .sig-note { margin: 6px 0 0; color: var(--dim); font-size: 0.85rem; line-height: 1.5; }
+  .series { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--rule); margin-top: 36px; padding-top: 16px; font-size: 0.88rem; }
+  .series a { color: var(--terra); text-decoration: none; }
+  .sources { font-size: 0.82rem; color: var(--dim); }
+  .sources li { margin-bottom: 4px; }
+  @media (max-width: 640px) { .sig-head .when { margin-left: 0; } }
+</style>
+</head>
+<body>
+
+<header class="shell-bar">
+  <div class="shell-in">
+    <a class="shell-brand" href="/">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg>
+      SovereignAI
+    </a>
+    <nav class="shell-links">
+      <a href="/">Home</a>
+      <a href="/watch">Why</a>
+      <a href="/playground">What</a>
+      <a href="/command-center">How</a>
+      <a href="/sovereignty">Ledger</a>
+      <a href="/blog">Blog</a>
+      <span class="shell-theme" data-theme-mount></span>
+      <a class="shell-cta" href="/#install">Run it</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <article class="wrap">
+    <p class="eyebrow"><a href="/blog" style="color:inherit;text-decoration:none">Blog</a> · Signals · October 19, 2026</p>
+    <h1 class="serif">Signals: what shipped in local AI, week of October 19, 2026</h1>
+    <p class="lede">17 things shipped in local AI this week that we thought were worth knowing about. Every line below is a project's own announcement of its own work, linked back to where it was published.</p>
+    <p class="byline">Assembled automatically from primary sources · no editor read this before it went up</p>
+
+    <p class="machine"><strong>What this page is.</strong> A machine collected these from release feeds and model registries and formatted them. It did not summarize, rank by opinion, or add commentary — the words in each entry are the publisher's own words, and the date is theirs too. That is the whole reason it is allowed to publish itself: there is nothing here for a machine to get wrong except the copying, and the link beside every line is how you check it. Inclusion is not endorsement, and nothing here has been tested by us. The pages where we <em>do</em> make claims about our own product are written by people and reviewed, and our own limits stay recorded in the <a href="/sovereignty">Sovereignty Ledger</a>.</p>
+
+    <section class="sig-group">
+      <h2 class="serif">Engines</h2>
+      <p class="sig-blurb">The local runtimes SovereignAI talks to, and the ones it could.</p>
+      <ul class="signals">
+        <li>
+          <p class="sig-head"><span class="who">llama.cpp</span><a href="https://github.com/ggml-org/llama.cpp/releases/tag/b11730" rel="noopener nofollow">b11730: cuda: cap MMQ Stream-K blocks at available work (#30553)</a><span class="when">2026-10-19</span></p>
+<p class="sig-note">cuda: cap Stream-K blocks at the number of k-blocks Stream-K normally launches one CUDA block per SM. For small matrices, this can exceed the total number of output-tile/k-block pairs, leaving blocks…</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">vLLM</span><a href="https://github.com/vllm-project/vllm/releases/tag/v0.32.0" rel="noopener nofollow">v0.32.0</a><span class="when">2026-10-18</span></p>
+<p class="sig-note">v0.32.0 Highlights This release features 814 commits from 363 contributors (121 new)! Structured decisions and generic parsers : the new POST /v1/systemone endpoint answers choice , noul and score…</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">vLLM</span><a href="https://github.com/vllm-project/vllm/releases/tag/v0.32.1rc0" rel="noopener nofollow">v0.32.1rc0</a><span class="when">2026-10-18</span></p>
+<p class="sig-note">[Doc][RL] Document the weight-transfer HTTP protocol for trainers wit…</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">Ollama</span><a href="https://github.com/ollama/ollama/releases/tag/v0.40.7-rc0" rel="noopener nofollow">v0.40.7</a><span class="when">2026-10-18</span></p>
+<p class="sig-note">What&#39;s Changed openai: allow Responses effort on non-thinking models by @hoyyeva in #19010 llama-server: let llama-server infer the draft speculative type by @dhiltgen in #19064 mlx: add PPLX Decider…</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">Ollama</span><a href="https://github.com/ollama/ollama/releases/tag/v0.40.6" rel="noopener nofollow">v0.40.6</a><span class="when">2026-10-17</span></p>
+<p class="sig-note">What&#39;s Changed win: prevent orphaned runners by @dhiltgen in #18500 gguf: add the q2_0 tensor and file types by @jmorganca in #18967 Launch clef in Ollama&#39;s cloud by @jberg5 in #19036 use identifiers…</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="sig-group">
+      <h2 class="serif">Models</h2>
+      <p class="sig-blurb">Open weights published in the open, newest first.</p>
+      <ul class="signals">
+        <li>
+          <p class="sig-head"><span class="who">NVIDIA models</span><a href="https://huggingface.co/nvidia/Muse-Spark-Open-816B-A42B-DFlash2" rel="noopener nofollow">nvidia/Muse-Spark-Open-816B-A42B-DFlash2</a><span class="when">2026-10-16</span></p>
+<p class="sig-note">618 downloads · 5 likes</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">NVIDIA models</span><a href="https://huggingface.co/nvidia/NVIDIA-Nemotron-Labs-Dory1.0-4B-BF16" rel="noopener nofollow">nvidia/NVIDIA-Nemotron-Labs-Dory1.0-4B-BF16</a><span class="when">2026-10-16</span></p>
+<p class="sig-note">1,779 downloads · 128 likes · text-generation</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">Trending GGUF</span><a href="https://huggingface.co/orcarouter/OrcaCyber-Nano-1.0" rel="noopener nofollow">orcarouter/OrcaCyber-Nano-1.0</a><span class="when">2026-10-16</span></p>
+<p class="sig-note">10,383 downloads · 110 likes · gguf</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">Liquid AI</span><a href="https://huggingface.co/LiquidAI/LFM2.5-24B-A2B" rel="noopener nofollow">LiquidAI/LFM2.5-24B-A2B</a><span class="when">2026-10-12</span></p>
+<p class="sig-note">14,151 downloads · 487 likes · text-generation · moe</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">Liquid AI</span><a href="https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-FP8" rel="noopener nofollow">LiquidAI/LFM2.5-24B-A2B-FP8</a><span class="when">2026-10-12</span></p>
+<p class="sig-note">33,158 downloads · 23 likes · text-generation · moe</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">Trending GGUF</span><a href="https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF" rel="noopener nofollow">LiquidAI/LFM2.5-24B-A2B-GGUF</a><span class="when">2026-10-09</span></p>
+<p class="sig-note">120,509 downloads · 212 likes · gguf · text-generation</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="sig-group">
+      <h2 class="serif">The local-first wave</h2>
+      <p class="sig-blurb">Everyone else building a private AI you run yourself.</p>
+      <ul class="signals">
+        <li>
+          <p class="sig-head"><span class="who">Jan</span><a href="https://github.com/janhq/jan/releases/tag/v0.8.7" rel="noopener nofollow">v0.8.7</a><span class="when">2026-10-19</span></p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="sig-group">
+      <h2 class="serif">Hardware and platform</h2>
+      <p class="sig-blurb">The silicon and the runtime everything above depends on.</p>
+      <ul class="signals">
+        <li>
+          <p class="sig-head"><span class="who">Hugging Face blog</span><a href="https://huggingface.co/blog/reflection-beam" rel="noopener nofollow">Welcome Beam: a 501B open model you can own, customize, and scale</a><span class="when">2026-10-16</span></p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">NVIDIA blog</span><a href="https://blogs.nvidia.com/blog/nemotron-3-5-super-vl/" rel="noopener nofollow">Open From Data Center to Desktop: NVIDIA Expands Nemotron Family With Highest Efficiency Super VL and Bolt Models</a><span class="when">2026-10-15</span></p>
+<p class="sig-note">NVIDIA today released Nemotron 3.5 Super VL, an open 120-billion-parameter model that delivers the fastest task completion and highest accuracy for specialized always-on agents. Joining it are two…</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">Hugging Face blog</span><a href="https://huggingface.co/blog/meta-muse-spark-open" rel="noopener nofollow">Welcome Muse Spark Open: open-weight frontier multimodal mixture-of-experts model from Meta</a><span class="when">2026-10-15</span></p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">Node.js releases</span><a href="https://github.com/nodejs/node/releases/tag/v24.22.0" rel="noopener nofollow">2026-10-14, Version 24.22.0 &#39;Krypton&#39; (LTS), @richardlau prepared by @aduh95</a><span class="when">2026-10-14</span></p>
+<p class="sig-note">Notable Changes [ ddbf974b47 ] - (SEMVER-MINOR) crypto : add crypto.parsePKCS12() (Brian Muenzenmeyer) #65627 [ c162c68ff0 ] - (SEMVER-MINOR) crypto : add a generic MAC API (Filip Skokan) #65553 […</p>
+        </li>
+        <li>
+          <p class="sig-head"><span class="who">Node.js releases</span><a href="https://github.com/nodejs/node/releases/tag/v26.12.0" rel="noopener nofollow">2026-10-14, Version 26.12.0 (Current), @richardlau</a><span class="when">2026-10-14</span></p>
+<p class="sig-note">Notable Changes [ 1ebd6d3677 ] - (SEMVER-MINOR) doc,lib,src : throw on missing WebAssembly or RX support (Paolo Insogna) #66533 [ 7f1937d2b9 ] - (SEMVER-MINOR) http : add websocketMask() and…</p>
+        </li>
+      </ul>
+    </section>
+
+    <h2 class="serif" id="sources">Sources</h2>
+    <p>Every entry above links its own announcement. The feeds read this week:</p>
+    <ul class="sources">
+      <li>llama.cpp</li>
+      <li>vLLM</li>
+      <li>Ollama</li>
+      <li>NVIDIA models</li>
+      <li>Trending GGUF</li>
+      <li>Liquid AI</li>
+      <li>Jan</li>
+      <li>Hugging Face blog</li>
+      <li>NVIDIA blog</li>
+      <li>Node.js releases</li>
+    </ul>
+    <p class="sources">The full source list, with a note on why each one is watched, is <a href="https://github.com/mlmrx/SovereignAI/blob/main/src/watchtower/sources.js" rel="noopener">in the repository</a> — as is the code that assembled this page. Nothing was fetched that is not in that file.</p>
+
+    <div class="series">
+      <a href="/blog">← All posts</a>
+      <a href="/feed.xml">Follow by feed →</a>
+    </div>
+  </article>
+</main>
+
+<footer class="shell-foot">
+  <div class="shell-in">
+    <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#d97757" d="M50 4 90 27v46L50 96 10 73V27z"/><path fill="#1b1a18" d="M34 29h34v10H45v7h18v10H45v7h23v10H34z"/></svg> SovereignAI</div>
+    <div class="cols">
+      <a href="/">Home</a>
+      <a href="/watch">Watch</a>
+      <a href="/a-day">A day with it</a>
+      <a href="/command-center">Command center</a>
+      <a href="/playground">Playground</a>
+      <a href="/what-is-sovereign-ai">What is sovereign AI?</a>
+      <a href="/why">The thesis</a>
+      <a href="/sovereignty">Sovereignty ledger</a>
+      <a href="/blog">Blog</a>
+      <a href="/answers">Answers</a>
+      <a href="/three-questions">The three questions</a>
+      <a href="/faq">FAQ</a>
+      <a href="/#install">Run the trial</a>
+      <a href="/#access">GitHub</a>
+    </div>
+    <p>Own every layer you can. Rent nothing you can&#39;t walk away from. · SovereignAI by Unify Dynamics · fair-source licensed (FSL-1.1-MIT), MIT after two years.</p>
+    <p>This website counts nothing: no analytics, no cookie-less counter, no cross-site tracking. Your SovereignAI instance reports nothing to anyone either.</p>
+  </div>
+</footer>
+
+</body>
+</html>

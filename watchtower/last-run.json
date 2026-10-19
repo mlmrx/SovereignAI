@@ -1,20 +1,30 @@
 {
-  "date": "2026-10-12",
+  "date": "2026-10-19",
   "published": true,
-  "route": "/blog/signals-2026-10-12",
+  "route": "/blog/signals-2026-10-19",
   "counts": {
-    "found": 19,
-    "shown": 19,
+    "found": 18,
+    "shown": 17,
     "held": 0,
-    "security": 0
+    "security": 1
   },
   "staleness": [
     {
       "id": "blog",
       "severity": "warn",
-      "message": "48 days since the last written post (2026-08-25). The monthly note is due."
+      "message": "55 days since the last written post (2026-08-25). The monthly note is due."
     }
   ],
-  "security": [],
-  "issue": "Automated watchtower run for 2026-10-12.\n\n## Staleness\n\n- 48 days since the last written post (2026-08-25). The monthly note is due.\n\n## Engines\n\n- **llama.cpp**: [b11568: examples : fix draft sampling and rejection handling (#30095)](https://github.com/ggml-org/llama.cpp/releases/tag/b11568) — 2026-10-12\n- **Ollama**: [v0.40.3](https://github.com/ollama/ollama/releases/tag/v0.40.3) — 2026-10-11\n- **vLLM**: [proto-v0.5.0](https://github.com/vllm-project/vllm/releases/tag/proto-v0.5.0) — 2026-10-09\n- **Ollama**: [v0.40.2](https://github.com/ollama/ollama/releases/tag/v0.40.2) — 2026-10-09\n- **vLLM**: [v0.31.1rc0: [Metrics] Expose cached prompt tokens by cache tier (#56318)](https://github.com/vllm-project/vllm/releases/tag/v0.31.1rc0) — 2026-10-06\n\n## Models\n\n- **Liquid AI**: [LiquidAI/d1-3B-MLX-4bit](https://huggingface.co/LiquidAI/d1-3B-MLX-4bit) — 2026-10-12\n- **Liquid AI**: [LiquidAI/d1-3B-MLX-8bit](https://huggingface.co/LiquidAI/d1-3B-MLX-8bit) — 2026-10-12\n- **NVIDIA models**: [nvidia/agile_one_s_pick_ssd_n2_1120](https://huggingface.co/nvidia/agile_one_s_pick_ssd_n2_1120) — 2026-10-10\n- **NVIDIA models**: [nvidia/agile_one_s_pickplace_ssd_n2_18200](https://huggingface.co/nvidia/agile_one_s_pickplace_ssd_n2_18200) — 2026-10-10\n- **Qwen**: [Qwen/Qwen-Image-2.1-Turbo](https://huggingface.co/Qwen/Qwen-Image-2.1-Turbo) — 2026-10-09\n- **Trending GGUF**: [ConwayResearch/Underdog-Saluki-27B-1.0](https://huggingface.co/ConwayResearch/Underdog-Saluki-27B-1.0) — 2026-10-08\n- **Trending GGUF**: [unsloth/embeddinggemma-2-GGUF](https://huggingface.co/unsloth/embeddinggemma-2-GGUF) — 2026-10-06\n- **Google open weights**: [google/embeddinggemma-2](https://huggingface.co/google/embeddinggemma-2) — 2026-09-14\n\n## The local-first wave\n\n- **Jan**: [0.8.6](https://github.com/janhq/jan/releases/tag/v0.8.6) — 2026-10-09\n- **Jan**: [0.8.5](https://github.com/janhq/jan/releases/tag/v0.8.5) — 2026-10-08\n\n## Hardware and platform\n\n- **Node.js releases**: [2026-10-07, Version 26.11.0 (Current), @aduh95](https://github.com/nodejs/node/releases/tag/v26.11.0) — 2026-10-07\n- **Node.js releases**: [2026-10-07, Version 26.11.1 (Current), @aduh95](https://github.com/nodejs/node/releases/tag/v26.11.1) — 2026-10-07\n- **Hugging Face blog**: [One Model Family, Two Gold-Level Results: Fine-Tuning Nemotron for IOI and IMO](https://huggingface.co/blog/nvidia/nemotron-ioi-and-imo-2026) — 2026-10-07\n- **NVIDIA blog**: [Why Telecom Operators Are Building Their AI Strategy on Open Models](https://blogs.nvidia.com/blog/telecom-operators-open-models/) — 2026-10-06\n\n---\n\n19 new item(s) found, 19 published, 0 held back by the per-section cap.\n\n[Run log](https://github.com/mlmrx/SovereignAI/actions/runs/38278863638)"
+  "security": [
+    {
+      "title": "Wednesday, October 21, 2026 Security Releases",
+      "url": "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases",
+      "date": "2026-10-14",
+      "summary": "",
+      "sourceId": "node-security",
+      "sourceLabel": "Node.js security",
+      "category": "security"
+    }
+  ],
+  "issue": "Automated watchtower run for 2026-10-19.\n\n## Security — read first\n\n- **Node.js security**: [Wednesday, October 21, 2026 Security Releases](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases) — 2026-10-14\n\n## Staleness\n\n- 55 days since the last written post (2026-08-25). The monthly note is due.\n\n## Engines\n\n- **llama.cpp**: [b11730: cuda: cap MMQ Stream-K blocks at available work (#30553)](https://github.com/ggml-org/llama.cpp/releases/tag/b11730) — 2026-10-19\n- **vLLM**: [v0.32.0](https://github.com/vllm-project/vllm/releases/tag/v0.32.0) — 2026-10-18\n- **vLLM**: [v0.32.1rc0](https://github.com/vllm-project/vllm/releases/tag/v0.32.1rc0) — 2026-10-18\n- **Ollama**: [v0.40.7](https://github.com/ollama/ollama/releases/tag/v0.40.7-rc0) — 2026-10-18\n- **Ollama**: [v0.40.6](https://github.com/ollama/ollama/releases/tag/v0.40.6) — 2026-10-17\n\n## Models\n\n- **NVIDIA models**: [nvidia/Muse-Spark-Open-816B-A42B-DFlash2](https://huggingface.co/nvidia/Muse-Spark-Open-816B-A42B-DFlash2) — 2026-10-16\n- **NVIDIA models**: [nvidia/NVIDIA-Nemotron-Labs-Dory1.0-4B-BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-Labs-Dory1.0-4B-BF16) — 2026-10-16\n- **Trending GGUF**: [orcarouter/OrcaCyber-Nano-1.0](https://huggingface.co/orcarouter/OrcaCyber-Nano-1.0) — 2026-10-16\n- **Liquid AI**: [LiquidAI/LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B) — 2026-10-12\n- **Liquid AI**: [LiquidAI/LFM2.5-24B-A2B-FP8](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-FP8) — 2026-10-12\n- **Trending GGUF**: [LiquidAI/LFM2.5-24B-A2B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF) — 2026-10-09\n\n## The local-first wave\n\n- **Jan**: [v0.8.7](https://github.com/janhq/jan/releases/tag/v0.8.7) — 2026-10-19\n\n## Hardware and platform\n\n- **Hugging Face blog**: [Welcome Beam: a 501B open model you can own, customize, and scale](https://huggingface.co/blog/reflection-beam) — 2026-10-16\n- **NVIDIA blog**: [Open From Data Center to Desktop: NVIDIA Expands Nemotron Family With Highest Efficiency Super VL and Bolt Models](https://blogs.nvidia.com/blog/nemotron-3-5-super-vl/) — 2026-10-15\n- **Hugging Face blog**: [Welcome Muse Spark Open: open-weight frontier multimodal mixture-of-experts model from Meta](https://huggingface.co/blog/meta-muse-spark-open) — 2026-10-15\n- **Node.js releases**: [2026-10-14, Version 24.22.0 'Krypton' (LTS), @richardlau prepared by @aduh95](https://github.com/nodejs/node/releases/tag/v24.22.0) — 2026-10-14\n- **Node.js releases**: [2026-10-14, Version 26.12.0 (Current), @richardlau](https://github.com/nodejs/node/releases/tag/v26.12.0) — 2026-10-14\n\n---\n\n18 new item(s) found, 17 published, 0 held back by the per-section cap.\n\n[Run log](https://github.com/mlmrx/SovereignAI/actions/runs/39269845453)"
 }
