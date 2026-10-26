@@ -1,30 +1,20 @@
 {
-  "date": "2026-10-19",
+  "date": "2026-10-26",
   "published": true,
-  "route": "/blog/signals-2026-10-19",
+  "route": "/blog/signals-2026-10-26",
   "counts": {
-    "found": 18,
-    "shown": 17,
+    "found": 15,
+    "shown": 15,
     "held": 0,
-    "security": 1
+    "security": 0
   },
   "staleness": [
     {
       "id": "blog",
-      "severity": "warn",
-      "message": "55 days since the last written post (2026-08-25). The monthly note is due."
+      "severity": "alarm",
+      "message": "62 days since the last written post (2026-08-25). The blog promises a monthly note on what changed; two months of silence with weekly digests running is worse than no digests."
     }
   ],
-  "security": [
-    {
-      "title": "Wednesday, October 21, 2026 Security Releases",
-      "url": "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases",
-      "date": "2026-10-14",
-      "summary": "",
-      "sourceId": "node-security",
-      "sourceLabel": "Node.js security",
-      "category": "security"
-    }
-  ],
-  "issue": "Automated watchtower run for 2026-10-19.\n\n## Security — read first\n\n- **Node.js security**: [Wednesday, October 21, 2026 Security Releases](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases) — 2026-10-14\n\n## Staleness\n\n- 55 days since the last written post (2026-08-25). The monthly note is due.\n\n## Engines\n\n- **llama.cpp**: [b11730: cuda: cap MMQ Stream-K blocks at available work (#30553)](https://github.com/ggml-org/llama.cpp/releases/tag/b11730) — 2026-10-19\n- **vLLM**: [v0.32.0](https://github.com/vllm-project/vllm/releases/tag/v0.32.0) — 2026-10-18\n- **vLLM**: [v0.32.1rc0](https://github.com/vllm-project/vllm/releases/tag/v0.32.1rc0) — 2026-10-18\n- **Ollama**: [v0.40.7](https://github.com/ollama/ollama/releases/tag/v0.40.7-rc0) — 2026-10-18\n- **Ollama**: [v0.40.6](https://github.com/ollama/ollama/releases/tag/v0.40.6) — 2026-10-17\n\n## Models\n\n- **NVIDIA models**: [nvidia/Muse-Spark-Open-816B-A42B-DFlash2](https://huggingface.co/nvidia/Muse-Spark-Open-816B-A42B-DFlash2) — 2026-10-16\n- **NVIDIA models**: [nvidia/NVIDIA-Nemotron-Labs-Dory1.0-4B-BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-Labs-Dory1.0-4B-BF16) — 2026-10-16\n- **Trending GGUF**: [orcarouter/OrcaCyber-Nano-1.0](https://huggingface.co/orcarouter/OrcaCyber-Nano-1.0) — 2026-10-16\n- **Liquid AI**: [LiquidAI/LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B) — 2026-10-12\n- **Liquid AI**: [LiquidAI/LFM2.5-24B-A2B-FP8](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-FP8) — 2026-10-12\n- **Trending GGUF**: [LiquidAI/LFM2.5-24B-A2B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF) — 2026-10-09\n\n## The local-first wave\n\n- **Jan**: [v0.8.7](https://github.com/janhq/jan/releases/tag/v0.8.7) — 2026-10-19\n\n## Hardware and platform\n\n- **Hugging Face blog**: [Welcome Beam: a 501B open model you can own, customize, and scale](https://huggingface.co/blog/reflection-beam) — 2026-10-16\n- **NVIDIA blog**: [Open From Data Center to Desktop: NVIDIA Expands Nemotron Family With Highest Efficiency Super VL and Bolt Models](https://blogs.nvidia.com/blog/nemotron-3-5-super-vl/) — 2026-10-15\n- **Hugging Face blog**: [Welcome Muse Spark Open: open-weight frontier multimodal mixture-of-experts model from Meta](https://huggingface.co/blog/meta-muse-spark-open) — 2026-10-15\n- **Node.js releases**: [2026-10-14, Version 24.22.0 'Krypton' (LTS), @richardlau prepared by @aduh95](https://github.com/nodejs/node/releases/tag/v24.22.0) — 2026-10-14\n- **Node.js releases**: [2026-10-14, Version 26.12.0 (Current), @richardlau](https://github.com/nodejs/node/releases/tag/v26.12.0) — 2026-10-14\n\n---\n\n18 new item(s) found, 17 published, 0 held back by the per-section cap.\n\n[Run log](https://github.com/mlmrx/SovereignAI/actions/runs/39269845453)"
+  "security": [],
+  "issue": "Automated watchtower run for 2026-10-26.\n\n## Staleness\n\n- **62 days since the last written post (2026-08-25). The blog promises a monthly note on what changed; two months of silence with weekly digests running is worse than no digests.**\n\n## Engines\n\n- **FreeToken**: [v0.2.1](https://github.com/FlashML-org/FreeToken/releases/tag/v0.2.1) — 2026-10-26\n- **Ollama**: [v0.40.11](https://github.com/ollama/ollama/releases/tag/v0.40.11) — 2026-10-25\n- **Ollama**: [v0.40.9](https://github.com/ollama/ollama/releases/tag/v0.40.9) — 2026-10-24\n- **FreeToken**: [v0.2.0](https://github.com/FlashML-org/FreeToken/releases/tag/v0.2.0) — 2026-10-21\n\n## Models\n\n- **Trending GGUF**: [ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-GGUF](https://huggingface.co/ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-GGUF) — 2026-10-23\n- **NVIDIA models**: [nvidia/MotionBricks](https://huggingface.co/nvidia/MotionBricks) — 2026-10-23\n- **NVIDIA models**: [nvidia/InternVideo2-CLIP-anomaly-detection](https://huggingface.co/nvidia/InternVideo2-CLIP-anomaly-detection) — 2026-10-22\n- **Liquid AI**: [LiquidAI/LFM2.5-24B-A2B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-DSpark-GGUF) — 2026-10-20\n- **Trending GGUF**: [unsloth/flint-GGUF](https://huggingface.co/unsloth/flint-GGUF) — 2026-10-20\n- **Liquid AI**: [LiquidAI/LFM2.5-24B-A2B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-DSpark) — 2026-10-19\n\n## Hardware and platform\n\n- **NVIDIA blog**: [Leading European Financial Services Organizations Embrace Open Models to Build Proprietary Intelligence](https://blogs.nvidia.com/blog/european-financial-services-organizations-open-models-proprietary-intelligence/) — 2026-10-22\n- **NVIDIA blog**: [NVIDIA Open Models Power a New Wave of European Public Sector Projects](https://blogs.nvidia.com/blog/european-public-sector-open-models/) — 2026-10-22\n- **Node.js releases**: [2026-10-21, Version 22.23.4 'Jod' (LTS), @aduh95](https://github.com/nodejs/node/releases/tag/v22.23.4) — 2026-10-21\n- **Node.js releases**: [2026-10-21, Version 24.22.1 'Krypton' (LTS), @aduh95](https://github.com/nodejs/node/releases/tag/v24.22.1) — 2026-10-21\n- **Hugging Face blog**: [How Specializing the Vocabulary of SLMs Can Cut Inference Cost by 77% in Real Applications](https://huggingface.co/blog/Dharma-AI/vocabx-vocabulary-specialization) — 2026-10-21\n\n---\n\n15 new item(s) found, 15 published, 0 held back by the per-section cap.\n\n[Run log](https://github.com/mlmrx/SovereignAI/actions/runs/40336287373)"
 }
