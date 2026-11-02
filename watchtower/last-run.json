@@ -1,20 +1,25 @@
 {
-  "date": "2026-10-26",
+  "date": "2026-11-02",
   "published": true,
-  "route": "/blog/signals-2026-10-26",
+  "route": "/blog/signals-2026-11-02",
   "counts": {
-    "found": 15,
-    "shown": 15,
+    "found": 16,
+    "shown": 16,
     "held": 0,
     "security": 0
   },
   "staleness": [
     {
+      "id": "shelf",
+      "severity": "warn",
+      "message": "The starter shelf was curated 2026-08, 3 months ago. Worth a review pass against this digest."
+    },
+    {
       "id": "blog",
       "severity": "alarm",
-      "message": "62 days since the last written post (2026-08-25). The blog promises a monthly note on what changed; two months of silence with weekly digests running is worse than no digests."
+      "message": "69 days since the last written post (2026-08-25). The blog promises a monthly note on what changed; two months of silence with weekly digests running is worse than no digests."
     }
   ],
   "security": [],
-  "issue": "Automated watchtower run for 2026-10-26.\n\n## Staleness\n\n- **62 days since the last written post (2026-08-25). The blog promises a monthly note on what changed; two months of silence with weekly digests running is worse than no digests.**\n\n## Engines\n\n- **FreeToken**: [v0.2.1](https://github.com/FlashML-org/FreeToken/releases/tag/v0.2.1) — 2026-10-26\n- **Ollama**: [v0.40.11](https://github.com/ollama/ollama/releases/tag/v0.40.11) — 2026-10-25\n- **Ollama**: [v0.40.9](https://github.com/ollama/ollama/releases/tag/v0.40.9) — 2026-10-24\n- **FreeToken**: [v0.2.0](https://github.com/FlashML-org/FreeToken/releases/tag/v0.2.0) — 2026-10-21\n\n## Models\n\n- **Trending GGUF**: [ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-GGUF](https://huggingface.co/ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-GGUF) — 2026-10-23\n- **NVIDIA models**: [nvidia/MotionBricks](https://huggingface.co/nvidia/MotionBricks) — 2026-10-23\n- **NVIDIA models**: [nvidia/InternVideo2-CLIP-anomaly-detection](https://huggingface.co/nvidia/InternVideo2-CLIP-anomaly-detection) — 2026-10-22\n- **Liquid AI**: [LiquidAI/LFM2.5-24B-A2B-DSpark-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-DSpark-GGUF) — 2026-10-20\n- **Trending GGUF**: [unsloth/flint-GGUF](https://huggingface.co/unsloth/flint-GGUF) — 2026-10-20\n- **Liquid AI**: [LiquidAI/LFM2.5-24B-A2B-DSpark](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-DSpark) — 2026-10-19\n\n## Hardware and platform\n\n- **NVIDIA blog**: [Leading European Financial Services Organizations Embrace Open Models to Build Proprietary Intelligence](https://blogs.nvidia.com/blog/european-financial-services-organizations-open-models-proprietary-intelligence/) — 2026-10-22\n- **NVIDIA blog**: [NVIDIA Open Models Power a New Wave of European Public Sector Projects](https://blogs.nvidia.com/blog/european-public-sector-open-models/) — 2026-10-22\n- **Node.js releases**: [2026-10-21, Version 22.23.4 'Jod' (LTS), @aduh95](https://github.com/nodejs/node/releases/tag/v22.23.4) — 2026-10-21\n- **Node.js releases**: [2026-10-21, Version 24.22.1 'Krypton' (LTS), @aduh95](https://github.com/nodejs/node/releases/tag/v24.22.1) — 2026-10-21\n- **Hugging Face blog**: [How Specializing the Vocabulary of SLMs Can Cut Inference Cost by 77% in Real Applications](https://huggingface.co/blog/Dharma-AI/vocabx-vocabulary-specialization) — 2026-10-21\n\n---\n\n15 new item(s) found, 15 published, 0 held back by the per-section cap.\n\n[Run log](https://github.com/mlmrx/SovereignAI/actions/runs/40336287373)"
+  "issue": "Automated watchtower run for 2026-11-02.\n\n## Staleness\n\n- The starter shelf was curated 2026-08, 3 months ago. Worth a review pass against this digest.\n- **69 days since the last written post (2026-08-25). The blog promises a monthly note on what changed; two months of silence with weekly digests running is worse than no digests.**\n\n## Engines\n\n- **llama.cpp**: [b12039: jinja : implement map('filter') (#24033)](https://github.com/ggml-org/llama.cpp/releases/tag/b12039) — 2026-11-02\n- **vLLM**: [v0.33.0](https://github.com/vllm-project/vllm/releases/tag/v0.33.0rc3) — 2026-11-02\n- **vLLM**: [v0.33.0](https://github.com/vllm-project/vllm/releases/tag/v0.33.0) — 2026-11-01\n- **Ollama**: [v0.40.13](https://github.com/ollama/ollama/releases/tag/v0.40.13) — 2026-10-29\n- **Ollama**: [v0.40.13-rc0](https://github.com/ollama/ollama/releases/tag/v0.40.13-rc0) — 2026-10-28\n\n## Models\n\n- **NVIDIA models**: [nvidia/DeepSeek-V4.1-Flash-1017-NVFP4](https://huggingface.co/nvidia/DeepSeek-V4.1-Flash-1017-NVFP4) — 2026-10-30\n- **Liquid AI**: [LiquidAI/d1-2B-GGUF](https://huggingface.co/LiquidAI/d1-2B-GGUF) — 2026-10-27\n- **Liquid AI**: [LiquidAI/d1-2B-MLX-4bit](https://huggingface.co/LiquidAI/d1-2B-MLX-4bit) — 2026-10-27\n- **Trending GGUF**: [LiquidAI/LFM3-Omni-2B-GGUF](https://huggingface.co/LiquidAI/LFM3-Omni-2B-GGUF) — 2026-10-27\n- **NVIDIA models**: [nvidia/Metatron-v1](https://huggingface.co/nvidia/Metatron-v1) — 2026-10-27\n- **Trending GGUF**: [ccore/Qwen3.5-4B-3D-Coder](https://huggingface.co/ccore/Qwen3.5-4B-3D-Coder) — 2026-10-25\n\n## The local-first wave\n\n- **Jan**: [0.8.8](https://github.com/janhq/jan/releases/tag/v0.8.8) — 2026-10-28\n\n## Hardware and platform\n\n- **Hugging Face blog**: [nemotron-halloween](https://huggingface.co/blog/nvidia/nemotron-halloween) — 2026-10-30\n- **Node.js releases**: [2026-10-29, Version 27.0.0-alpha.0.0.0 (Alpha), @RafaelGSS](https://github.com/nodejs/node/releases/tag/v27.0.0-alpha.0.0.0) — 2026-10-29\n- **Hugging Face blog**: [Introducing AnySpeechRecognizer and AnyDecisionModel: Open Models for Speech and Decisions on Apple Platforms](https://huggingface.co/blog/anydecisionmodel) — 2026-10-29\n- **Node.js releases**: [2026-10-28, Version 24.22.2 'Krypton' (LTS), @aduh95](https://github.com/nodejs/node/releases/tag/v24.22.2) — 2026-10-28\n\n---\n\n16 new item(s) found, 16 published, 0 held back by the per-section cap.\n\n[Run log](https://github.com/mlmrx/SovereignAI/actions/runs/41486514579)"
 }
