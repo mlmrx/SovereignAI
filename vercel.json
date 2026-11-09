@@ -216,6 +216,10 @@
     {
       "source": "/blog/signals-2026-11-02",
       "destination": "/blog-signals-2026-11-02.html"
+    },
+    {
+      "source": "/blog/signals-2026-11-09",
+      "destination": "/blog-signals-2026-11-09.html"
     }
   ],
   "headers": [
